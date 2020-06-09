@@ -1,5 +1,5 @@
 const {Client} = require('elasticsearch');
-const vivoPublication = require('./vivo-publication.json');
+const vivo = require('./vivo.json');
 const waitUntil = require('./wait-util');
 
 class ElasticSearch {
@@ -42,7 +42,7 @@ class ElasticSearch {
 
     console.log('Connected to Elastic Search');
 
-    await this.ensureIndex('research-profiles', 'research-profile', require('./vivo-publication.json'));
+    await this.ensureIndex('research-profiles', 'research-profile', require('./vivo.json'));
   }
 
   /**
@@ -73,7 +73,6 @@ class ElasticSearch {
 
     return this.client.index({
       index : 'research-profiles',
-      type: 'vivo-publication',
       id : record['@id'],
       body: record
     });
@@ -96,11 +95,6 @@ class ElasticSearch {
         index: newIndexName,
         body : {
           settings : {
-            // index: {
-            //   "mapper": {
-            //     "dynamic": false
-            //   }
-            // },
             analysis : {
               analyzer: {
                 autocomplete: { 
@@ -126,9 +120,7 @@ class ElasticSearch {
               }
             }
           },
-          mappings : {
-            'vivo-publication' : vivoPublication
-          }
+          mappings : vivo
         }
       });
     } catch(e) {

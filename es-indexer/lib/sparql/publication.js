@@ -1,6 +1,6 @@
 // https://wiki.lyrasis.org/display/VIVODOC110x/Publication+Model
 
-module.exports = uri => `
+module.exports = (uri, graph='?g') => `
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX bibo: <http://purl.org/ontology/bibo/>
@@ -10,7 +10,8 @@ PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 PREFIX vcard: <http://www.w3.org/2006/vcard/ns#>
 PREFIX cito: <http://purl.org/spar/cito/>
 PREFIX obo: <http://purl.obolibrary.org/obo/>
-PREFIX ucd: <http://experts.library.ucdavis.edu/individual/>
+PREFIX ucd: <http://ucdavis.edu/ns/>
+PREFIX ucdrp: <http://experts.library.ucdavis.edu/individual/>
 
 CONSTRUCT {
   ?subject rdf:type ?type .
@@ -43,7 +44,7 @@ CONSTRUCT {
   ?subject vivo:publicationDate ?publicationDateTime .
 
 } WHERE {
-  GRAPH ?g { 
+  GRAPH ${graph} { 
 
     ?subject rdf:type ?type .
     OPTIONAL { ?subject rdfs:label ?label . }

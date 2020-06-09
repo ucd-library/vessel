@@ -131,16 +131,30 @@ class ScopedImport {
     console.log(`Updated ${result.fileUri}
   -> Subject: ${result.subjects.join('\n  -> Subject: ')}`)
 
-    for( let i = 0; i < result.subjects.length; i++ ) {
-      let response = await fuseki.query(`SELECT ?object
-        WHERE {
-          GRAPH <${this.dataGraphUri}> { <${result.subjects[i]}> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?object }
-        }`);
-      response = await response.json();
-      result.subjects[i] = {
-        subject: result.subjects[i],
-        types : response.results.bindings.map(term => term.object.value)
+    let response = await fuseki.query(`CONSTRUCT {
+      ${result.subjects.map((s, i) => `<${s}> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o${i} . `).join('\n')}
+    } WHERE {
+      GRAPH <${this.dataGraphUri}> { 
+        ${result.subjects.map((s, i) => `<${s}> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o${i} .`).join('\n')}
       }
+    }`);
+    response = await response.text();
+    const store = $rdf.graph();
+    $rdf.parse(response, store, this.graphUri, 'text/turtle');
+
+    let subjects = {};
+    store.statements.forEach(stmt => {
+      let s = stmt.subject.value;
+      let o = stmt.object.value;
+      if( !subjects[s]) subjects[s] = [];
+      if( !subjects[s].includes(o) ) subjects[s].push(o);
+    });
+    result.subjects = [];
+    for( let subject in subjects ) {
+      result.subjects.push({
+        subject,
+        types: subjects[subject]
+      });
     }
 
     await kafka.send({
