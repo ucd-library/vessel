@@ -23,6 +23,16 @@ services:
       - ./fuseki-injest/package.json:/service/package.json
       - ./fuseki-injest/index.js:/service/index.js
 
+  index:
+    build: ./es-indexer
+    env_file:
+      - .env
+    volumes:
+      - ./es-indexer/lib:/service/lib
+      - ./es-indexer/package.json:/service/package.json
+      - ./es-indexer/index.js:/service/index.js
+    command: bash -c "tail -f /dev/null"
+
   zookeeper:
     image: bitnami/zookeeper:latest
     environment: 

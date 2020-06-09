@@ -88,7 +88,7 @@ class ScopedImport {
     let response = await fuseki.query(`SELECT ?object
     WHERE {
       GRAPH <${this.graphUri}> { ?subject ?predicate ?object }
-      FILTER( <${fileScopeUri}/data> = ?predicate )
+      FILTER( <${this.graphUri}/data> = ?predicate )
     }`);
     response = await response.json();
     
@@ -122,7 +122,7 @@ class ScopedImport {
     });
 
     let result = await this.checkCache(args);
-    if( result.cached ) {
+    if( result.cached && args.force !== true ) {
       console.log(`Ignoring (${args.source}/${args.type}/${args.filename}): no changes`);
       return null;
     }
@@ -131,10 +131,22 @@ class ScopedImport {
     console.log(`Updated ${result.fileUri}
   -> Subject: ${result.subjects.join('\n  -> Subject: ')}`)
 
-    let kresp = await kafka.send({
+    for( let i = 0; i < result.subjects.length; i++ ) {
+      let response = await fuseki.query(`SELECT ?object
+        WHERE {
+          GRAPH <${this.dataGraphUri}> { <${result.subjects[i]}> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?object }
+        }`);
+      response = await response.json();
+      result.subjects[i] = {
+        subject: result.subjects[i],
+        types : response.results.bindings.map(term => term.object.value)
+      }
+    }
+
+    await kafka.send({
       topic : 'fuseki-updates',
-      messages : JSON.stringify(result)
-    });
+      messages : [JSON.stringify(result)]
+    }, args.source);
 
     return result;
   }
@@ -146,7 +158,7 @@ class ScopedImport {
     let response = await fuseki.query(`CONSTRUCT { ?subject ?predicate ?object
   } WHERE {
       GRAPH <${this.graphUri}> { ?subject ?predicate ?object }
-      FILTER( ?subject = <${fileScopeUri}> || ?subject = <${fileScopeUri}/po> )
+      FILTER( ?subject = <${fileScopeUri}> )
     }`, 'text/turtle');
 
     let ttl = await response.text();
@@ -181,7 +193,7 @@ class ScopedImport {
     if( cache.statements && cache.statements.length ) {
       let cacheTerms = cache.statements.map(stmt => this.statementToTriple(stmt));
       
-      oldValues = cache.statements.find(stmt => stmt.predicate.value == fileScopeUri+'/data');
+      oldValues = cache.statements.find(stmt => stmt.predicate.value == this.graphUri+'/data');
       let oldGraphValues = '';
       if( oldValues ) {
         oldGraphValues = `GRAPH <${this.dataGraphUri}> {
@@ -207,7 +219,7 @@ WHERE {}`;
 
     let insertStmt = `INSERT {
   GRAPH <${this.graphUri}> {
-    <${fileScopeUri}> <${fileScopeUri}/data> ${$rdf.lit(data).toNQ()} .
+    <${fileScopeUri}> <${this.graphUri}/data> ${$rdf.lit(data).toNQ()} .
     <${fileScopeUri}> <${this.graphUri}/md5> "${hash}" .
     <${fileScopeUri}> <${this.graphUri}/type> "${args.type}" .
     <${fileScopeUri}> <${this.graphUri}/source> "${args.source}" .

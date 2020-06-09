@@ -6,28 +6,6 @@ class Kafka {
     this.client = new KafkaClient({kafkaHost: 'kafka:9092'});
     this.producer = new Producer(this.client);
 
-    this.client.createTopics([{
-      topic: 'fuseki-updates',
-      partitions: 1,
-      replicationFactor: 1
-    }], (err, result) => {
-      if( err ) console.error(err);
-      else console.log(result);
-
-      this.consumer = new Consumer(this.client, 
-        [{ topic: 'fuseki-updates', partition: 0}], 
-        {autoCommit: false}
-      )
-      this.consumer.on('message', (msg) => {
-        console.log('Consumer message: ', JSON.parse(msg.value));
-        
-        this.consumer.commit(true, function(err, data) {
-          console.log('commit:', err, data);
-        });
-      });
-  });
-
-
     this.producer.on('ready', function () {
       console.log('Kafka producer ready');
     });
@@ -37,12 +15,13 @@ class Kafka {
     
   }
 
-  send(msgs) {
+  send(msgs, source) {
     if( !Array.isArray(msgs) ) {
       msgs = [msgs];
     }
 
     msgs.forEach(msg => {
+      msg.messages = msg.messages.map(msg => new KeyedMessage('source-'+source, msg));
       msg.timestamp = Date.now();
     });
 
@@ -52,10 +31,6 @@ class Kafka {
         else resolve(data);
       });
     });
-  }
-
-  consume(callback) {
-
   }
 
 

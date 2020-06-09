@@ -26,15 +26,16 @@ const scopedImport = require('./lib/scoped-import');
   //   }
   // }
 
-  await scopedImport.sync({
-    rootDir: '/data',
-    source : 'elements'
-  });
+  // await scopedImport.sync({
+  //   rootDir: '/data',
+  //   source : 'elements'
+  // });
   
-  // const args = {
-  //   file : '/data/user/13847',
-  //   source : 'elements',
-  //   type : 'user'
-  // };
-  // scopedImport.update(args);
+  const args = {
+    file : '/data/publication/342878',
+    source : 'elements',
+    type : 'publication',
+    force : true
+  };
+  scopedImport.update(args);
 })();
