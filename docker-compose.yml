@@ -32,6 +32,39 @@ services:
       - ./es-indexer/package.json:/service/package.json
       - ./es-indexer/index.js:/service/index.js
     command: bash -c "tail -f /dev/null"
+  
+  api:
+    build: ./api
+    volumes:
+      - ./api/lib:/service/lib
+      - ./api/controllers:/service/controllers
+      - ./api/models:/service/models
+      - ./api/package.json:/service/package.json
+      - ./api/index.js:/service/index.js
+    env_file:
+      - .env
+    ports: 
+      - 3000:3000
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.7.1
+    environment: 
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - network.host=0.0.0.0
+      - cluster.name=docker-cluster
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - xpack.graph.enabled=false
+      - xpack.ml.enabled=false
+      - xpack.monitoring.enabled=false
+      - xpack.security.enabled=false
+      - xpack.watcher.enabled=false
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
 
   zookeeper:
     image: bitnami/zookeeper:latest
@@ -52,17 +85,18 @@ services:
     volumes: 
       - kafka-data:/bitnami/kafka
 
-  kafka-ui:
-    image: hlebalbau/kafka-manager
-    ports:
-      - 9000:9000
-    environment:
-      - ZK_HOSTS=zookeeper:2181
-      - KAFKA_MANAGER_USERNAME=admin
-      - KAFKA_MANAGER_PASSWORD=${FUSEKI_PASSWORD}
-      - KAFKA_MANAGER_AUTH_ENABLED=true
+  # kafka-ui:
+  #   image: hlebalbau/kafka-manager
+  #   ports:
+  #     - 9000:9000
+  #   environment:
+  #     - ZK_HOSTS=zookeeper:2181
+  #     - KAFKA_MANAGER_USERNAME=admin
+  #     - KAFKA_MANAGER_PASSWORD=${FUSEKI_PASSWORD}
+  #     - KAFKA_MANAGER_AUTH_ENABLED=true
 
 volumes:
+  es-data:
   fuseki-data:
   kafka-data:
   zookeeper-data:

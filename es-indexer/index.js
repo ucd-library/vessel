@@ -1,6 +1,7 @@
 const kafka = require('./lib/kafka');
 const fuseki = require('./lib/fuseki');
 const sparqlModels = require('./lib/sparql');
+const es = require('./lib/elastic-search')
 
 kafka.consume(async msg => {
   let subjects = JSON.parse(msg.value).subjects;
@@ -23,6 +24,8 @@ async function load(uri, type) {
   uri = uri.replace('http://experts.library.ucdavis.edu/individual/', 'ucd:');
   let graph = construct(response['@graph'], uri);
   console.log(graph[uri]);
+
+  await es.insert(graph[uri]);
 }
 
 function construct(graph, id, crawled={}) {

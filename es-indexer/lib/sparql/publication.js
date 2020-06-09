@@ -13,6 +13,8 @@ PREFIX obo: <http://purl.obolibrary.org/obo/>
 PREFIX ucd: <http://experts.library.ucdavis.edu/individual/>
 
 CONSTRUCT {
+  ?subject rdf:type ?type .
+
   ?subject rdfs:label ?label .
   ?subject bibo:abstract ?abstract .
   ?subject bibo:doi ?doi .
@@ -43,6 +45,7 @@ CONSTRUCT {
 } WHERE {
   GRAPH ?g { 
 
+    ?subject rdf:type ?type .
     OPTIONAL { ?subject rdfs:label ?label . }
     OPTIONAL { ?subject bibo:abstract ?abstract . }
     OPTIONAL { ?subject bibo:doi ?doi . }

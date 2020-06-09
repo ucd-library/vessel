@@ -1,0 +1,102 @@
+{
+
+  "properties" : {
+
+    "@id" : {
+      "type" : "keyword"
+    },
+
+    "@type" : {
+      "type" : "keyword"
+    },
+
+    "abstract" : {
+      "type" : {
+        "type" : "text",
+        "analyzer": "autocomplete", 
+        "search_analyzer": "autocomplete_search"
+      }
+    },
+
+    "Authorship.rank" : {
+      "type" : "integer"
+    },
+
+    "Authorship.@id" : {
+      "type" : "keyword"
+    },
+
+    "doi" : {
+      "type" : "keyword"
+    },
+
+    "hasContactInfo" : {
+      "type": "object",
+      "enabled": false
+    },
+
+    "hasSubjectArea.label" : {
+      "type" : "keyword",
+      "fields": {
+        "text" : {
+          "type" : "text",
+          "analyzer": "autocomplete", 
+          "search_analyzer": "autocomplete_search"
+        }
+      }
+    },
+
+    "issue" : {
+      "type" : "keyword"
+    },
+
+    "Journal.label" : {
+      "type" : "keyword",
+      "fields": {
+        "text" : {
+          "type" : "text",
+          "analyzer": "autocomplete", 
+          "search_analyzer": "autocomplete_search"
+        }
+      }
+    },
+
+    "Journal.issn" : {
+      "type" : "keyword",
+      "fields": {
+        "text" : {
+          "type" : "text",
+          "analyzer": "autocomplete", 
+          "search_analyzer": "autocomplete_search"
+        }
+      }
+    },
+
+    "label" : {
+      "type" : "keyword",
+      "text" : {
+        "type" : "text",
+        "analyzer": "autocomplete", 
+        "search_analyzer": "autocomplete_search"
+      }
+    },
+
+    "pageEnd" : {
+      "type" : "integer"
+    },
+
+    "pageStart" : {
+      "type" : "integer"
+    },
+
+    "publicationDate" : {
+      "type" : "date"
+    },
+
+    "volume" : {
+      "type" : "keyword"
+    }
+
+
+  }
+}
