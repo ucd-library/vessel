@@ -32,9 +32,9 @@ const scopedImport = require('./lib/scoped-import');
   // });
   
   const args = {
-    file : '/data/publication/342878',
+    file : '/data/user/18278',
     source : 'elements',
-    type : 'publication',
+    type : 'user',
     force : true
   };
   scopedImport.update(args);

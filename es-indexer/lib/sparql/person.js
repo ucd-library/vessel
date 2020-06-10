@@ -27,6 +27,22 @@ CONSTRUCT {
   ?subject vivo:orcidId ?orcidId .
   ?orcidId vivo:confirmedOrcidId ?confirmedOrcidId .
 
+  ?subject vivo:hasResearchArea ?hasResearchArea .
+
+  ?subject obo:contactInfoFor ?contactInfoFor .
+  ?contactInfoFor vcard:giveName ?givenName .
+  ?contactInfoFor vcard:familyName ?familyName .
+  ?contactInfoFor vcard:additionalName ?additionalName .
+  ?contactInfoFor vcard:honorificPrefix ?honorificPrefix .
+  ?contactInfoFor vcard:honorificSuffix ?honorificSuffix .
+
+  ?contactInfoFor vcard:hasEmail ?vcardEmail .
+  ?vcardEmail vcard:email ?email .
+  ?vcardEmail rdf:type ?emailType .
+
+  ?contactInfoFor vcard:title ?title .
+
+
 } WHERE {
   GRAPH ${graph} { 
 
@@ -42,6 +58,28 @@ CONSTRUCT {
     OPTIONAL {
       ?subject vivo:orcidId ?orcidId .
       OPTIONAL { ?orcidId vivo:confirmedOrcidId ?confirmedOrcidId . }
+    }
+
+    OPTIONAL {
+      ?subject vivo:hasResearchArea ?hasResearchArea .
+    }
+
+    OPTIONAL {
+      ?subject obo:ARG_2000028 ?contactInfoFor .
+
+      OPTIONAL { ?contactInfoFor vcard:hasName ?vcardName . }
+      OPTIONAL { ?vcardName vcard:givenName ?givenName . }
+      OPTIONAL { ?vcardName vcard:familyName ?familyName . }     
+      OPTIONAL { ?vcardName vcard:additionalName ?additionalName . }
+      OPTIONAL { ?vcardName vcard:honorificPrefix ?honorificPrefix . }
+      OPTIONAL { ?vcardName vcard:honorificSuffix ?honorificSuffix . }
+
+      OPTIONAL { ?contactInfoFor vcard:hasEmail ?vcardEmail . }
+      OPTIONAL { ?vcardEmail vcard:email ?email . }
+      OPTIONAL { ?vcardEmail rdf:type ?emailType . }
+
+      OPTIONAL { ?contactInfoFor vcard:hasTitle ?vcardTitle . }
+      OPTIONAL { ?vcardTitle vcard:title ?title . }
     }
 
     FILTER(?subject = <${uri}>)

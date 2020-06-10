@@ -2,6 +2,7 @@ const kafka = require('./lib/kafka');
 const fuseki = require('./lib/fuseki');
 const sparqlModels = require('./lib/sparql');
 const es = require('./lib/elastic-search')
+const reindex = require('./lib/reindex');
 
 kafka.consume(async msg => {
   let subjects = JSON.parse(msg.value).subjects;
@@ -17,8 +18,12 @@ kafka.consume(async msg => {
 
 async function load(type, uri) {
   console.log('Loading', uri, 'with model', type);
-  let model = await sparqlModels.getModel(type, uri)
-  console.log(model);
-  // await es.insert(graph[uri]);
+  let result = await sparqlModels.getModel(type, uri);
+  console.log(result.model);
+  await es.insert(result.model);
 }
 
+// (async function() {
+//   await reindex.run();
+//   process.exit();
+// })();

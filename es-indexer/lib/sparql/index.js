@@ -1,5 +1,6 @@
 
-const publication = require('./publication')
+const publication = require('./publication');
+const person = require('./person');
 const fuseki = require('../fuseki');
 const merge = require('deepmerge');
 
@@ -13,7 +14,9 @@ class SparqlModel {
     ]
 
     this.TYPES = {
-      'http://purl.org/ontology/bibo/AcademicArticle' : publication
+      'http://purl.org/ontology/bibo/AcademicArticle' : publication,
+      'http://xmlns.com/foaf/0.1/Person' : person,
+      'http://vivoweb.org/ontology/core#FacultyMember' : person
     }
   }
 
@@ -38,18 +41,30 @@ class SparqlModel {
       result.model = merge(result.model, model);
     }
 
+    this.clean(result.model);
     return result;
   }
 
   async _getModelForGraph(graph, type, uri) {
     let sparqlQuery = this.TYPES[type](uri, '<'+graph+'>');
-    console.log(graph, type, uri);
     let response = await fuseki.query(sparqlQuery, 'application/ld+json');
     response = await response.json();
 
     uri = uri.replace('http://experts.library.ucdavis.edu/individual/', 'ucdrp:');
+    if( !response['@graph'] && response['@id'] ) {
+      if( response['@context'] ) delete response['@context'];
+      let tmp = {'@graph':[response]};
+      response = tmp;
+    }
+
     let model = this._constructModel(response['@graph'] || [], uri);
     return model[uri] || {};
+  }
+
+  clean(model) {
+    if( model.pageStart ) model.pageStart = model.pageStart.replace(/\D*/g, '');
+    if( model.pageEnd ) model.pageEnd = model.pageEnd.replace(/\D*/g, '');
+    return model;
   }
 
   _constructModel(graph, id, crawled={}) {
@@ -70,6 +85,7 @@ class SparqlModel {
       if( Array.isArray(graph[id][key]) ) {
         for( let i = 0; i < graph[id][key].length; i++ ) {
           let subid = graph[id][key][i];
+          if( crawled[subid] ) continue;
   
           if( graph[subid] ) {
             this._constructModel(graph, subid, crawled);
@@ -78,7 +94,7 @@ class SparqlModel {
             graph[id][key][i] = subid
           }
         }
-      } else if( graph[graph[id][key]] ) {
+      } else if( graph[graph[id][key]] && !crawled[graph[id][key]] ) {
         this._constructModel(graph, graph[id][key], crawled);
         graph[id][key] = graph[graph[id][key]];
       }
