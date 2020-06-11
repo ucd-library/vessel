@@ -20,7 +20,6 @@ services:
     volumes:
       - ./data:/data
       - ./fuseki-injest/lib:/service/lib
-      - ./fuseki-injest/package.json:/service/package.json
       - ./fuseki-injest/index.js:/service/index.js
 
   index:
@@ -29,7 +28,6 @@ services:
       - .env
     volumes:
       - ./es-indexer/lib:/service/lib
-      - ./es-indexer/package.json:/service/package.json
       - ./es-indexer/index.js:/service/index.js
     command: bash -c "tail -f /dev/null"
   
@@ -39,7 +37,6 @@ services:
       - ./api/lib:/service/lib
       - ./api/controllers:/service/controllers
       - ./api/models:/service/models
-      - ./api/package.json:/service/package.json
       - ./api/index.js:/service/index.js
     env_file:
       - .env
@@ -67,11 +64,12 @@ services:
       - es-data:/usr/share/elasticsearch/data
 
   zookeeper:
-    image: bitnami/zookeeper:latest
+    image: zookeeper
     environment: 
       - ALLOW_ANONYMOUS_LOGIN=yes
     volumes:
-      - zookeeper-data:/bitnami/zookeeper
+      - zookeeper-data:/data
+      - zookeeper-datalog:/datalog
 
   kafka:
     image: bitnami/kafka:latest
@@ -84,6 +82,8 @@ services:
       - KAFKA_CLIENT_PASSWORD=${FUSEKI_PASSWORD}
     volumes: 
       - kafka-data:/bitnami/kafka
+    depends_on:
+      - "zookeeper"
 
   # kafka-ui:
   #   image: hlebalbau/kafka-manager
@@ -100,3 +100,4 @@ volumes:
   fuseki-data:
   kafka-data:
   zookeeper-data:
+  zookeeper-datalog:

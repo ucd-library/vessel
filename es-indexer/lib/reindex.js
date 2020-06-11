@@ -20,7 +20,8 @@ class Reindex {
     let subjects = await this.getAllSubjectsForType(type);
     for( let subject of subjects ) {
       console.log('Reindexing: '+subject);
-      let result = await sparqlModels.getModel(type, subject)
+      let result = await sparqlModels.getModel(type, subject);
+      // console.log(result.model);
       await es.insert(result.model);
     }
     return subjects;

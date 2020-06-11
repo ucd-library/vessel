@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "swagger": "swagger-jsdoc -o ./controllers/swagger/spec.json -d ./controllers/swagger/def.js ./controllers/**.js"
   },
   "author": "",
   "license": "ISC",
@@ -12,6 +13,7 @@
     "body-parser": "^1.19.0",
     "compression": "^1.7.4",
     "elasticsearch": "^16.7.1",
-    "express": "^4.17.1"
+    "express": "^4.17.1",
+    "swagger-jsdoc": "^4.0.0"
   }
 }

@@ -27,6 +27,12 @@ CONSTRUCT {
 
   ?subject vivo:Authorship ?author .
   ?author vivo:rank ?authorRank .
+  ?author vcard:hasName ?authorVcardName .
+  ?authorVcardName vcard:givenName ?authorGivenName .
+  ?authorVcardName vcard:middleName ?authorMiddleName .
+  ?authorVcardName vcard:familyName ?authorFamilyName .
+  ?author vivo:orcid ?authorOrcid .
+  ?author rdfs:label ?authorLabel .
 
   ?subject obo:hasContactInfo ?hasContactInfo .
   ?hasContactInfo vcard:hasURL ?contactInfoHasUrl .
@@ -40,6 +46,9 @@ CONSTRUCT {
   ?subject bibo:Journal ?publicationVenue .
   ?publicationVenue rdfs:label ?publicationVenueLabel .
   ?publicationVenue bibo:issn ?publicationVenueIssn .
+
+  ?subject vivo:informationResourceSupportedBy ?supportedBy .
+  ?supportedBy rdfs:label ?supportedByLabel .
 
   ?subject vivo:publicationDate ?publicationDateTime .
 
@@ -55,12 +64,23 @@ CONSTRUCT {
     OPTIONAL { ?subject bibo:pageEnd ?pageEnd . }
 
     OPTIONAL {
-      ?subject vivo:relatedBy ?authorRelatedBy .
-      ?authorRelatedBy rdf:type vivo:Authorship .
-      OPTIONAL{ ?authorRelatedBy vivo:rank ?authorRank . }
-      ?authorRelatedBy vivo:relates ?author .
-      ?author rdf:type ?authorType .
-      FILTER(?authorType = foaf:Person || ?authorType = vcard:Individual)
+      ?subject vivo:relatedBy ?author .
+      ?author rdf:type vivo:Authorship .
+      OPTIONAL { ?author vivo:rank ?authorRank . }
+      OPTIONAL { 
+        ?author vivo:relates ?authorIndividual .
+        ?authorIndividual rdf:type vcard:Individual . 
+        ?authorIndividual vcard:hasName ?authorVcardName .
+        OPTIONAL { ?authorVcardName vcard:givenName ?authorGivenName . }
+        OPTIONAL { ?authorVcardName vcard:middleName ?authorMiddleName . }
+        OPTIONAL { ?authorVcardName vcard:familyName ?authorFamilyName . }   
+      }
+      OPTIONAL{ 
+        ?author vivo:relates ?authorPerson .
+        ?authorPerson rdf:type foaf:Person .
+        OPTIONAL { ?authorPerson vivo:orcidid ?authorOrcid . }
+        OPTIONAL { ?authorPerson rdfs:label ?authorLabel . }
+      }
     }
 
     OPTIONAL { 
@@ -81,6 +101,11 @@ CONSTRUCT {
       ?subject vivo:hasPublicationVenue ?publicationVenue .
       ?publicationVenue rdf:type ?publicationVenueType .
       ?publicationVenue bibo:issn ?publicationVenueIssn .
+    }
+
+    OPTIONAL {
+      ?subject vivo:informationResourceSupportedBy ?supportedBy .
+      ?supportedBy rdfs:label ?supportedByLabel .
     }
 
     OPTIONAL {

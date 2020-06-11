@@ -9,6 +9,7 @@
   "author": "jrmerz@ucdavis.edu",
   "license": "MIT",
   "dependencies": {
+    "deepmerge": "^4.2.2",
     "elasticsearch": "^16.7.1",
     "kafka-node": "^5.0.0",
     "node-fetch": "^2.6.0"

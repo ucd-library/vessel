@@ -50,18 +50,27 @@ class ScopedImport {
       args.rootDir = path.resolve(process.cwd(), args.rootDir);
     }
 
+    await kafka.send({
+      topic : 'fuseki-updates',
+      messages : [JSON.stringify({
+        command: 'toggle-indexing',
+        value: false
+      })]
+    }, 'scoped-import');
+
     let types = fs.readdirSync(args.rootDir);
     for( let type of types ) {
       let files = await fs.readdirSync(path.join(args.rootDir, type));
       for( let file of files ) {
+        console.log('Reading: '+path.join(args.rootDir, type, file));
         let fargs = {
           file : path.join(args.rootDir, type, file),
-          source : args.source
+          source : args.source,
+          force : args.force
         }
         await this.update(fargs);
       }
     }
-
     
     let response = await fuseki.query(`SELECT ?subject
     WHERE {
@@ -80,6 +89,22 @@ class ScopedImport {
         await this.delete({source: args.source, type, filename});
       }
     }
+
+    await kafka.send({
+      topic : 'fuseki-updates',
+      messages : [JSON.stringify({
+        command: 'toggle-indexing',
+        value: true
+      })]
+    }, 'scoped-import');
+
+    await kafka.send({
+      topic : 'fuseki-updates',
+      messages : [JSON.stringify({
+        command: 'reindex',
+      })]
+    }, 'scoped-import');
+
   }
 
 

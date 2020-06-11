@@ -1,6 +1,7 @@
 
 const publication = require('./publication');
 const person = require('./person');
+const organization = require('./organization');
 const fuseki = require('../fuseki');
 const merge = require('deepmerge');
 
@@ -16,7 +17,9 @@ class SparqlModel {
     this.TYPES = {
       'http://purl.org/ontology/bibo/AcademicArticle' : publication,
       'http://xmlns.com/foaf/0.1/Person' : person,
-      'http://vivoweb.org/ontology/core#FacultyMember' : person
+      'http://vivoweb.org/ontology/core#FacultyMember' : person,
+      'http://vivoweb.org/ontology/core#AcademicDepartment' : organization,
+      'http://vivoweb.org/ontology/core#University' : organization
     }
   }
 
@@ -47,6 +50,7 @@ class SparqlModel {
 
   async _getModelForGraph(graph, type, uri) {
     let sparqlQuery = this.TYPES[type](uri, '<'+graph+'>');
+    // console.log(sparqlQuery);
     let response = await fuseki.query(sparqlQuery, 'application/ld+json');
     response = await response.json();
 
@@ -64,7 +68,28 @@ class SparqlModel {
   clean(model) {
     if( model.pageStart ) model.pageStart = model.pageStart.replace(/\D*/g, '');
     if( model.pageEnd ) model.pageEnd = model.pageEnd.replace(/\D*/g, '');
+
+    this.cleanObject(model, 'Authorship');
+    this.cleanObject(model, 'hasSubjectArea');
+    this.cleanObject(model, 'Journal');
+
     return model;
+  }
+
+  cleanObject(parent, attr) {
+    if( parent === undefined ) return;
+    let obj = parent[attr];
+    if( obj === undefined ) return;
+
+    if( Array.isArray(obj) ) {
+      obj.forEach((o, i) => {
+        if( typeof o === 'string') {
+          obj[i] = {'@id': o};
+        }
+      });
+    } else if( typeof obj === 'string' ) {
+      parent[attr] = {'@id': obj}
+    }
   }
 
   _constructModel(graph, id, crawled={}) {

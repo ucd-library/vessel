@@ -1,0 +1,41 @@
+{
+  "info": {
+    "title": "UC Davis - Researcher Profiles API",
+    "version": "0.0.1"
+  },
+  "basePath": "/api",
+  "swagger": "2.0",
+  "paths": {
+    "/{id}": {
+      "get": {
+        "description": "Get research profile record by id",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "description": "id of record",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "record"
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "record": {
+      "type": "object"
+    }
+  },
+  "responses": {},
+  "parameters": {},
+  "securityDefinitions": {},
+  "tags": []
+}

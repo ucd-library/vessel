@@ -28,6 +28,7 @@ CONSTRUCT {
   ?orcidId vivo:confirmedOrcidId ?confirmedOrcidId .
 
   ?subject vivo:hasResearchArea ?hasResearchArea .
+  ?hasResearchArea rdfs:label ?researchAreaLabel .
 
   ?subject obo:contactInfoFor ?contactInfoFor .
   ?contactInfoFor vcard:giveName ?givenName .
@@ -41,7 +42,23 @@ CONSTRUCT {
   ?vcardEmail rdf:type ?emailType .
 
   ?contactInfoFor vcard:title ?title .
+  ?contactInfoFor vcard:telephone ?telephone .
+  ?contactInfoFor vcard:geo ?geo .
 
+  ?contactInfoFor vcard:hasURL ?vcardURL .
+  ?vcardURL vcard:url ?url .
+  ?vcardURL vcard:rank ?urlRank .
+  ?vcardURL vcard:label ?urlLabel .
+
+  ?subject vitro:mainImage ?mainImage .
+  ?mainImage vitro:filename ?mainImagFilename .
+
+  ?subject vivo:Position ?position .
+  ?position rdfs:label ?positionLabel .
+  ?position vivo:Organization ?positionOrg .
+  ?positionOrg rdfs:label ?positionOrgLabel .
+  ?positionOrg rdfs:start ?positionStartTimeValue .
+  ?positionOrg rdfs:end ?positionEndTimeValue .
 
 } WHERE {
   GRAPH ${graph} { 
@@ -62,24 +79,80 @@ CONSTRUCT {
 
     OPTIONAL {
       ?subject vivo:hasResearchArea ?hasResearchArea .
+      ?hasResearchArea rdfs:label ?researchAreaLabel .
     }
 
     OPTIONAL {
       ?subject obo:ARG_2000028 ?contactInfoFor .
 
-      OPTIONAL { ?contactInfoFor vcard:hasName ?vcardName . }
-      OPTIONAL { ?vcardName vcard:givenName ?givenName . }
-      OPTIONAL { ?vcardName vcard:familyName ?familyName . }     
-      OPTIONAL { ?vcardName vcard:additionalName ?additionalName . }
-      OPTIONAL { ?vcardName vcard:honorificPrefix ?honorificPrefix . }
-      OPTIONAL { ?vcardName vcard:honorificSuffix ?honorificSuffix . }
+      OPTIONAL { 
+        ?contactInfoFor vcard:hasName ?vcardName . 
+        OPTIONAL { ?vcardName vcard:givenName ?givenName . }
+        OPTIONAL { ?vcardName vcard:familyName ?familyName . }     
+        OPTIONAL { ?vcardName vcard:additionalName ?additionalName . }
+        OPTIONAL { ?vcardName vcard:honorificPrefix ?honorificPrefix . }
+        OPTIONAL { ?vcardName vcard:honorificSuffix ?honorificSuffix . }
+      }
 
-      OPTIONAL { ?contactInfoFor vcard:hasEmail ?vcardEmail . }
-      OPTIONAL { ?vcardEmail vcard:email ?email . }
-      OPTIONAL { ?vcardEmail rdf:type ?emailType . }
+      OPTIONAL { 
+        ?contactInfoFor vcard:hasEmail ?vcardEmail .
+        OPTIONAL { ?vcardEmail vcard:email ?email . }
+        OPTIONAL { ?vcardEmail rdf:type ?emailType . }
+      }
 
-      OPTIONAL { ?contactInfoFor vcard:hasTitle ?vcardTitle . }
-      OPTIONAL { ?vcardTitle vcard:title ?title . }
+      OPTIONAL { 
+        ?contactInfoFor vcard:hasTitle ?vcardTitle . 
+        ?vcardTitle vcard:title ?title . 
+      }
+
+      OPTIONAL { 
+        ?contactInfoFor vcard:hasTelephone ?vcardTelephone . 
+        ?vcardTelephone vcard:telephone ?telephone . 
+      }
+
+      OPTIONAL { 
+        ?contactInfoFor vcard:hasGeo ?vcardGeo .
+        ?vcardGeo vcard:geo ?geo . 
+      }
+
+      OPTIONAL { 
+        ?contactInfoFor vcard:hasURL ?vcardURL . 
+        OPTIONAL { ?vcardURL vcard:url ?url . }
+        OPTIONAL { ?vcardURL vcard:rank ?urlRank . }
+        OPTIONAL { ?vcardURL vcard:label ?urlLabel . }
+      }
+    }
+
+    OPTIONAL { 
+      ?subject vitro:mainImage ?mainImage .
+      ?mainImage vitro:filename ?mainImagFilename .
+    }
+
+    OPTIONAL {
+      ?subject vivo:relatedBy ?position .
+      ?position rdf:type vivo:Position . 
+      
+      OPTIONAL { ?position rdfs:label ?positionLabel . }
+
+      OPTIONAL { 
+        ?position vivo:relates ?positionOrg .
+        ?positionOrg rdfs:label ?positionOrgLabel .
+      }
+
+      OPTIONAL {
+        ?position vivo:dateTimeInternal ?positionDateTime .
+      }
+
+      OPTIONAL { 
+        ?positionDateTime vivo:start ?positionStartTime .
+        ?positionStartTime rdfs:label ?positionStartTimeValue .
+      }
+
+      OPTIONAL { 
+        ?positionDateTime vivo:end ?positionEndTime .
+        ?positionEndTime rdfs:label ?positionEndTimeValue .
+      }
+
     }
 
     FILTER(?subject = <${uri}>)
