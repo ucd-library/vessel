@@ -12,6 +12,7 @@ A proof-of-concept.
   - `docker-compose up`
   - `docker-compose exec index bash`
     - `node index.js`
+  - Then in a new terminal:
   - `docker-compose exec injest bash`
     - `node reindex.js`
 
@@ -70,7 +71,7 @@ On insert or update both the data graph and the scoped import graph are updated.
 }
 ```
 
-As `index.js` runs, you will see ScopedImport class log it's decision to update or ignore files.  Additionally you will see a Kafka Consumer log messages that have been sent by the ScopedImport Kafka Producer when updates happen.
+As `reindex.js` runs, you will see ScopedImport class log it's decision to update or ignore files.  Additionally you will see a Kafka Consumer log messages that have been sent by the ScopedImport Kafka Producer when updates happen.
 
 Currently data is added to the `https://experts.library.ucdavis.edu/individual` graph.
 
@@ -79,6 +80,11 @@ Currently data is added to the `https://experts.library.ucdavis.edu/individual` 
   - Fuseki UI: http://localhost:8080/
   - Kafka UI: http://localhost:9000/
 
-# TODO
+# Elastic Search Indexer
 
-Add Elastic Search. Add real consumer (indexer) that listens to Kafka messages and reads in objects into elastic search based on spaql queries.  Add Node API layer (with swagger docs).
+
+The Elastic Search indexer is a Kafka consumer that listens for messages and reads in objects (using `lib/sparql/index.js` getModel() method) into elastic search based on spaql queries.
+
+# API Layer
+
+Node API layer (with swagger docs). currently `/api` returns OpenAPI docs and `/api/{:id}` returns elastic search object.  id's have `ucdrp:` prefix. 
