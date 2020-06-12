@@ -10,5 +10,6 @@ RUN npm install --production
 
 COPY lib lib
 COPY index.js .
+COPY reindex.js .
 
 CMD bash -c "tail -f /dev/null"

@@ -10,14 +10,22 @@ A proof-of-concept.
   - Make ./data directory in this repository
   - Copy over contents of Vivo Harvester `translated-records` (application/rdf+xml).  Keep `./data/publication`, `./data/user`, etc folder structure
   - `docker-compose up`
+  - `docker-compose exec index bash`
+    - `node index.js`
   - `docker-compose exec injest bash`
-  - `node index.js`
+    - `node reindex.js`
 
 This will scan and import all files from `./data`
 
+Additionally you can run `reindex.js` in the `index` container to force the indexer to recrawl the graph for known types.  
+
+You can run `index.js` in the `injest` container to insert a specific file.  See edit script to change file gets added.  The force flag will ignore MD5 file check.
+
 ## Changes
 
-Feel free to edit/add/delete any file from `./data`.  You can then rerun `node index.js` to rescan folder.  Only modified files will be updated in Fuseki.  Or create a new script like the following to submit changes of single file.
+Feel free to edit/add/delete any file from `./data`.  You can then rerun `node reindex.js` in `injest` container to rescan folder.  Only modified files will be updated in Fuseki.  Or edit `index.js` to submit changes of single file.
+
+example:
 
 ```javascript
 
@@ -33,9 +41,9 @@ scopedImport.update({
 
 The injest works off of the (newly coined) notion of scoped imports, where all triples for a graph are scoped to a single file.  When the file changes, the ScopedImport class is able to make the proper changes in Fuseki.  More on this below.
 
-The default script `index.js` will scan all directories in `./data`.  All scope imports have three things:
+The default script `reindex.js` will scan all directories in `./data`.  All scope imports have three things:
   - source: where the data came from
-  - type: what type is the file.  Really a convenience for additionaly namespacing.  When using the default `index.js` sync script, the `type` is tied to the folder name.
+  - type: what type is the file.  Really a convenience for additionaly namespacing.  When using the default `reindex.js` sync script, the `type` is tied to the folder name.
   - filename: actual name of the file.
 
 The ScopedImport class uses `https://experts.library.ucdavis.edu/scoped-import` graph.  When a file is found the scoped import graph is used to check if it has an entry for the file.  If not a simple insert is preformed.  If the scoped graph has a entry, the MD5 of the file is checked against the MD5 stored in the graph.  If they do not match a update is preformed.  Otherwise the file is ignored.

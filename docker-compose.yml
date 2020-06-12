@@ -21,6 +21,7 @@ services:
       - ./data:/data
       - ./fuseki-injest/lib:/service/lib
       - ./fuseki-injest/index.js:/service/index.js
+      - ./fuseki-injest/reindex.js:/service/reindex.js
 
   index:
     build: ./es-indexer
@@ -29,6 +30,7 @@ services:
     volumes:
       - ./es-indexer/lib:/service/lib
       - ./es-indexer/index.js:/service/index.js
+      - ./es-indexer/reindex.js:/service/reindex.js
     command: bash -c "tail -f /dev/null"
   
   api:
