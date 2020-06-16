@@ -12,7 +12,7 @@ const parser = new SparqlParser();
 class SparqlModel {
 
   constructor() {
-    this.GRAPHS = config.graph;
+    this.GRAPHS = config.fuseki.graphs;
 
     this.TYPES = {
       'http://purl.org/ontology/bibo/AcademicArticle' : publication,

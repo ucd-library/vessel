@@ -2,8 +2,9 @@ const {sparql, kafka, config} = require('@ucd-lib/rp-node-utils');
 const es = require('./lib/elastic-search')
 const reindex = require('./lib/reindex');
 const changes = require('./lib/get-changes');
+const UpdateWindow = require('./lib/update-window');
 
-let enabled = true;
+// let enabled = true;
 
 // kafka.consume(async msg => {
 //   msg = JSON.parse(msg.value);
@@ -30,12 +31,19 @@ let enabled = true;
 //   }
 // });
 
-async function load(type, uri) {
-  console.log('Loading', uri, 'with model', type);
-  let result = await sparql.getModel(type, uri);
-  console.log(JSON.stringify(result.model, '  ', '  '));
-  await es.insert(result.model);
+async function load(uri, types) {
+  for( let type of types ) {
+    if( !sparql.TYPES[type] ) continue;
+
+    console.log('Loading', uri, 'with model', type);
+    let result = await sparql.getModel(type, uri);
+    await es.insert(result.model);
+    console.log('Updated', uri);
+    break;
+  }
 }
+
+const updateWindow = new UpdateWindow(load);
 
 
 (async function() {
@@ -55,7 +63,7 @@ async function load(type, uri) {
     async msg => {
       msg = JSON.parse(msg.value);
       let update = sparql.parseQuery(msg.body);
-      console.log(changes(update));
+      updateWindow.add(changes(update));
     }
   );
 })();
