@@ -9,7 +9,6 @@ services:
       - .env
     volumes:
       - ./fuseki-proxy/index.js:/service/index.js
-    command: bash -c "tail -f /dev/null"
 
   fuseki-backend:
     image: ucdlib/rp-v-fuseki-backend:local

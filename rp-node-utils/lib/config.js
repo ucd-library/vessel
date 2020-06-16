@@ -1,7 +1,7 @@
 const env = process.env;
 
 // order matters.  Top graphs take precident
-const graphs = env.FUSEKI_GRAPHS || '';
+let graphs = env.FUSEKI_GRAPHS || '';
 if( graphs ) {
   graphs = graph.split(';').map(g => g.trim());
 } else {

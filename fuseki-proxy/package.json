@@ -5,9 +5,7 @@
   "main": "index.js",
   "dependencies": {
     "express": "^4.17.1",
-    "http-proxy": "^1.18.1",
-    "kafka-node": "^5.0.0",
-    "node-fetch": "^2.6.0"
+    "http-proxy": "^1.18.1"
   },
   "devDependencies": {},
   "scripts": {

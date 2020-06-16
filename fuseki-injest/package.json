@@ -12,9 +12,7 @@
   "author": "jrmerz@ucdavis.edu",
   "license": "MIT",
   "dependencies": {
-    "kafka-node": "^5.0.0",
     "md5": "^2.2.1",
-    "n3": "^1.4.0",
     "node-fetch": "^2.6.0",
     "rdflib": "^1.2.2"
   }

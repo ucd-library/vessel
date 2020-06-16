@@ -1,6 +1,7 @@
 const {sparql, kafka, config} = require('@ucd-lib/rp-node-utils');
 const es = require('./lib/elastic-search')
 const reindex = require('./lib/reindex');
+const changes = require('./lib/get-changes');
 
 let enabled = true;
 
@@ -38,15 +39,23 @@ async function load(type, uri) {
 
 
 (async function() {
+  await kafka.init();
   await kafka.initConsumer([{
     topic: config.kafka.topics.fusekiUpdates,
     partitions: 1,
     replicationFactor: 1
   }])
 
-  kafka.consume(async msg => {
-    msg = JSON.parse(msg.value);
-    let update = sparql.parse(msg.body);
-    console.log(update);
-  });
+  kafka.consume(
+    [{
+      topic: config.kafka.topics.fusekiUpdates, 
+      partition: 0
+    }],
+    {autoCommit: false},
+    async msg => {
+      msg = JSON.parse(msg.value);
+      let update = sparql.parseQuery(msg.body);
+      console.log(changes(update));
+    }
+  );
 })();

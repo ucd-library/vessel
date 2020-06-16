@@ -39,7 +39,7 @@ app.all(/.*/, (req, res) => {
   if( req.get('content-type') === 'application/sparql-update' ) {
     openRequests.push(new BodyWrapper(req, res));
   }
-  proxy.web(req, res, { target: 'http://fuseki:3030' });
+  proxy.web(req, res, { target: 'http://fuseki-backend:3030' });
 });
 
 app.listen(3030, () => {

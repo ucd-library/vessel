@@ -7,6 +7,7 @@ const merge = require('deepmerge');
 const config = require('../config');
 const clean = require('./clean');
 const SparqlParser = require('sparqljs').Parser;
+const parser = new SparqlParser();
 
 class SparqlModel {
 
