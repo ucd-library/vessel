@@ -1,18 +1,17 @@
 
-const publication = require('./publication');
-const person = require('./person');
-const organization = require('./organization');
+const publication = require('./queries/publication');
+const person = require('./queries/person');
+const organization = require('./queries/organization');
 const fuseki = require('../fuseki');
 const merge = require('deepmerge');
+const config = require('../config');
+const clean = require('./clean');
+const SparqlParser = require('sparqljs').Parser;
 
 class SparqlModel {
 
   constructor() {
-    // order matters.  Top graphs take precident
-    this.GRAPHS = [
-      'https://experts.library.ucdavis.edu/individual',
-      'http://iam.ucdavis.edu/ns'
-    ]
+    this.GRAPHS = config.graph;
 
     this.TYPES = {
       'http://purl.org/ontology/bibo/AcademicArticle' : publication,
@@ -21,6 +20,10 @@ class SparqlModel {
       'http://vivoweb.org/ontology/core#AcademicDepartment' : organization,
       'http://vivoweb.org/ontology/core#University' : organization
     }
+  }
+
+  parseQuery(sparql) {
+    return parser.parse(sparql);
   }
 
   hasModel(type) {
@@ -44,7 +47,7 @@ class SparqlModel {
       result.model = merge(result.model, model);
     }
 
-    this.clean(result.model);
+    clean.run(result.model);
     return result;
   }
 
@@ -54,6 +57,7 @@ class SparqlModel {
     let response = await fuseki.query(sparqlQuery, 'application/ld+json');
     response = await response.json();
 
+    // TODO: this is wrong
     uri = uri.replace('http://experts.library.ucdavis.edu/individual/', 'ucdrp:');
     if( !response['@graph'] && response['@id'] ) {
       if( response['@context'] ) delete response['@context'];
@@ -63,33 +67,6 @@ class SparqlModel {
 
     let model = this._constructModel(response['@graph'] || [], uri);
     return model[uri] || {};
-  }
-
-  clean(model) {
-    if( model.pageStart ) model.pageStart = model.pageStart.replace(/\D*/g, '');
-    if( model.pageEnd ) model.pageEnd = model.pageEnd.replace(/\D*/g, '');
-
-    this.cleanObject(model, 'Authorship');
-    this.cleanObject(model, 'hasSubjectArea');
-    this.cleanObject(model, 'Journal');
-
-    return model;
-  }
-
-  cleanObject(parent, attr) {
-    if( parent === undefined ) return;
-    let obj = parent[attr];
-    if( obj === undefined ) return;
-
-    if( Array.isArray(obj) ) {
-      obj.forEach((o, i) => {
-        if( typeof o === 'string') {
-          obj[i] = {'@id': o};
-        }
-      });
-    } else if( typeof obj === 'string' ) {
-      parent[attr] = {'@id': obj}
-    }
   }
 
   _constructModel(graph, id, crawled={}) {

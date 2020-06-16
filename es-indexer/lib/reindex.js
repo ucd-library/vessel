@@ -1,5 +1,4 @@
-const sparqlModels = require('./sparql');
-const fuseki = require('./fuseki');
+const {sparql, fuseki} = require('@ucd-lib/rp-node-utils');
 const es = require('./elastic-search');
 
 class Reindex {
@@ -7,7 +6,7 @@ class Reindex {
   async run(type) {
     if( !type ) {
       let count = 0;
-      for( let key in sparqlModels.TYPES ) {
+      for( let key in sparql.TYPES ) {
         count += (await this._run(key)).length;
       }
       console.log(count);
@@ -20,7 +19,7 @@ class Reindex {
     let subjects = await this.getAllSubjectsForType(type);
     for( let subject of subjects ) {
       console.log('Reindexing: '+subject);
-      let result = await sparqlModels.getModel(type, subject);
+      let result = await sparql.getModel(type, subject);
       // console.log(result.model);
       await es.insert(result.model);
     }

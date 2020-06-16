@@ -11,8 +11,7 @@ const scopedImport = require('./lib/scoped-import');
   // const args = {
   //   file : '/data/relationship/2254025',
   //   source : 'elements',
-  //   type : 'relationship',
-  //   force : true
+  //   type : 'relationship'
   // };
   await scopedImport.update(args);
 

@@ -1,0 +1,19 @@
+{
+  "name": "@ucd-lib/rp-node-utils",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "jrmerz@ucdavis.edu",
+  "license": "MIT",
+  "dependencies": {
+    "deepmerge": "^4.2.2",
+    "node-fetch": "^2.6.0",
+    "sparqljs": "^3.0.1"
+  }
+}

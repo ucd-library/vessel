@@ -1,4 +1,4 @@
-FROM node:14
+FROM ucdlib/rp-v-node-utils:local
 
 RUN mkdir /service
 WORKDIR /service

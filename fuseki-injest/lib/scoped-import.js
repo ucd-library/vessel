@@ -1,10 +1,9 @@
 const md5 = require('md5');
 const {URL} = require('url');
-const fuseki = require('./fuseki');
 const $rdf = require('rdflib');
 const path = require('path');
 const fs = require('fs');
-const kafka = require('./kafka')
+const {fuseki} = require('@ucd-lib/rp-node-utils');
 
 class ScopedImport {
 
@@ -50,14 +49,6 @@ class ScopedImport {
       args.rootDir = path.resolve(process.cwd(), args.rootDir);
     }
 
-    await kafka.send({
-      topic : 'fuseki-updates',
-      messages : [JSON.stringify({
-        command: 'toggle-indexing',
-        value: false
-      })]
-    }, 'scoped-import');
-
     let types = fs.readdirSync(args.rootDir);
     for( let type of types ) {
       let files = await fs.readdirSync(path.join(args.rootDir, type));
@@ -89,22 +80,6 @@ class ScopedImport {
         await this.delete({source: args.source, type, filename});
       }
     }
-
-    await kafka.send({
-      topic : 'fuseki-updates',
-      messages : [JSON.stringify({
-        command: 'toggle-indexing',
-        value: true
-      })]
-    }, 'scoped-import');
-
-    await kafka.send({
-      topic : 'fuseki-updates',
-      messages : [JSON.stringify({
-        command: 'reindex',
-      })]
-    }, 'scoped-import');
-
   }
 
 
@@ -166,26 +141,6 @@ class ScopedImport {
     response = await response.text();
     const store = $rdf.graph();
     $rdf.parse(response, store, this.graphUri, 'text/turtle');
-
-    let subjects = {};
-    store.statements.forEach(stmt => {
-      let s = stmt.subject.value;
-      let o = stmt.object.value;
-      if( !subjects[s]) subjects[s] = [];
-      if( !subjects[s].includes(o) ) subjects[s].push(o);
-    });
-    result.subjects = [];
-    for( let subject in subjects ) {
-      result.subjects.push({
-        subject,
-        types: subjects[subject]
-      });
-    }
-
-    await kafka.send({
-      topic : 'fuseki-updates',
-      messages : [JSON.stringify(result)]
-    }, args.source);
 
     return result;
   }
@@ -296,9 +251,6 @@ WHERE {}`;
   statementToTriple(triple) {
     return `${triple.subject.toNQ()} ${triple.predicate.toNQ()} ${triple.object.toNQ()}`;
   }
-
-
-  // add diff and file n3 to kafka
 
 }
 

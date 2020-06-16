@@ -1,12 +1,13 @@
 const fetch = require('node-fetch');
+const config = require('./config')
 
 class Fuseki {
 
   constructor() {
-    this.username = 'admin';
-    this.password = process.env.FUSEKI_PASSWORD;
-    this.url = 'http://fuseki:3030';
-    this.database = 'vivo';
+    this.username = config.fuseki.username;
+    this.password = config.fuseki.password;
+    this.url = 'http://'+config.fuseki.host+':'+config.fuseki.port;
+    this.database = config.fuseki.database;
   }
 
   async query(query, responseType) {

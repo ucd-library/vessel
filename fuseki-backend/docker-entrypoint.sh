@@ -1,6 +1,5 @@
 #! /bin/bash
 
-echo "here"
 if [ -f "/fuseki/databases/vivo/tdb.lock" ] ; then
   echo "WARNING: fuseki lock file found.  removing."
   rm /fuseki/databases/vivo/tdb.lock

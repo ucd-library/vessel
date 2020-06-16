@@ -2,9 +2,17 @@ version: '3'
 services:
 
   fuseki:
-    build: ./fuseki
+    image: ucdlib/rp-v-fuseki-proxy:local
     ports:
       - 8080:3030
+    env_file:
+      - .env
+    volumes:
+      - ./fuseki-proxy/index.js:/service/index.js
+    command: bash -c "tail -f /dev/null"
+
+  fuseki-backend:
+    image: ucdlib/rp-v-fuseki-backend:local
     env_file:
       - .env
     volumes:
@@ -14,7 +22,7 @@ services:
       - FUSEKI_DATASET_1=vivo
 
   injest:
-    build: ./fuseki-injest
+    image: ucdlib/rp-v-fuseki-injest:local
     env_file:
       - .env
     volumes:
@@ -22,9 +30,10 @@ services:
       - ./fuseki-injest/lib:/service/lib
       - ./fuseki-injest/index.js:/service/index.js
       - ./fuseki-injest/reindex.js:/service/reindex.js
+    command: bash -c "tail -f /dev/null"
 
   index:
-    build: ./es-indexer
+    image: ucdlib/rp-v-es-indexer:local
     env_file:
       - .env
     volumes:
@@ -32,9 +41,9 @@ services:
       - ./es-indexer/index.js:/service/index.js
       - ./es-indexer/reindex.js:/service/reindex.js
     command: bash -c "tail -f /dev/null"
-  
+
   api:
-    build: ./api
+    image: ucdlib/rp-v-api:local
     volumes:
       - ./api/lib:/service/lib
       - ./api/controllers:/service/controllers
