@@ -4,6 +4,7 @@ const {kafka, config} = require('@ucd-lib/rp-node-utils');
 
 const app = express();
 const proxy = httpProxy.createProxyServer({})
+proxy.on('error', err => console.log(err));
 
 let openRequests = [];
 class BodyWrapper {

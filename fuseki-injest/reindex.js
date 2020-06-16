@@ -5,7 +5,7 @@ const scopedImport = require('./lib/scoped-import');
   await scopedImport.sync({
     rootDir: '/data',
     source : 'elements'
-    // force : true
+    // ,force : true
   });
 
   process.exit();
