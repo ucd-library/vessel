@@ -1,0 +1,63 @@
+## Licensed under the terms of http://www.apache.org/licenses/LICENSE-2.0
+
+## Example RDF Delta + Fuseki configuration.
+## https://github.com/jfmunozf/Jena-Fuseki-Reasoner-Inference/wiki/Configuring-Apache-Jena-Fuseki-2.4.1-inference-and-reasoning-support-using-SPARQL-1.1:-Jena-inference-rules,-RDFS-Entailment-Regimes-and-OWL-reasoning
+## https://github.com/afs/rdf-delta/issues/9
+
+PREFIX :        <#>
+PREFIX fuseki:  <http://jena.apache.org/fuseki#>
+PREFIX rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX ja:      <http://jena.hpl.hp.com/2005/11/Assembler#>
+PREFIX delta:   <http://jena.apache.org/rdf-delta#>
+PREFIX tdb:   <http://jena.hpl.hp.com/2008/tdb#>
+
+[] rdf:type fuseki:Server ;
+   .
+
+<#service1> rdf:type fuseki:Service ;
+    fuseki:name                        "vivo" ;
+    fuseki:serviceQuery                "sparql" ;
+    fuseki:serviceQuery                "query" ;
+    fuseki:serviceUpdate               "update" ;
+    fuseki:serviceUpload               "upload" ;
+    fuseki:serviceReadWriteGraphStore  "data" ;     
+    fuseki:serviceReadGraphStore       "get" ;
+    fuseki:dataset                     <#deltaDataset> ;
+    .
+
+<#deltaDataset> rdf:type delta:DeltaDataset ;
+    ## delta:changes  "http://rdf-delta:1066/" ;
+    ## delta:changes  ("http://rdf-delta:1066/" "http://rdf-patch-kafka-producer:3030/") ;
+    delta:changes  "http://rdf-patch-kafka-producer:3030/" ;
+    delta:patchlog "vivo";
+    ## delta:storage "tdb2";
+
+    ## Other storage options:
+##    delta:storage "mem";
+##    delta:storage "tdb";
+##    ## Fuskei server, Delta client area - must not be shared between servers.
+    delta:zone "Zone1";
+    delta:dataset <#dataset> .
+
+<#dataset> a ja:RDFDataset ;
+    ja:defaultGraph <#model_inf> ;
+    ja:namedGraph
+       [ ja:graphName      <https://experts.library.ucdavis.edu/individual> ;
+         ja:graph          <#model_inf> ] ;
+     .
+
+
+<#model_inf> a ja:InfModel ;
+    ja:baseModel <#graph> ;
+    ja:reasoner [
+        ja:reasonerURL <http://jena.hpl.hp.com/2003/GenericRuleReasoner> ;
+        ja:rulesFrom <file:///opt/rdf-delta/testinference.rules> ;			
+    ] .
+
+<#graph> a tdb:GraphTDB ;
+    tdb:dataset :tdb_dataset_readwrite .
+
+:tdb_dataset_readwrite
+        a             tdb:DatasetTDB2 ;
+        tdb:location  "TDB2" .

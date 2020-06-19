@@ -39,3 +39,14 @@ docker build \
   -t "${ORG}/${PREFIX}api:${TAG}" \
   --build-arg BUILDKIT_INLINE_CACHE=1 \
   ./api
+
+docker build \
+  -t "${ORG}/${PREFIX}rdf-delta:${TAG}" \
+  --build-arg BUILDKIT_INLINE_CACHE=1 \
+  --build-arg RDF_DELTA_VERSION=0.8.1 \
+  ./fuseki-rdf-patch
+
+docker build \
+  -t "${ORG}/${PREFIX}rdf-patch-kafka-producer:${TAG}" \
+  --build-arg BUILDKIT_INLINE_CACHE=1 \
+  ./rdf-patch-kafka-producer

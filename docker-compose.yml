@@ -2,23 +2,50 @@ version: '3'
 services:
 
   fuseki:
-    image: ucdlib/rp-v-fuseki-proxy:local
+    image: ucdlib/rp-v-rdf-delta:local
     ports:
-      - 8080:3030
+      - 3030:3030
     env_file:
       - .env
     volumes:
-      - ./fuseki-proxy/index.js:/service/index.js
+        - fuseki-data:/fuseki
+    command:
+      bash -c "dcmd fuseki --port 3030 --conf /opt/rdf-delta/fuseki-config.ttl"
+    depends_on:
+      - "rdf-delta"
+      - "rdf-patch-kafka-producer"
 
-  fuseki-backend:
-    image: ucdlib/rp-v-fuseki-backend:local
+  fuseki-repl:
+    image: ucdlib/rp-v-rdf-delta:local
+    ports:
+      - 3031:3031
     env_file:
       - .env
     volumes:
-      - fuseki-data:/fuseki
+        - fuseki-data:/fuseki
+    command:
+      bash -c "dcmd fuseki --port 3031 --conf /opt/rdf-delta/fuseki-config.ttl"
+    depends_on:
+      - "rdf-delta"
+      - "rdf-patch-kafka-producer"
+
+  rdf-delta:
+    image: ucdlib/rp-v-rdf-delta:local
+    env_file:
+      - .env
+    volumes:
+      - rdf-delta-data:/PatchStore
     environment:
       - ADMIN_PASSWORD=${FUSEKI_PASSWORD}
-      - FUSEKI_DATASET_1=vivo
+    command:
+      bash -c "dcmd server --store /PatchStore"
+
+  rdf-patch-kafka-producer:
+    image: ucdlib/rp-v-rdf-patch-kafka-producer:local
+    env_file:
+      - .env
+    command:
+      bash -c 'node index.js'
 
   injest:
     image: ucdlib/rp-v-fuseki-injest:local
@@ -53,25 +80,25 @@ services:
     ports: 
       - 3000:3000
 
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.7.1
-    environment: 
-      - discovery.type=single-node
-      - bootstrap.memory_lock=true
-      - network.host=0.0.0.0
-      - cluster.name=docker-cluster
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-      - xpack.graph.enabled=false
-      - xpack.ml.enabled=false
-      - xpack.monitoring.enabled=false
-      - xpack.security.enabled=false
-      - xpack.watcher.enabled=false
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
-    volumes:
-      - es-data:/usr/share/elasticsearch/data
+  # elasticsearch:
+  #   image: docker.elastic.co/elasticsearch/elasticsearch:7.7.1
+  #   environment: 
+  #     - discovery.type=single-node
+  #     - bootstrap.memory_lock=true
+  #     - network.host=0.0.0.0
+  #     - cluster.name=docker-cluster
+  #     - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+  #     - xpack.graph.enabled=false
+  #     - xpack.ml.enabled=false
+  #     - xpack.monitoring.enabled=false
+  #     - xpack.security.enabled=false
+  #     - xpack.watcher.enabled=false
+  #   ulimits:
+  #     memlock:
+  #       soft: -1
+  #       hard: -1
+  #   volumes:
+  #     - es-data:/usr/share/elasticsearch/data
 
   zookeeper:
     image: zookeeper
@@ -95,19 +122,10 @@ services:
     depends_on:
       - "zookeeper"
 
-  # kafka-ui:
-  #   image: hlebalbau/kafka-manager
-  #   ports:
-  #     - 9000:9000
-  #   environment:
-  #     - ZK_HOSTS=zookeeper:2181
-  #     - KAFKA_MANAGER_USERNAME=admin
-  #     - KAFKA_MANAGER_PASSWORD=${FUSEKI_PASSWORD}
-  #     - KAFKA_MANAGER_AUTH_ENABLED=true
-
 volumes:
   es-data:
   fuseki-data:
   kafka-data:
   zookeeper-data:
   zookeeper-datalog:
+  rdf-delta-data:

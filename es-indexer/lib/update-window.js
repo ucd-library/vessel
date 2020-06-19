@@ -18,9 +18,13 @@ class UpdateWindow {
       clearTimeout(this.timer);
     }
 
-    for( let subject in subjects ) {
-      this._push(subject, subjects[subject]);
+    for( let subject of subjects ) {
+      this.data[subject] = true;
     }
+
+    // for( let subject in subjects ) {
+    //   this._push(subject, subjects[subject]);
+    // }
 
     if( this.wait < this.MAX_WAIT ) {
       this.wait = this.wait * 1.25;
@@ -38,27 +42,27 @@ class UpdateWindow {
     console.log('Update window set for: '+new Date(Date.now()+this.wait).toISOString())
   }
 
-  _push(subject, types) {
-    // check that we care about type
-    let include = false;
-    for( let type of types ) {
-      if( sparql.TYPES[type] ) {
-        include = true;
-        break;
-      }
-    }
-    if( !include ) return;
+  // _push(subject, types) {
+  //   // check that we care about type
+  //   let include = false;
+  //   for( let type of types ) {
+  //     if( sparql.TYPES[type] ) {
+  //       include = true;
+  //       break;
+  //     }
+  //   }
+  //   if( !include ) return;
 
-    if( !this.data[subject] ) {
-      this.data[subject] = [];
-    }
+  //   if( !this.data[subject] ) {
+  //     this.data[subject] = [];
+  //   }
 
-    for( let type of types ) {
-      if( !this.data[subject].includes(type) ) {
-        this.data[subject].push(type);
-      }
-    }
-  }
+  //   for( let type of types ) {
+  //     if( !this.data[subject].includes(type) ) {
+  //       this.data[subject].push(type);
+  //     }
+  //   }
+  // }
 
 
   async _trigger() {
@@ -68,10 +72,10 @@ class UpdateWindow {
     for( let subject of subjects ) {
       if( !this.emit ) return;
 
-      let types = this.data[subject];
+      // let types = this.data[subject];
       delete this.data[subject];
 
-      await this.handler(subject, types);
+      await this.handler(subject);
     }
   }
 

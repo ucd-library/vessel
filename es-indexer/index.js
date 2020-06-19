@@ -1,8 +1,9 @@
-const {sparql, kafka, config} = require('@ucd-lib/rp-node-utils');
+const {sparql, kafka, fuseki, config} = require('@ucd-lib/rp-node-utils');
 const es = require('./lib/elastic-search')
 const reindex = require('./lib/reindex');
 const changes = require('./lib/get-changes');
 const UpdateWindow = require('./lib/update-window');
+const patchParser = require('./lib/patch-parser');
 
 // let enabled = true;
 
@@ -31,7 +32,13 @@ const UpdateWindow = require('./lib/update-window');
 //   }
 // });
 
-async function load(uri, types) {
+async function load(uri) {
+  // let types = [];
+
+  let response = await fuseki.query(`select * { GRAPH ?g {<${uri}> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?type}}`)
+  response = await response.json();
+  let types = [...new Set(response.results.bindings.map(term => term.type.value))];
+
   for( let type of types ) {
     if( !sparql.TYPES[type] ) continue;
 
@@ -49,20 +56,19 @@ const updateWindow = new UpdateWindow(load);
 (async function() {
   await kafka.init();
   await kafka.initConsumer([{
-    topic: config.kafka.topics.fusekiUpdates,
+    topic: config.kafka.topics.rdfPatch,
     partitions: 1,
     replicationFactor: 1
   }])
 
   kafka.consume(
     [{
-      topic: config.kafka.topics.fusekiUpdates, 
+      topic: config.kafka.topics.rdfPatch, 
       partition: 0
     }],
     {autoCommit: false},
     async msg => {
-      msg = JSON.parse(msg.value);
-      let update = sparql.parseQuery(msg.body);
+      let update = patchParser(msg.value);
       updateWindow.add(changes(update));
     }
   );

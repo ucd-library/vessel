@@ -16,7 +16,8 @@ module.exports = {
     host : env.KAFKA_HOST || 'kafka',
     port : env.KAFKA_PORT || 9092,
     topics : {
-      fusekiUpdates : 'fuseki-sparql-update'
+      fusekiUpdates : 'fuseki-sparql-update',
+      rdfPatch : 'fuseki-rdf-patch'
     }
   },
   fuseki : {
