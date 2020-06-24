@@ -229,7 +229,7 @@ WHERE {}`;
 
     let resp = await fuseki.update(insertStmt);
     if( resp.status !== 204 ) {
-      throw new Error(`Failed to update (${args.source}/${args.type}/${args.filename}) DELETE ${result.status}:  ${await result.text()}`);
+      throw new Error(`Failed to update (${args.source}/${args.type}/${args.filename}) DELETE ${resp.status}:  ${await resp.text()}`);
     }
 
     return {

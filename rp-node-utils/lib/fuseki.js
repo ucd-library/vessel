@@ -13,11 +13,10 @@ class Fuseki {
   async query(query, responseType) {
     return fetch(this.url+'/'+this.database, {
       method : 'POST',
-      headers : {
+      headers : this._setAuthorization({
         accept : (responseType || 'application/sparql-results+json')+',*/*;q=0.9',
-        authorization : 'Basic '+Buffer.from(this.username+':'+this.password).toString('base64'),
         'Content-Type': 'application/sparql-query'
-      },
+      }),
       body : query
     });
   }
@@ -25,13 +24,19 @@ class Fuseki {
   async update(query) {
     return fetch(this.url+'/'+this.database, {
       method : 'POST',
-      headers : {
+      headers : this._setAuthorization({
         accept : 'application/sparql-results+json,*/*;q=0.9',
-        authorization : 'Basic '+Buffer.from(this.username+':'+this.password).toString('base64'),
         'Content-Type': 'application/sparql-update'
-      },
+      }),
       body : query
     });
+  }
+
+  _setAuthorization(headers) {
+    if( this.username || this.password ) {
+      headers.authorization = 'Basic '+Buffer.from(this.username+':'+this.password).toString('base64');
+    }
+    return headers;
   }
 
 }

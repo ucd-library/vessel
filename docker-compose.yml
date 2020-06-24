@@ -1,51 +1,53 @@
 version: '3'
 services:
 
-  fuseki:
-    image: ucdlib/rp-v-rdf-delta:local
-    ports:
-      - 3030:3030
-    env_file:
-      - .env
-    volumes:
-        - fuseki-data:/fuseki
-    command:
-      bash -c "dcmd fuseki --port 3030 --conf /opt/rdf-delta/fuseki-config.ttl"
-    depends_on:
-      - "rdf-delta"
-      - "rdf-patch-kafka-producer"
+  # fuseki:
+  #   image: ucdlib/rp-v-rdf-delta:local
+  #   ports:
+  #     - 3030:3030
+  #   env_file:
+  #     - .env
+  #   volumes:
+  #       - fuseki-data:/fuseki
+  #   command:
+  #     bash -c "dcmd fuseki --port 3030 --conf /opt/rdf-delta/fuseki-config.ttl"
+  #   depends_on:
+  #     - "rdf-delta"
+  #     - "rdf-patch-kafka-producer"
 
-  fuseki-repl:
-    image: ucdlib/rp-v-rdf-delta:local
-    ports:
-      - 3031:3031
-    env_file:
-      - .env
-    volumes:
-        - fuseki-data:/fuseki
-    command:
-      bash -c "dcmd fuseki --port 3031 --conf /opt/rdf-delta/fuseki-config.ttl"
-    depends_on:
-      - "rdf-delta"
-      - "rdf-patch-kafka-producer"
+  # fuseki-repl:
+  #   image: ucdlib/rp-v-rdf-delta:local
+  #   ports:
+  #     - 3031:3031
+  #   env_file:
+  #     - .env
+  #   volumes:
+  #       - fuseki-data:/fuseki
+  #   command:
+  #     bash -c "dcmd fuseki --port 3031 --conf /opt/rdf-delta/fuseki-config.ttl"
+  #   depends_on:
+  #     - "rdf-delta"
+  #     - "rdf-patch-kafka-producer"
 
-  rdf-delta:
-    image: ucdlib/rp-v-rdf-delta:local
-    env_file:
-      - .env
-    volumes:
-      - rdf-delta-data:/PatchStore
-    environment:
-      - ADMIN_PASSWORD=${FUSEKI_PASSWORD}
-    command:
-      bash -c "dcmd server --store /PatchStore"
+  # rdf-delta:
+  #   image: ucdlib/rp-v-rdf-delta:local
+  #   env_file:
+  #     - .env
+  #   volumes:
+  #     - rdf-delta-data:/PatchStore
+  #   environment:
+  #     - ADMIN_PASSWORD=${FUSEKI_PASSWORD}
+  #   command:
+  #     bash -c "dcmd server --store /PatchStore"
 
-  rdf-patch-kafka-producer:
-    image: ucdlib/rp-v-rdf-patch-kafka-producer:local
-    env_file:
-      - .env
-    command:
-      bash -c 'node index.js'
+  # rdf-patch-kafka-producer:
+  #   image: ucdlib/rp-v-rdf-patch-kafka-producer:local
+  #   env_file:
+  #     - .env
+  #   volumes:
+  #     - ./rdf-patch-kafka-producer/index.js:/service/index.js
+  #   command: bash -c "tail -f /dev/null"
+  #     # bash -c 'node index.js'
 
   injest:
     image: ucdlib/rp-v-fuseki-injest:local
@@ -58,27 +60,27 @@ services:
       - ./fuseki-injest/reindex.js:/service/reindex.js
     command: bash -c "tail -f /dev/null"
 
-  index:
-    image: ucdlib/rp-v-es-indexer:local
-    env_file:
-      - .env
-    volumes:
-      - ./es-indexer/lib:/service/lib
-      - ./es-indexer/index.js:/service/index.js
-      - ./es-indexer/reindex.js:/service/reindex.js
-    command: bash -c "tail -f /dev/null"
+  # index:
+  #   image: ucdlib/rp-v-es-indexer:local
+  #   env_file:
+  #     - .env
+  #   volumes:
+  #     - ./es-indexer/lib:/service/lib
+  #     - ./es-indexer/index.js:/service/index.js
+  #     - ./es-indexer/reindex.js:/service/reindex.js
+  #   command: bash -c "tail -f /dev/null"
 
-  api:
-    image: ucdlib/rp-v-api:local
-    volumes:
-      - ./api/lib:/service/lib
-      - ./api/controllers:/service/controllers
-      - ./api/models:/service/models
-      - ./api/index.js:/service/index.js
-    env_file:
-      - .env
-    ports: 
-      - 3000:3000
+  # api:
+  #   image: ucdlib/rp-v-api:local
+  #   volumes:
+  #     - ./api/lib:/service/lib
+  #     - ./api/controllers:/service/controllers
+  #     - ./api/models:/service/models
+  #     - ./api/index.js:/service/index.js
+  #   env_file:
+  #     - .env
+  #   ports: 
+  #     - 3000:3000
 
   # elasticsearch:
   #   image: docker.elastic.co/elasticsearch/elasticsearch:7.7.1
@@ -100,27 +102,27 @@ services:
   #   volumes:
   #     - es-data:/usr/share/elasticsearch/data
 
-  zookeeper:
-    image: zookeeper
-    environment: 
-      - ALLOW_ANONYMOUS_LOGIN=yes
-    volumes:
-      - zookeeper-data:/data
-      - zookeeper-datalog:/datalog
+  # zookeeper:
+  #   image: zookeeper
+  #   environment: 
+  #     - ALLOW_ANONYMOUS_LOGIN=yes
+  #   volumes:
+  #     - zookeeper-data:/data
+  #     - zookeeper-datalog:/datalog
 
-  kafka:
-    image: bitnami/kafka:latest
-    ports:
-      - 9092:9092
-    environment: 
-      - ALLOW_PLAINTEXT_LISTENER=yes
-      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
-      - KAFKA_CLIENT_USER=admin
-      - KAFKA_CLIENT_PASSWORD=${FUSEKI_PASSWORD}
-    volumes: 
-      - kafka-data:/bitnami/kafka
-    depends_on:
-      - "zookeeper"
+  # kafka:
+  #   image: bitnami/kafka:latest
+  #   ports:
+  #     - 9092:9092
+  #   environment: 
+  #     - ALLOW_PLAINTEXT_LISTENER=yes
+  #     - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+  #     - KAFKA_CLIENT_USER=admin
+  #     - KAFKA_CLIENT_PASSWORD=${FUSEKI_PASSWORD}
+  #   volumes: 
+  #     - kafka-data:/bitnami/kafka
+  #   depends_on:
+  #     - "zookeeper"
 
 volumes:
   es-data:
