@@ -10,4 +10,10 @@ if [ -f "/fuseki/system/tdb.lock" ] ; then
   rm /fuseki/system/tdb.lock
 fi 
 
+if [ ! -f "/jena-fuseki/extra" ] ; then
+  cd /fuseki
+  ln -s /jena-fuseki/extra .
+  cd /
+fi
+
 exec /docker-entrypoint-org.sh "$@"
