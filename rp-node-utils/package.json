@@ -1,6 +1,6 @@
 {
-  "name": "fuseki-injest",
-  "version": "1.0.0",
+  "name": "@ucd-lib/rp-node-utils",
+  "version": "0.0.1",
   "description": "",
   "main": "index.js",
   "directories": {
@@ -12,10 +12,9 @@
   "author": "jrmerz@ucdavis.edu",
   "license": "MIT",
   "dependencies": {
+    "deepmerge": "^4.2.2",
     "kafka-node": "^5.0.0",
-    "md5": "^2.2.1",
-    "n3": "^1.4.0",
     "node-fetch": "^2.6.0",
-    "rdflib": "^1.2.2"
+    "sparqljs": "^3.0.1"
   }
 }
