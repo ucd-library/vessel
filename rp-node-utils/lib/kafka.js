@@ -11,6 +11,9 @@ class Kafka {
     this.client = new KafkaClient({
       kafkaHost: config.kafka.host+':'+config.kafka.port
     });
+    this.client.on('ready', ()=>{
+      console.log('client ready');
+    });
     if( producer ) this.initProducer();
   }
 
@@ -29,6 +32,7 @@ class Kafka {
     return new Promise((resolve, reject) => {
       this.client.createTopics(topics, (err, result) => {
         console.log('Kafka Topics initialized');
+        console.log(err, result);
         resolve();
       });
     });
@@ -37,7 +41,13 @@ class Kafka {
 
   consume(topics, options, cb) {
     let consumer = new Consumer(this.client, topics, options);
+
+    consumer.on('ready', ()=>{
+      console.log('c ready');
+    });
     consumer.on('message', (msg) => this._handleMessage(consumer, options, msg, cb));
+    consumer.resume();
+    console.log(consumer);
   }
 
   async _handleMessage(consumer, options, msg, cb) {

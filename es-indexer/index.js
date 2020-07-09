@@ -55,6 +55,7 @@ const updateWindow = new UpdateWindow(load);
 
 (async function() {
   await kafka.init();
+  console.log(config.kafka);
   await kafka.initConsumer([{
     topic: config.kafka.topics.rdfPatch,
     partitions: 1,
@@ -63,11 +64,16 @@ const updateWindow = new UpdateWindow(load);
 
   kafka.consume(
     [{
-      topic: config.kafka.topics.rdfPatch, 
-      partition: 0
+      topic: config.kafka.topics.rdfPatch,
+      partition: 0,
+      offset: 7
     }],
-    {autoCommit: false},
+    {
+      autoCommit: false,
+      fromOffset: true
+    },
     async msg => {
+      console.log(msg);
       let update = patchParser(msg.value);
       updateWindow.add(changes(update));
     }

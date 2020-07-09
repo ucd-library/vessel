@@ -1,19 +1,21 @@
 version: '3'
 services:
 
-  # fuseki:
-  #   image: ucdlib/rp-v-rdf-delta:local
-  #   ports:
-  #     - 3030:3030
-  #   env_file:
-  #     - .env
-  #   volumes:
-  #       - fuseki-data:/fuseki
-  #   command:
-  #     bash -c "dcmd fuseki --port 3030 --conf /opt/rdf-delta/fuseki-config.ttl"
-  #   depends_on:
-  #     - "rdf-delta"
-  #     - "rdf-patch-kafka-producer"
+  fuseki-backend:
+    build: ./fuseki-backend
+    ports:
+      - 3030:3030
+    env_file:
+      - .env
+    environment: 
+      - ADMIN_PASSWORD=${FUSEKI_PASSWORD}
+    # volumes:
+    #     - fuseki-data:/fuseki
+    # command:
+    #   bash -c "dcmd fuseki --port 3030 --conf /opt/rdf-delta/fuseki-config.ttl"
+    # depends_on:
+    #   - "rdf-delta"
+    #   - "rdf-patch-kafka-producer"
 
   # fuseki-repl:
   #   image: ucdlib/rp-v-rdf-delta:local
@@ -60,15 +62,15 @@ services:
       - ./fuseki-injest/reindex.js:/service/reindex.js
     command: bash -c "tail -f /dev/null"
 
-  # index:
-  #   image: ucdlib/rp-v-es-indexer:local
-  #   env_file:
-  #     - .env
-  #   volumes:
-  #     - ./es-indexer/lib:/service/lib
-  #     - ./es-indexer/index.js:/service/index.js
-  #     - ./es-indexer/reindex.js:/service/reindex.js
-  #   command: bash -c "tail -f /dev/null"
+  index:
+    image: ucdlib/rp-v-es-indexer:local
+    env_file:
+      - .env
+    volumes:
+      - ./es-indexer/lib:/service/lib
+      - ./es-indexer/index.js:/service/index.js
+      - ./es-indexer/reindex.js:/service/reindex.js
+    command: bash -c "tail -f /dev/null"
 
   # api:
   #   image: ucdlib/rp-v-api:local
@@ -102,27 +104,45 @@ services:
   #   volumes:
   #     - es-data:/usr/share/elasticsearch/data
 
-  # zookeeper:
-  #   image: zookeeper
-  #   environment: 
-  #     - ALLOW_ANONYMOUS_LOGIN=yes
-  #   volumes:
-  #     - zookeeper-data:/data
-  #     - zookeeper-datalog:/datalog
+  zookeeper:
+    image: zookeeper
+    environment: 
+      - ALLOW_ANONYMOUS_LOGIN=yes
+    volumes:
+      - zookeeper-data:/data
+      - zookeeper-datalog:/datalog
 
-  # kafka:
-  #   image: bitnami/kafka:latest
+  # debugger:
+  #   image: ucdlib/http-service-proxy-debugger:0.0.1
   #   ports:
-  #     - 9092:9092
+  #     - 3000:3000
   #   environment: 
-  #     - ALLOW_PLAINTEXT_LISTENER=yes
-  #     - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
-  #     - KAFKA_CLIENT_USER=admin
-  #     - KAFKA_CLIENT_PASSWORD=${FUSEKI_PASSWORD}
-  #   volumes: 
-  #     - kafka-data:/bitnami/kafka
-  #   depends_on:
-  #     - "zookeeper"
+  #     - TARGET=http://kafka:9092
+
+  kafka:
+    image: bitnami/kafka:latest
+    # hostname: justins-mbp.lan
+    ports:
+      - 9092:9092
+    environment: 
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      - KAFKA_CLIENT_USER=admin
+      - KAFKA_CLIENT_PASSWORD=${FUSEKI_PASSWORD}
+    volumes: 
+      - kafka-data:/bitnami/kafka
+    depends_on:
+      - "zookeeper"
+
+  kafka-ui:
+    image: hlebalbau/kafka-manager
+    ports:
+      - 9000:9000
+    environment:
+      - ZK_HOSTS=zookeeper:2181
+      - KAFKA_MANAGER_USERNAME=admin
+      - KAFKA_MANAGER_PASSWORD=${FUSEKI_PASSWORD}
+      - KAFKA_MANAGER_AUTH_ENABLED=true
 
 volumes:
   es-data:
