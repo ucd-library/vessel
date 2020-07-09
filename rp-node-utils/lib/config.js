@@ -16,10 +16,11 @@ module.exports = {
     host : env.KAFKA_HOST || 'kafka',
     port : env.KAFKA_PORT || 9092,
     topics : {
-      fusekiUpdates : 'fuseki-sparql-update',
+      index : 'index-rdf-subject',
       rdfPatch : 'fuseki-rdf-patch'
     }
   },
+
   fuseki : {
     username : env.FUSEKI_USERNAME || 'admin',
     password : env.FUSEKI_PASSWORD || 'testing123',
@@ -27,5 +28,10 @@ module.exports = {
     port : env.FUSEKI_PORT || 3030,
     database : env.FUSEKI_DATABASE || 'vivo',
     graphs
+  },
+
+  redis : {
+    host : process.env.REDIS_HOST || 'redis',
+    port : process.env.REDIS_PORT || 6379
   }
 }
