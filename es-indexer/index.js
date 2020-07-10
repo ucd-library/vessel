@@ -1,5 +1,5 @@
-const {sparql, kafka, fuseki, config} = require('@ucd-lib/rp-node-utils');
-const es = require('./lib/elastic-search')
+const {sparql, kafka, fuseki, config, elasticSearch} = require('@ucd-lib/rp-node-utils');
+// const es = require('./lib/elastic-search')
 const reindex = require('./lib/reindex');
 const changes = require('./lib/get-changes');
 const UpdateWindow = require('./lib/update-window');
@@ -44,7 +44,7 @@ async function load(uri) {
 
     console.log('Loading', uri, 'with model', type);
     let result = await sparql.getModel(type, uri);
-    await es.insert(result.model);
+    // await es.insert(result.model);
     console.log('Updated', uri);
     break;
   }
@@ -55,6 +55,8 @@ const updateWindow = new UpdateWindow(load);
 
 (async function() {
   await kafka.init();
+  await elasticSearch.connect();
+
   console.log(config.kafka);
   await kafka.initConsumer([{
     topic: config.kafka.topics.rdfPatch,

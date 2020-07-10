@@ -33,5 +33,13 @@ module.exports = {
   redis : {
     host : process.env.REDIS_HOST || 'redis',
     port : process.env.REDIS_PORT || 6379
+  },
+
+  elasticSearch : {
+    host : env.ELASTIC_SEARCH_HOST || 'elasticsearch',
+    port : env.ELASTIC_SEARCH_PORT || '9200',
+    username : env.ELASTIC_SEARCH_USERNAME || 'elastic',
+    password : env.ELASTIC_SEARCH_PASSWORD || 'changeme',
+    requestTimeout : env.ELASTIC_SEARCH_REQUEST_TIME || 3*60*1000
   }
 }
