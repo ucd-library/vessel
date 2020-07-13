@@ -1,40 +1,15 @@
-const {sparql, kafka, fuseki, config, elasticSearch} = require('@ucd-lib/rp-node-utils');
-// const es = require('./lib/elastic-search')
-const reindex = require('./lib/reindex');
-const changes = require('./lib/get-changes');
-const UpdateWindow = require('./lib/update-window');
-const patchParser = require('./lib/patch-parser');
+const {sparql, kafka, fuseki, config, logging} = require('@ucd-lib/rp-node-utils');
+const elasticSearch = require('./lib/elastic-search');
 
-// let enabled = true;
-
-// kafka.consume(async msg => {
-//   msg = JSON.parse(msg.value);
-
-//   if( msg.command ) {
-//     if( msg.command === 'toggle-indexing' ) {
-//       enabled = msg.value;
-//       console.log('Toggling indexing listen: '+enabled);
-//     } else if( msg.command === 'reindex' ) {
-//       await reindex.run();
-//     }
-//     return;
-//   }
-//   if( !enabled ) return;
-
-//   let subjects = msg.subjects;
-  
-//   for( let item of subjects ) {
-//     for( let type of item.types ) {
-//       if( sparql.hasModel(type) ) {
-//         await load(type, item.subject);
-//       }
-//     }
-//   }
-// });
-
-async function load(uri) {
-  // let types = [];
-
+/**
+ * @function index
+ * @description given subject uri; check if the subject rdf:type is of a
+ * known es model type, if so query Fuseki using es model sparql query and
+ * insert into elastic search
+ * 
+ * @param {String} uri subject uri
+ */
+async function index(uri, msg) {
   let response = await fuseki.query(`select * { GRAPH ?g {<${uri}> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?type}}`)
   response = await response.json();
   let types = [...new Set(response.results.bindings.map(term => term.type.value))];
@@ -42,31 +17,36 @@ async function load(uri) {
   for( let type of types ) {
     if( !sparql.TYPES[type] ) continue;
 
-    console.log('Loading', uri, 'with model', type);
+    logging.info('Loading', uri, 'with model', type, '.  Sent by '+(msg.sender || 'unknown'));
     let result = await sparql.getModel(type, uri);
-    // await es.insert(result.model);
-    console.log('Updated', uri);
+    await elasticSearch.insert(result.model);
+    logging.info('Updated', uri);
     break;
   }
 }
 
-const updateWindow = new UpdateWindow(load);
-
-
+/**
+ * Open connections to kafka and elastic search.  Consume the Kafka index stream.
+ * Read messages off stream, check if they are of a known type, if so, insert
+ * into elastic search
+ * 
+ * Messages should be a stringified JSON object with a 'subject' property that is the 
+ * subject URI as a string.  Additional 'nice to have' properties are:
+ */
 (async function() {
-  await kafka.init();
+  await kafka.connect();
   await elasticSearch.connect();
 
-  console.log(config.kafka);
   await kafka.initConsumer([{
-    topic: config.kafka.topics.rdfPatch,
+    topic: config.kafka.topics.index,
     partitions: 1,
     replicationFactor: 1
   }])
 
+  // TODO: lookup latest offset
   kafka.consume(
     [{
-      topic: config.kafka.topics.rdfPatch,
+      topic: config.kafka.topics.index,
       partition: 0,
       offset: 7
     }],
@@ -75,9 +55,8 @@ const updateWindow = new UpdateWindow(load);
       fromOffset: true
     },
     async msg => {
-      console.log(msg);
-      let update = patchParser(msg.value);
-      updateWindow.add(changes(update));
+      msg = JSON.parse(msg.value);
+      await index(msg.subject, msg);
     }
   );
 })();

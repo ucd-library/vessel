@@ -1,46 +1,16 @@
-const {Client} = require('elasticsearch');
+const {config, elasticSearch, logging} = require('@ucd-lib/rp-node-utils');
 const vivo = require('./vivo.json');
-const waitUntil = require('./wait-util');
 
 class ElasticSearch {
 
-  constructor() {
-    this.client = new Client({
-      host: 'http://elastic:changeme@elasticsearch:9200',
-      requestTimeout : 3*60*1000
-    });
-
-    this.init();
-  }
 
   /**
-   * @method isConnected
-   * @description make sure we are connected to elasticsearch
-   */
-  async isConnected() {
-    if( this.connected ) return;
-    console.log('waiting for es connection')
-    await waitUntil('elasticsearch', 9200);
-    console.log('connected');
-
-    // sometimes we still aren't ready....
-    try {
-      await this.client.ping({requestTimeout: 5000});
-      this.connected = true;
-    } catch(e) {
-      console.log(e)
-      await this.isConnected();
-    }
-  }
-
-  /**
-   * @method init
+   * @method connect
    * @description connect to elasticsearch and ensure collection indexes
    */
-  async init() {
-    await this.isConnected();
-
-    console.log('Connected to Elastic Search');
+  async connect() {
+    await elasticSearch.connect();
+    this.client = elasticSearch.client;
 
     await this.ensureIndex('research-profiles', 'research-profile', require('./vivo.json'));
   }
@@ -83,11 +53,10 @@ class ElasticSearch {
    * @description create new new index with a unique name based on alias name
    * 
    * @param {String} alias alias name to base index name off of
-   * @param {String} schemaName schema name for objects in index
    * 
    * @returns {Promise} resolves to string, new index name
    */
-  async createIndex(alias, schemaName, schema) {
+  async createIndex(alias) {
     var newIndexName = `${alias}-${Date.now()}`;
 
     try {

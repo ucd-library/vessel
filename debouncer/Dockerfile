@@ -8,7 +8,7 @@ COPY package.json .
 
 RUN npm install --production
 
-# COPY lib lib
+COPY lib lib
 COPY index.js .
 
 CMD node index.js

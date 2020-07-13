@@ -1,5 +1,6 @@
 const {Producer, KeyedMessage, KafkaClient, Consumer} = require('kafka-node');
 const config = require('./config');
+const logger = require('./logger');
 
 class Kafka {
 
@@ -7,33 +8,57 @@ class Kafka {
     
   }
 
-  init(producer=false) {
+  /**
+   * @method connect
+   * @description connect kafka client to kafka server.
+   * 
+   * @param {*} producer 
+   */
+  connect(producer=false) {
     this.client = new KafkaClient({
       kafkaHost: config.kafka.host+':'+config.kafka.port
     });
     this.client.on('ready', ()=>{
-      console.log('client ready');
+      logger.info('kafka client ready');
     });
-    if( producer ) this.initProducer();
+    this.client.on('error', ()=>{
+      logger.error('kafka client error', e);
+    });
   }
 
+  /**
+   * @method initProducer
+   * @description create the Kafka producer object.  Required to
+   * use the send() method
+   */
   initProducer() {
     this.producer = new Producer(this.client);
 
     this.producer.on('ready', function () {
-      console.log('Kafka producer ready');
+      logger.info('Kafka producer ready');
     });
     this.producer.on('error', function (err) {
-      console.error('Kafka producer error', err);
+      logger.error('Kafka producer error', err);
     });
   }
 
+  /**
+   * @method initConsumer
+   * @description ensurse as list of topics are available to be consumed.
+   * This should be called before the consume() method
+   * 
+   * @param {*} topics 
+   */
   initConsumer(topics) {
     return new Promise((resolve, reject) => {
       this.client.createTopics(topics, (err, result) => {
-        console.log('Kafka Topics initialized');
-        console.log(err, result);
-        resolve();
+        if( err ) {
+          logger.error('Kafka topics failed to initialize', e);
+          reject(e);
+        } else {
+          logger.info('Kafka Topics initialized', topics);
+          resolve(result);
+        }
       });
     });
   }
@@ -42,12 +67,11 @@ class Kafka {
   consume(topics, options, cb) {
     let consumer = new Consumer(this.client, topics, options);
 
-    consumer.on('ready', ()=>{
-      console.log('c ready');
+    consumer.on('ready', () => {
+      logger.info('Kafka consumer ready', topics, options);
     });
     consumer.on('message', (msg) => this._handleMessage(consumer, options, msg, cb));
     consumer.resume();
-    console.log(consumer);
   }
 
   async _handleMessage(consumer, options, msg, cb) {

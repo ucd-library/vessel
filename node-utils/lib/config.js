@@ -32,7 +32,11 @@ module.exports = {
 
   redis : {
     host : process.env.REDIS_HOST || 'redis',
-    port : process.env.REDIS_PORT || 6379
+    port : process.env.REDIS_PORT || 6379,
+    prefixes : {
+      debouncer : 'debouncer-',
+      session : 'session-'
+    }
   },
 
   elasticSearch : {
@@ -41,5 +45,18 @@ module.exports = {
     username : env.ELASTIC_SEARCH_USERNAME || 'elastic',
     password : env.ELASTIC_SEARCH_PASSWORD || 'changeme',
     requestTimeout : env.ELASTIC_SEARCH_REQUEST_TIME || 3*60*1000
+  },
+
+  google : {
+    serviceAccountFile : ''
+  },
+
+  logging : {
+    name : process.env.LOGGER_NAME || global.LOGGER_NAME || 'fin-server-generic',
+    level : process.env.LOG_LEVEL || global.LOG_LEVEL || 'info'
+  },
+
+  debouncer : {
+    handleMessageDelay : 5 // seconds
   }
 }
