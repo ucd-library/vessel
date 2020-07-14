@@ -26,3 +26,9 @@ In the https://github.com/ucd-library/rp-ucd-deployment library to create the Re
 # Development
 
 This repository only containers the service Docker file for running the service.  However most of these services are meant to be run as part of the research profiles deployment.  It is recommend that you follow the https://github.com/ucd-library/rp-ucd-deployment development instructions when developing services in the repository.
+
+# Customization
+
+VESSEL is intentionally without a web client.  The client is defined to the deployment layer, allowing full customization of the user interface.
+
+In the future, the Vivo SPARQL queries and Elastic Search schema definition files will be removed as well and defined in the deployment.  This will allow for full customization of both the data model used and the user interface while leveraging the VESSEL service stack and deployment architecture.
