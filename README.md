@@ -4,7 +4,7 @@ Vivo schema + fusEki + elaStic Search; rEsearch profiLes
 VESSEL contains the core services for the UC Davis Library - Research Profile implementation.
 
 You can see the architecture diagram here:
-https://docs.google.com/drawings/d/1hX61wnAj0LrOLnk1JHZdqgnlwrZEry2VTae6M59BYTg/edit
+https://docs.google.com/drawings/d/1TvNR2_PHlqCFE6ptN4bmAiF3V9OxUWFaNqtkuK3sWnc
 
 VESSEL contains the following services:
   - Debouncer: listens to Kafka events generated from https://github.com/ucd-library/rp-ucd-fuseki (based on the on a combination of UCD Library Jena build: 
