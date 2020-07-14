@@ -14,7 +14,7 @@ class Kafka {
    * 
    * @param {*} producer 
    */
-  connect(producer=false) {
+  connect() {
     this.client = new KafkaClient({
       kafkaHost: config.kafka.host+':'+config.kafka.port
     });

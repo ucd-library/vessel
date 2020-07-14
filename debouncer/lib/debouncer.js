@@ -11,13 +11,18 @@ class Debouncer {
 
   async connect() {
     await redis.connect();
+
+    // see if there where messages left in redis
+    this.run = true;
+    this.handleMessages();
+
     await kafka.connect();
-    
     await kafka.initConsumer([{
       topic: config.kafka.topics.rdfPatch,
       partitions: 1,
       replicationFactor: 1
     }]);
+
     kafka.consume(
       [{
         topic: config.kafka.topics.rdfPatch,
