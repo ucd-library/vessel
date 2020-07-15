@@ -32,3 +32,10 @@ This repository only containers the service Docker file for running the service.
 VESSEL is intentionally without a web client.  The client is defined to the deployment layer, allowing full customization of the user interface.
 
 In the future, the Vivo SPARQL queries and Elastic Search schema definition files will be removed as well and defined in the deployment.  This will allow for full customization of both the data model used and the user interface while leveraging the VESSEL service stack and deployment architecture.
+
+# Known Issues
+
+Zookeeper not starting with error: `Zookeeper: java.io.IOException: No snapshot found, but there are log entries. Something is broken`
+
+// docker volume rm rp-local-dev_zookeeper-data
+// docker volume rm rp-local-dev_zookeeper-datalog

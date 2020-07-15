@@ -21,19 +21,23 @@ class Debouncer {
       topic: config.kafka.topics.rdfPatch,
       partitions: 1,
       replicationFactor: 1
+    },{
+      topic: config.kafka.topics.index,
+      partitions: 1,
+      replicationFactor: 1
     }]);
 
     kafka.consume(
       [{
         topic: config.kafka.topics.rdfPatch,
         partition: 0,
-        offset: 7
+        offset: 0
       }],
       {
         autoCommit: false,
         fromOffset: true
       },
-      this.onMessage
+      msg => this.onMessage(msg)
     );
   }
 
@@ -41,6 +45,7 @@ class Debouncer {
     this.run = false;
 
     let subjects = changes(patchParser(msg.value));
+    // console.log('debouncer subjects received: ', patchParser(msg.value));
     let now = Date.now();
     for( let subject of subjects ) {
       await redis.client.set(config.redis.prefixes.debouncer+subject, now);
@@ -62,6 +67,7 @@ class Debouncer {
   }
 
   async sendKey(key) {
+    console.log('Debouncer sending subject to index: ', key.replace(config.redis.prefixes.debouncer, ''));
     let received = await redis.client.get(key);
 
     await kafka.send({
@@ -99,7 +105,7 @@ class Debouncer {
 
     let res = await redis.client.send_command(
       'scan', 
-      [options.cursor, 'MATCH', options.pattern, 'COUNT', options.pattern]
+      [options.cursor, 'MATCH', options.pattern, 'COUNT', options.count]
     );
     return {cursor: res[0], keys: res[1]};
   }

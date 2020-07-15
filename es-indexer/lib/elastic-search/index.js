@@ -1,4 +1,4 @@
-const {config, elasticSearch, logging} = require('@ucd-lib/rp-node-utils');
+const {config, elasticSearch, logger} = require('@ucd-lib/rp-node-utils');
 const vivo = require('./vivo.json');
 
 class ElasticSearch {

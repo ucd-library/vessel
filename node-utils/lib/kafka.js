@@ -18,10 +18,11 @@ class Kafka {
     this.client = new KafkaClient({
       kafkaHost: config.kafka.host+':'+config.kafka.port
     });
-    this.client.on('ready', ()=>{
+
+    this.client.on('ready', () => {
       logger.info('kafka client ready');
     });
-    this.client.on('error', ()=>{
+    this.client.on('error', e => {
       logger.error('kafka client error', e);
     });
   }
@@ -53,7 +54,7 @@ class Kafka {
     return new Promise((resolve, reject) => {
       this.client.createTopics(topics, (err, result) => {
         if( err ) {
-          logger.error('Kafka topics failed to initialize', e);
+          logger.error('Kafka topics failed to initialize', err);
           reject(e);
         } else {
           logger.info('Kafka Topics initialized', topics);

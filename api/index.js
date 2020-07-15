@@ -1,7 +1,6 @@
 const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
-const compression = require('compression');
 
 app.use((req, res, next) => {
   res.on('finish',() => {
@@ -10,7 +9,6 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(compression());
 app.use(bodyParser.json());
 
 /**

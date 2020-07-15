@@ -1,4 +1,4 @@
-const {sparql, kafka, fuseki, config, logging} = require('@ucd-lib/rp-node-utils');
+const {sparql, kafka, fuseki, config, logger} = require('@ucd-lib/rp-node-utils');
 const elasticSearch = require('./lib/elastic-search');
 
 /**
@@ -17,10 +17,10 @@ async function index(uri, msg) {
   for( let type of types ) {
     if( !sparql.TYPES[type] ) continue;
 
-    logging.info('Loading', uri, 'with model', type, '.  Sent by '+(msg.sender || 'unknown'));
+    logger.info('Loading', uri, 'with model', type, '.  Sent by '+(msg.sender || 'unknown'));
     let result = await sparql.getModel(type, uri);
     await elasticSearch.insert(result.model);
-    logging.info('Updated', uri);
+    logger.info('Updated', uri);
     break;
   }
 }
@@ -48,7 +48,7 @@ async function index(uri, msg) {
     [{
       topic: config.kafka.topics.index,
       partition: 0,
-      offset: 7
+      offset: 0
     }],
     {
       autoCommit: false,

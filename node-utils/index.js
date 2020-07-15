@@ -3,5 +3,8 @@ module.exports = {
   kafka : require('./lib/kafka'),
   fuseki : require('./lib/fuseki'),
   sparql : require('./lib/sparql'),
-  elasticSearch : require('./lib/elastic-search')
+  elasticSearch : require('./lib/elastic-search'),
+  redis : require('./lib/redis'),
+  'wait-util' : require('./lib/wait-until'),
+  logger : require('./lib/logger')
 }

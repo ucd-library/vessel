@@ -52,11 +52,20 @@ module.exports = {
   },
 
   logging : {
-    name : process.env.LOGGER_NAME || global.LOGGER_NAME || 'fin-server-generic',
-    level : process.env.LOG_LEVEL || global.LOG_LEVEL || 'info'
+    name : env.LOGGER_NAME || global.LOGGER_NAME || 'fin-server-generic',
+    level : env.LOG_LEVEL || global.LOG_LEVEL || 'info'
   },
 
   debouncer : {
     handleMessageDelay : 5 // seconds
+  },
+
+  gateway : {
+    port : env.GATEWAY_PORT || 3000,
+    serviceHosts : {
+      auth : env.AUTH_SERVICE_HOST || 'http://auth:3000',
+      client : env.CLIENT_SERVICE_HOST || 'http://client:3000',
+      api : env.API_SERVICE_HOST || 'http://api:3000'
+    }
   }
 }
