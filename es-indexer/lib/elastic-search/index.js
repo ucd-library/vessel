@@ -39,8 +39,6 @@ class ElasticSearch {
   }
 
   async insert(record) {
-    await this.isConnected();
-
     return this.client.index({
       index : 'research-profiles',
       id : record['@id'],

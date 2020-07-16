@@ -16,9 +16,9 @@
     "bunyan": "^1.8.14",
     "deepmerge": "^4.2.2",
     "elasticsearch": "^16.7.1",
-    "kafka-node": "^5.0.0",
     "n3": "^1.5.0",
     "node-fetch": "^2.6.0",
+    "node-rdkafka": "^2.9.0",
     "redis": "^3.0.2",
     "sparqljs": "^3.0.1"
   }

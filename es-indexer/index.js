@@ -34,29 +34,27 @@ async function index(uri, msg) {
  * subject URI as a string.  Additional 'nice to have' properties are:
  */
 (async function() {
-  await kafka.connect();
-  await elasticSearch.connect();
+  let consumer = new kafka.Consumer({
+    'group.id': config.kafka.groups.index,
+    'metadata.broker.list': config.kafka.host+':'+config.kafka.port,
+    'enable.auto.commit': true
+  })
+  await consumer.connect();
 
-  await kafka.initConsumer([{
-    topic: config.kafka.topics.index,
-    partitions: 1,
-    replicationFactor: 1
-  }])
+  await consumer.ensureTopic({
+    topic : config.kafka.topics.index,
+    num_partitions: 1,
+    replication_factor: 1
+  });
 
-  // TODO: lookup latest offset
-  kafka.consume(
-    [{
-      topic: config.kafka.topics.index,
-      partition: 0,
-      offset: 0
-    }],
-    {
-      autoCommit: false,
-      fromOffset: true
-    },
-    async msg => {
-      msg = JSON.parse(msg.value);
-      await index(msg.subject, msg);
-    }
+  // assign to front of committed offset
+  await consumer.assign(
+    await consumer.committed(config.kafka.topics.index)
   );
+
+  this.kafkaConsumer.consume(async msg => {
+    msg = JSON.parse(msg.value);
+    await index(msg.subject, msg);
+  });
+
 })();

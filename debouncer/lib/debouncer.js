@@ -1,4 +1,4 @@
-const {sparql, kafka, redis, fuseki, config} = require('@ucd-lib/rp-node-utils');
+const {kafka, redis, config} = require('@ucd-lib/rp-node-utils');
 const patchParser = require('./patch-parser');
 const changes = require('./get-changes');
 
@@ -7,6 +7,15 @@ class Debouncer {
   constructor() {
     this.lastMessageTimer = null;
     this.run = false;
+
+    this.kafkaProducer = new kafka.Producer({
+      'metadata.broker.list': config.kafka.host+':'+config.kafka.port
+    })
+    this.kafkaConsumer = new kafka.Consumer({
+      'group.id': config.kafka.groups.debouncer,
+      'metadata.broker.list': config.kafka.host+':'+config.kafka.port,
+      'enable.auto.commit': true
+    })
   }
 
   async connect() {
@@ -16,29 +25,26 @@ class Debouncer {
     this.run = true;
     this.handleMessages();
 
-    await kafka.connect();
-    await kafka.initConsumer([{
-      topic: config.kafka.topics.rdfPatch,
-      partitions: 1,
-      replicationFactor: 1
-    },{
-      topic: config.kafka.topics.index,
-      partitions: 1,
-      replicationFactor: 1
-    }]);
+    await this.kafkaProducer.connect();
+    await this.kafkaConsumer.connect();
 
-    kafka.consume(
-      [{
-        topic: config.kafka.topics.rdfPatch,
-        partition: 0,
-        offset: 0
-      }],
-      {
-        autoCommit: false,
-        fromOffset: true
-      },
-      msg => this.onMessage(msg)
+    await this.kafkaConsumer.ensureTopic({
+      topic : config.kafka.topics.rdfPatch,
+      num_partitions: 1,
+      replication_factor: 1
+    });
+    await this.kafkaConsumer.ensureTopic({
+      topic : config.kafka.topics.index,
+      num_partitions: 1,
+      replication_factor: 1
+    })
+
+    // assign to front of committed offset
+    await this.kafkaConsumer.assign(
+      await this.kafkaConsumer.committed(config.kafka.topics.rdfPatch)
     );
+
+    this.kafkaConsumer.consume(msg => this.onMessage(msg));
   }
 
   async onMessage(msg) {
@@ -63,21 +69,21 @@ class Debouncer {
       this.lastMessageTimer = null;
       this.run = true;
       this.handleMessages();
-    });
+    }, config.debouncer.handleMessageDelay * 1000);
   }
 
   async sendKey(key) {
     console.log('Debouncer sending subject to index: ', key.replace(config.redis.prefixes.debouncer, ''));
     let received = await redis.client.get(key);
 
-    await kafka.send({
+    kafka.produce({
       topic : config.kafka.topics.index,
-      messages : [JSON.stringify({
+      value : {
         sender : 'debouncer',
-        timestamp : Date.now(),
-        received : received,
+        debouncerRecievedTimestamp : received,
         subject : key.replace(config.redis.prefixes.debouncer, '')
-      })]
+      },
+      key : 'debouncer'
     });
 
     await redis.client.del(key);

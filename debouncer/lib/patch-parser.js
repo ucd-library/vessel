@@ -20,8 +20,5 @@ module.exports = (patch) => {
     .map(line => line.replace(/^(A|D): /, ''))
     .join('\n');
 
-  console.log(patch);
-  console.log();
-
   return parser.parse(patch);
 }

@@ -18,6 +18,10 @@ module.exports = {
     topics : {
       index : 'index-rdf-subject',
       rdfPatch : 'fuseki-rdf-patch'
+    },
+    groups : {
+      debouncer : 'vessel-debouncer-group',
+      index : 'vessel-indexer-group'
     }
   },
 
