@@ -1,4 +1,4 @@
-const {kafka, redis, config} = require('@ucd-lib/rp-node-utils');
+const {kafka, redis, logger, config} = require('@ucd-lib/rp-node-utils');
 const patchParser = require('./patch-parser');
 const changes = require('./get-changes');
 
@@ -25,35 +25,58 @@ class Debouncer {
     this.run = true;
     this.handleMessages();
 
-    await this.kafkaProducer.connect();
-    await this.kafkaConsumer.connect();
+    try {
+      await this.kafkaProducer.connect();
+      await this.kafkaConsumer.connect();
 
-    await this.kafkaConsumer.ensureTopic({
-      topic : config.kafka.topics.rdfPatch,
-      num_partitions: 1,
-      replication_factor: 1
-    });
-    await this.kafkaConsumer.ensureTopic({
-      topic : config.kafka.topics.index,
-      num_partitions: 1,
-      replication_factor: 1
-    })
+      await kafka.utils.ensureTopic({
+        topic : config.kafka.topics.rdfPatch,
+        num_partitions: 1,
+        replication_factor: 1
+      }, {'metadata.broker.list': config.kafka.host+':'+config.kafka.port});
+      await kafka.utils.ensureTopic({
+        topic : config.kafka.topics.index,
+        num_partitions: 1,
+        replication_factor: 1
+      }, {'metadata.broker.list': config.kafka.host+':'+config.kafka.port});
 
-    // assign to front of committed offset
-    await this.kafkaConsumer.assign(
-      await this.kafkaConsumer.committed(config.kafka.topics.rdfPatch)
-    );
+      let watermarks = await this.kafkaConsumer.queryWatermarkOffsets(config.kafka.topics.rdfPatch);
+      let topics = await this.kafkaConsumer.committed(config.kafka.topics.rdfPatch);
+      logger.info(`Debouncer (group.id=${config.kafka.groups.debouncer}) kafak status=${JSON.stringify(topics)} watermarks=${JSON.stringify(watermarks)}`);
 
-    this.kafkaConsumer.consume(msg => this.onMessage(msg));
+      // assign to front of committed offset
+      await this.kafkaConsumer.assign(topics);
+    } catch(e) {
+      console.error('kafka init error', e);
+    }
+
+    this.listen();
+  }
+
+  async listen() {
+    try {
+      await this.kafkaConsumer.consume(msg => this.onMessage(msg));
+    } catch(e) {
+      console.error('kafka consume error', e);
+    }
   }
 
   async onMessage(msg) {
     this.run = false;
 
-    let subjects = changes(patchParser(msg.value));
-    // console.log('debouncer subjects received: ', patchParser(msg.value));
+    logger.info(`handling kafka message: ${kafka.utils.getMsgId(msg)}`);
+
+    let subjects;
+    try {
+      subjects = changes(patchParser(msg.value.toString('utf-8')));
+    } catch(e) {
+      logger.error(`failed to parse rdf patch. message: ${kafka.utils.getMsgId(msg)}`, e.message, msg.value.toString('utf-8'));
+      return;
+    }
+
     let now = Date.now();
     for( let subject of subjects ) {
+      console.log('Setting redis key: '+config.redis.prefixes.debouncer+subject);
       await redis.client.set(config.redis.prefixes.debouncer+subject, now);
     }
 
@@ -73,10 +96,10 @@ class Debouncer {
   }
 
   async sendKey(key) {
-    console.log('Debouncer sending subject to index: ', key.replace(config.redis.prefixes.debouncer, ''));
+    console.log('Sending subject to indexer: ', key.replace(config.redis.prefixes.debouncer, ''));
     let received = await redis.client.get(key);
 
-    kafka.produce({
+    this.kafkaProducer.produce({
       topic : config.kafka.topics.index,
       value : {
         sender : 'debouncer',
@@ -92,16 +115,20 @@ class Debouncer {
   async handleMessages() {
     if( !this.run ) return;
 
+    let options = {cursor: 0};
     while( 1 ) {
-      let res = await this.scan();
+      let res = await this.scan(options);
       for( let key of res.keys ) {
         await this.sendKey(key);
       }
 
       if( !this.run || res.cursor == '0' ) break;
+      options.cursor = res.cursor;
     }
   }
 
+  // TODO: scan might have us redoing A LOT of work!
+  // Keys returns key set, but adds $$
   async scan(options) {
     options = Object.assign({
       cursor : '0',

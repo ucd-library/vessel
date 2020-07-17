@@ -1,23 +1,10 @@
 const Kafka = require('node-rdkafka');
-const Admin = require('./Admin');
 
 class Producer {
 
   constructor(config) {
     this.config = config;
     this.client = new Kafka.Producer(config);
-  }
-
-  async ensureTopic(topic) {
-    let admin = new Admin({
-      'metadata.broker.list': this.config['metadata.broker.list']
-    });
-
-    try {
-      await admin.createTopic(topic);
-    } catch(e) {}
-
-    admin.disconnect();
   }
 
   /**
@@ -43,7 +30,7 @@ class Producer {
       msg.value = Buffer.from(msg.value);
     }
 
-    this.produce(msg.topic, null, msg.value, msg.key, Date.now());
+    this.client.produce(msg.topic, null, msg.value, msg.key, Date.now());
   }
 
 }

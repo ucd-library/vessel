@@ -6,8 +6,8 @@ const fuseki = require('../fuseki');
 const merge = require('deepmerge');
 const config = require('../config');
 const clean = require('./clean');
-const SparqlParser = require('sparqljs').Parser;
-const parser = new SparqlParser();
+// const SparqlParser = require('sparqljs').Parser;
+// const parser = new SparqlParser();
 
 class SparqlModel {
 
@@ -23,9 +23,9 @@ class SparqlModel {
     }
   }
 
-  parseQuery(sparql) {
-    return parser.parse(sparql);
-  }
+  // parseQuery(sparql) {
+  //   return parser.parse(sparql);
+  // }
 
   hasModel(type) {
     return this.TYPES[type] ? true : false;

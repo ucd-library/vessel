@@ -9,15 +9,24 @@ const elasticSearch = require('./lib/elastic-search');
  * 
  * @param {String} uri subject uri
  */
-async function index(uri, msg) {
+async function index(uri, id, msg) {
   let response = await fuseki.query(`select * { GRAPH ?g {<${uri}> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?type}}`)
-  response = await response.json();
-  let types = [...new Set(response.results.bindings.map(term => term.type.value))];
+  
+  let body;
+  try {
+    body = await response.text();
+    body = JSON.parse(body);
+  } catch(e) {
+    logger.error(`From ${id} sent by ${msg.sender || 'unknown'}: Fuseki request failed (${response.status}):`, body);
+    return;
+  }
+
+  let types = [...new Set(body.results.bindings.map(term => term.type.value))];
 
   for( let type of types ) {
     if( !sparql.TYPES[type] ) continue;
 
-    logger.info('Loading', uri, 'with model', type, '.  Sent by '+(msg.sender || 'unknown'));
+    logger.info(`From ${id} sent by ${msg.sender || 'unknown'} loading ${uri} with model ${type}`);
     let result = await sparql.getModel(type, uri);
     await elasticSearch.insert(result.model);
     logger.info('Updated', uri);
@@ -40,21 +49,26 @@ async function index(uri, msg) {
     'enable.auto.commit': true
   })
   await consumer.connect();
+  await elasticSearch.connect();
 
-  await consumer.ensureTopic({
+  await kafka.utils.ensureTopic({
     topic : config.kafka.topics.index,
     num_partitions: 1,
     replication_factor: 1
-  });
+  }, {'metadata.broker.list': config.kafka.host+':'+config.kafka.port});
+
+  let watermarks = await consumer.queryWatermarkOffsets(config.kafka.topics.index);
+  let topics = await consumer.committed(config.kafka.topics.index);
+  logger.info(`Indexer (group.id=${config.kafka.groups.index}) kafak status=${JSON.stringify(topics)} watermarks=${JSON.stringify(watermarks)}`);
 
   // assign to front of committed offset
-  await consumer.assign(
-    await consumer.committed(config.kafka.topics.index)
-  );
+  await consumer.assign(topics);
 
-  this.kafkaConsumer.consume(async msg => {
+  consumer.consume(async msg => {
+    let id = kafka.utils.getMsgId(msg);
+    logger.info('handling kafka message: '+id);
     msg = JSON.parse(msg.value);
-    await index(msg.subject, msg);
+    await index(msg.subject, id, msg);
   });
 
 })();

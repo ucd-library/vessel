@@ -9,18 +9,6 @@ class Consumer {
     this.consuming = true;
   }
 
-  async ensureTopic(topic) {
-    let admin = new Admin({
-      'metadata.broker.list': this.config['metadata.broker.list']
-    });
-
-    try {
-      await admin.createTopic(topic);
-    } catch(e) {}
-
-    admin.disconnect();
-  }
-
   /**
    * @method consume
    * @description Attempts to consume one message at a time.  Callback function should
@@ -47,7 +35,7 @@ class Consumer {
    */
   consumeOne() {
     return new Promise((resolve, reject) => {
-      consumer.consume(1, (e, msgs) => {
+      this.client.consume(1, (e, msgs) => {
         if( e ) reject(e);
         else if( !msgs.length ) resolve(null);
         else resolve(msgs[0]);
@@ -97,7 +85,7 @@ class Consumer {
     topic = this._topicHelper(topic);
 
     return new Promise((resolve, reject) => {
-      this.client.committed(topic, 0, (err, result) => {
+      this.client.committed(topic, 10000, (err, result) => {
         if( err ) reject(err);
         else resolve(result);
       });
@@ -105,7 +93,7 @@ class Consumer {
   }
 
   /**
-   * @method committed
+   * @method queryWatermarkOffsets
    * @description get watermark offsets for topic/partition
    * 
    * @param {String|Object} topic 
@@ -115,7 +103,7 @@ class Consumer {
     if( !topic.partition ) topic.partition = 0; 
     
     return new Promise((resolve, reject) => {
-      this.client.queryWatermarkOffsets(topic.topic, topic.partition, 0, (err, offsets) => {
+      this.client.queryWatermarkOffsets(topic.topic, topic.partition, 10000, (err, offsets) => {
         if( err ) reject(err);
         else resolve(offsets);
       });

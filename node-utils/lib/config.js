@@ -56,7 +56,7 @@ module.exports = {
   },
 
   logging : {
-    name : env.LOGGER_NAME || global.LOGGER_NAME || 'fin-server-generic',
+    name : env.LOGGER_NAME || global.LOGGER_NAME || 'rp-service',
     level : env.LOG_LEVEL || global.LOG_LEVEL || 'info'
   },
 
