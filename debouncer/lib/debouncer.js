@@ -6,7 +6,7 @@ class Debouncer {
 
   constructor() {
     this.lastMessageTimer = null;
-    this.run = false;
+    this.run = true;
 
     this.kafkaProducer = new kafka.Producer({
       'metadata.broker.list': config.kafka.host+':'+config.kafka.port
@@ -20,10 +20,6 @@ class Debouncer {
 
   async connect() {
     await redis.connect();
-
-    // see if there where messages left in redis
-    this.run = true;
-    this.handleMessages();
 
     try {
       await this.kafkaProducer.connect();
@@ -51,6 +47,10 @@ class Debouncer {
     }
 
     this.listen();
+
+    setTimeout(() => {
+      this.handleMessages();
+    }, 1000);
   }
 
   async listen() {
@@ -76,7 +76,6 @@ class Debouncer {
 
     let now = Date.now();
     for( let subject of subjects ) {
-      console.log('Setting redis key: '+config.redis.prefixes.debouncer+subject);
       await redis.client.set(config.redis.prefixes.debouncer+subject, now);
     }
 
