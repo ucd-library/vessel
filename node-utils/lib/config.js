@@ -1,4 +1,5 @@
 const env = process.env;
+const {URL} = require('url');
 
 // order matters.  Top graphs take precident
 let graphs = env.FUSEKI_GRAPHS || '';
@@ -12,6 +13,32 @@ if( graphs ) {
 }
 
 module.exports = {
+  server : {
+    url : env.SERVER_URL || 'http://localhost:8080',
+    protocol : env.SERVER_PROTOCOL || 'http',
+    private : env.PRIVATE_SERVER ? env.PRIVATE_SERVER.trim().toLowerCase() === 'true' : true,
+    env : env.SERVER_ENV || 'dev'
+  },
+
+  client : {
+    env : env.CLIENT_ENV || 'dev'
+  },
+
+  jwt : {
+    expiresIn : env.JWT_EXPIRES_IN || 1000 * 60 * 60 * 24 * 30,
+    cookieName : env.JWT_COOKIE_NAME || 'rp-ucd-jwt',
+  },
+
+  authService : {
+    host : env.AUTH_SERVICE_HOST || 'auth',
+    port : env.AUTH_SERVICE_PORT || 3000,
+    session : {
+      name : env.AUTH_SESSION_NAME,
+      cookieSecret : env.AUTH_SESSION_COOKIE_SECRET || 'testing123',
+      maxAge : env.AUTH_SESSION_MAX_AGE ? parseInt(process.env.AUTH_SESSION_MAX_AGE) : (1000 * 60 * 60 * 24 * 30),
+    }
+  },
+
   kafka : {
     host : env.KAFKA_HOST || 'kafka',
     port : env.KAFKA_PORT || 9092,
@@ -39,7 +66,11 @@ module.exports = {
     port : process.env.REDIS_PORT || 6379,
     prefixes : {
       debouncer : 'debouncer-',
-      session : 'session-'
+      session : 'session-',
+      roles : 'role-'
+    },
+    keys : {
+      serverSecret : 'server-secret'
     }
   },
 
@@ -65,7 +96,7 @@ module.exports = {
   },
 
   gateway : {
-    port : env.GATEWAY_PORT || 3000,
+    port : 3000,
     serviceHosts : {
       auth : env.AUTH_SERVICE_HOST || 'http://auth:3000',
       client : env.CLIENT_SERVICE_HOST || 'http://client:3000',

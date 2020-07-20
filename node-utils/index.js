@@ -6,5 +6,7 @@ module.exports = {
   elasticSearch : require('./lib/elastic-search'),
   redis : require('./lib/redis'),
   'wait-util' : require('./lib/wait-until'),
-  logger : require('./lib/logger')
+  logger : require('./lib/logger'),
+  auth : require('./lib/auth'),
+  reindex : require('./lib/reindex')
 }

@@ -10,6 +10,13 @@ const elasticSearch = require('./lib/elastic-search');
  * @param {String} uri subject uri
  */
 async function index(uri, id, msg) {
+  // if type was included in message and a known type,
+  // just insert
+  if( msg.type && sparql.TYPES[msg.type] ) {
+    await insert(uri, id, msg, type);
+    return;
+  }
+
   let response = await fuseki.query(`select * { GRAPH ?g {<${uri}> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?type}}`)
   
   let body;
@@ -25,13 +32,26 @@ async function index(uri, id, msg) {
 
   for( let type of types ) {
     if( !sparql.TYPES[type] ) continue;
-
-    logger.info(`From ${id} sent by ${msg.sender || 'unknown'} loading ${uri} with model ${type}`);
-    let result = await sparql.getModel(type, uri);
-    await elasticSearch.insert(result.model);
-    logger.info('Updated', uri);
+    await insert(uri, id, msg, type);
     break;
   }
+}
+
+/**
+ * @function insert
+ * @description insert es model from uri/type
+ * 
+ * @param {String} uri uri of model 
+ * @param {String} id unique kafka message id
+ * @param {Object} msg kafka message
+ * @param {String} type rdf type of model
+ */
+async function insert(uri, id, msg, type) {
+  logger.info(`From ${id} sent by ${msg.sender || 'unknown'} loading ${uri} with model ${type}`);
+  let result = await sparql.getModel(type, uri);
+  await elasticSearch.insert(result.model);
+  logger.info('Updated', uri);
+  ;
 }
 
 /**

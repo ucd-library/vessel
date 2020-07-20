@@ -8,7 +8,7 @@ COPY package.json .
 
 RUN npm install --production
 
-COPY controllers controllers
+COPY controller.js .
 COPY index.js .
 
 CMD node index.js

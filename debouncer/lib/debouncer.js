@@ -95,7 +95,7 @@ class Debouncer {
   }
 
   async sendKey(key) {
-    console.log('Sending subject to indexer: ', key.replace(config.redis.prefixes.debouncer, ''));
+    logger.info('Sending subject to indexer: ', key.replace(config.redis.prefixes.debouncer, ''));
     let received = await redis.client.get(key);
 
     this.kafkaProducer.produce({
@@ -114,9 +114,13 @@ class Debouncer {
   async handleMessages() {
     if( !this.run ) return;
 
-    let options = {cursor: 0};
+    let options = {
+      cursor: 0,
+      pattern : config.redis.prefixes.debouncer+'*',
+      count : '1'
+    };
     while( 1 ) {
-      let res = await this.scan(options);
+      let res = await redis.scan(options);
       for( let key of res.keys ) {
         await this.sendKey(key);
       }
@@ -126,21 +130,6 @@ class Debouncer {
     }
   }
 
-  // TODO: scan might have us redoing A LOT of work!
-  // Keys returns key set, but adds $$
-  async scan(options) {
-    options = Object.assign({
-      cursor : '0',
-      pattern : config.redis.prefixes.debouncer+'*',
-      count : '1'
-    }, options);
-
-    let res = await redis.client.send_command(
-      'scan', 
-      [options.cursor, 'MATCH', options.pattern, 'COUNT', options.count]
-    );
-    return {cursor: res[0], keys: res[1]};
-  }
 
 }
 

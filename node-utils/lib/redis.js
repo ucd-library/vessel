@@ -25,6 +25,23 @@ class RedisClient {
     if( !this.client ) this._initClient();
   }
 
+  /**
+   * @method scan
+   * @description https://redis.io/commands/scan
+   * 
+   * @param {Object} options 
+   * @param {Number} options.curser
+   * @param {String} options.pattern
+   * @param {Number} options.count
+   */
+  async scan(options={}) {
+    let res = await this.client.send_command(
+      'scan', 
+      [options.cursor, 'MATCH', options.pattern, 'COUNT', options.count]
+    );
+    return {cursor: res[0], keys: res[1]};
+  }
+
 }
 
 module.exports = new RedisClient();
