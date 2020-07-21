@@ -82,7 +82,7 @@ class Auth {
       { 
         maxAge: config.jwt.expiresIn, 
         httpOnly: true,
-        sameSite : true
+        sameSite : 'lax'
       }
     );
   }

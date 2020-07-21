@@ -1,4 +1,5 @@
 const sparql = require('./sparql');
+const fuseki = require('./fuseki');
 const kafka = require('./kafka');
 const logger = require('./logger');
 const config = require('./config');
@@ -19,11 +20,11 @@ class Reindex {
     if( !type ) {
       logger.info('Reindexing all types: ', Object.keys(sparql.TYPES));
       for( let key in sparql.TYPES ) {
-        await this._run(key);
+        await this._indexType(key);
       }
       
     } else {
-      await this._run(type);
+      await this._indexType(type);
     }
 
     await this.kafkaProducer.disconnect();
@@ -51,7 +52,7 @@ class Reindex {
             sender : 'reindexer',
             subject, type
           },
-          key : 'debouncer'
+          key : 'reindexer'
         });
       }
 
@@ -64,10 +65,11 @@ class Reindex {
     let response = await fuseki.query(`PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
     SELECT ?subject WHERE {
       GRAPH ?g { ?subject rdf:type <${type}> .}
-      ORDER BY (?subject)
-      LIMIT ${count}
-      OFFSET ${page*100}
-    }`);
+    }
+    ORDER BY (?subject)
+    LIMIT ${count}
+    OFFSET ${page*100}
+    `);
     response = await response.json();
     return [...new Set(response.results.bindings.map(term => term.subject.value))];
   }

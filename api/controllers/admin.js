@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const {Reindex} = require('@ucd-lib/rp-node-utils')
+const {Reindex} = require('@ucd-lib/rp-node-utils');
 
 router.get('/reindex', async (req, res) => {
   try {

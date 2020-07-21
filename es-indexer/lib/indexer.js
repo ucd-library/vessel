@@ -16,6 +16,7 @@ class Indexer {
 
   async connect() {
     await redis.connect();
+    await elasticSearch.connect();
 
     try {
       await this.kafkaConsumer.connect();
@@ -59,11 +60,10 @@ class Indexer {
 
     let payload;
     try {
-      let payload = JSON.parse(msg.value);
+      payload = JSON.parse(msg.value);
       payload.msgId = id;
-      await index(payload.subject, id, payload);
     } catch(e) {
-      logger.error(`failed to parse rdf patch. message: ${id}`, e.message, msg.value.toString('utf-8'));
+      logger.error(`failed to parse index payload. message: ${id}`, e.message, msg.value.toString('utf-8'));
       return;
     }
 
@@ -152,6 +152,10 @@ class Indexer {
    * @param {String} uri subject uri
    */
   async index(msg) {
+    if( typeof msg === 'string' ) {
+      msg = JSON.parse(msg);
+    }
+
     // if type was included in message and a known type,
     // just insert
     if( msg.type && sparql.TYPES[msg.type] ) {
@@ -159,7 +163,7 @@ class Indexer {
       return;
     }
 
-    let response = await fuseki.query(`select * { GRAPH ?g {<${uri}> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?type}}`)
+    let response = await fuseki.query(`select * { GRAPH ?g {<${msg.subject}> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?type}}`)
     
     let body;
     try {

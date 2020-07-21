@@ -96,6 +96,10 @@ module.exports = {
     handleMessageDelay : 5 // seconds
   },
 
+  indexer : {
+    handleMessageDelay : 5 // seconds
+  },
+
   gateway : {
     port : 3000,
     serviceHosts : {

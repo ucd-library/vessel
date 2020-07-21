@@ -59,7 +59,16 @@ class Consumer {
     return new Promise((resolve, reject) => {
       this.client.connect(opts, (err, data) => {
         if( err ) reject(err);
-        else resolve(err);
+        else resolve(data);
+      });
+    });
+  }
+
+  disconnect() {
+    return new Promise((resolve, reject) => {
+      this.client.disconnect((err, data) => {
+        if( err ) reject(err);
+        else resolve(data);
       });
     });
   }
