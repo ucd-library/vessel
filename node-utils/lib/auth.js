@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
 const redis = require('./redis');
 const config = require('./config');
 const logger = require('./logger');
@@ -57,19 +58,27 @@ class Auth {
   }
 
   isAdmin(decodedToken) {
-    if( decodedToken.payload.admin ) return true;
-    if( (decodedToken.payload.admin || []).includes('admin') ) return true;
+    if( decodedToken.admin ) return true;
+    if( (decodedToken.roles || []).includes('admin') ) return true;
     return false;
   }
 
-  async handleLogin(username, res) {
+  setUserRole(username, role) {
+    return redis.client.set(config.redis.prefixes.roles+username+'-'+role, true);
+  }
+
+  removeUserRole(username, role) {
+    return redis.client.del(config.redis.prefixes.roles+username+'-'+role);
+  }
+
+  async handleLogin(res, username) {
     this._connect();
     let roles = ((await redis.client.keys(config.redis.prefixes.roles+username+'-*')) || [])
       .map(role => role.replace(config.redis.prefixes.roles+username+'-', ''));
-    
-    res.cookies(
+
+    res.cookie(
       config.jwt.cookieName, 
-      this.mintToken({username, roles}),
+      await this.mintToken({username, roles}),
       { 
         maxAge: config.jwt.expiresIn, 
         httpOnly: true,

@@ -8,5 +8,6 @@ module.exports = {
   'wait-util' : require('./lib/wait-until'),
   logger : require('./lib/logger'),
   auth : require('./lib/auth'),
-  reindex : require('./lib/reindex')
+  Reindex : require('./lib/reindex'),
+  middleware : require('./lib/middleware')
 }

@@ -1,10 +1,14 @@
 const express = require('express');
-const {logger, redis, config} = require('@ucd-lib/rp-node-utils');
+const redis = require('redis');
+const {logger, config} = require('@ucd-lib/rp-node-utils');
 const session = require('express-session');
 const RedisStore = require('connect-redis')(session)
 const app = express();
 
-redis.connect();
+const redisClient = redis.createClient({
+  host: config.redis.host,
+  port : config.redis.port
+});
 
 app.use(session({
   name              : config.authService.session.name || 'vessel-auth-cas',
@@ -12,7 +16,7 @@ app.use(session({
   resave            : false,
   maxAge            : config.authService.session.cookieMaxAge,
   saveUninitialized : true,
-  store             : new RedisStore({ client: redis.client })
+  store             : new RedisStore({ client: redisClient })
 }));
 
 require('./controller')(app);

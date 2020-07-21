@@ -66,6 +66,7 @@ module.exports = {
     port : process.env.REDIS_PORT || 6379,
     prefixes : {
       debouncer : 'debouncer-',
+      indexer : 'indexer-',
       session : 'session-',
       roles : 'role-'
     },

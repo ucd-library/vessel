@@ -13,8 +13,8 @@ function init(app) {
   app.get('/auth/login/', (req, res) => {
     logger.info('CAS Service: starting CAS redirection');
 
-    req.query.returnTo = config.server.url;
-    cas.service_url = config.server.url;
+    // req.query.returnTo = config.server.url;
+    // cas.service_url = config.server.url;
 
     cas.bounce(req, res, async () => {
       logger.info('CAS Service: CAS redirection complete');

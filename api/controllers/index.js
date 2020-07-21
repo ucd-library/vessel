@@ -2,6 +2,7 @@ const router = require('express').Router();
 const model = require('../models/elastic-search');
 const swaggerSpec = require('./swagger/spec.json');
 const errorHandler = require('./utils/error-handler');
+const {middleware} = require('@ucd-lib/rp-node-utils');
 
 /**
  * @swagger
@@ -41,5 +42,7 @@ router.get('/:id', async (req, res) => {
     errorHandler(req, res, e);
   }
 });
+
+router.use('/admin', middleware.admin, require('./admin'));
 
 module.exports = router;

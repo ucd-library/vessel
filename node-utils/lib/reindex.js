@@ -25,6 +25,8 @@ class Reindex {
     } else {
       await this._run(type);
     }
+
+    await this.kafkaProducer.disconnect();
   }
 
   /**

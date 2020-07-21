@@ -6,6 +6,9 @@ VESSEL contains the core services for the UC Davis Library - Research Profile im
 You can see the architecture diagram here:
 https://docs.google.com/drawings/d/1TvNR2_PHlqCFE6ptN4bmAiF3V9OxUWFaNqtkuK3sWnc
 
+Kafka message event flow here:
+https://docs.google.com/drawings/d/1OBQCEQ5USqEUhjvyCvC3b66Eh_LnXD0JdHvChq8vN1A
+
 VESSEL contains the following services:
   - Debouncer: listens to Kafka events generated from https://github.com/ucd-library/rp-ucd-fuseki (based on the on a combination of UCD Library Jena build: 
   https://github.com/ucd-library/jena and the custom https://github.com/ucd-library/fuseki-kafka-connector), places them in Redis, waits for events to quite

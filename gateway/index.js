@@ -16,6 +16,11 @@ proxy.on('proxyRes', async (proxyRes, req, res) => {
   } else if( req.originalUrl.match(/^\/auth\/logout/) ) {
     auth.handleLogout(res);
   }
+
+  for( let key in proxyRes.headers ) {
+    res.setHeader(key, proxyRes.headers[key]);
+  }
+  res.status(proxyRes.statusCode);
   proxyRes.pipe(res);
 });
 
@@ -48,13 +53,15 @@ app.use(require('./controllers/middleware/private-instance'));
  */
 app.use(/^\/api(\/.*|$)/, (req, res) => {
   proxy.web(req, res, {
-    target: config.gateway.serviceHosts.api+req.originalUrl
+    target: config.gateway.serviceHosts.api+req.originalUrl,
+    ignorePath: true
   });
 });
 
 app.use(/^\/auth(\/.*|$)/, (req, res) => {
   proxy.web(req, res, {
-    target: config.gateway.serviceHosts.auth+req.originalUrl
+    target: config.gateway.serviceHosts.auth+req.originalUrl,
+    ignorePath: true
   });
 });
 

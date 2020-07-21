@@ -1,4 +1,4 @@
-const {config, auth} = require('@ucd-lib/rp-node-utils');
+const auth = require('../auth');
 
 module.exports = async (req, res, next) => {
   let token = auth.getTokenFromRequest(req);
