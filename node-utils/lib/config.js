@@ -15,7 +15,6 @@ if( graphs ) {
 module.exports = {
   server : {
     url : env.SERVER_URL || 'http://localhost:8080',
-    protocol : env.SERVER_PROTOCOL || 'http',
     private : env.PRIVATE_SERVER ? env.PRIVATE_SERVER.trim().toLowerCase() === 'true' : true,
     env : env.SERVER_ENV || 'dev'
   },
