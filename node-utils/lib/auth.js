@@ -8,6 +8,7 @@ class Auth {
 
   constructor() {
     this.isRedisConnected = false;
+    this.redis = redis;
   }
 
   _connect() {
@@ -63,18 +64,24 @@ class Auth {
     return false;
   }
 
+  getUserRoleKey(username, role) {
+    return config.redis.prefixes.roles+username+'-'+role;
+  }
+
   setUserRole(username, role) {
-    return redis.client.set(config.redis.prefixes.roles+username+'-'+role, true);
+    this._connect();
+    return redis.client.set(this.getUserRoleKey(username, role), true);
   }
 
   removeUserRole(username, role) {
-    return redis.client.del(config.redis.prefixes.roles+username+'-'+role);
+    this._connect();
+    return redis.client.del(this.getUserRoleKey(username, role));
   }
 
   async handleLogin(res, username) {
     this._connect();
-    let roles = ((await redis.client.keys(config.redis.prefixes.roles+username+'-*')) || [])
-      .map(role => role.replace(config.redis.prefixes.roles+username+'-', ''));
+    let roles = ((await redis.client.keys(this.getUserRoleKey(username, '*'))) || [])
+      .map(role => role.replace(this.getUserRoleKey(username, ''), ''));
 
     res.cookie(
       config.jwt.cookieName, 

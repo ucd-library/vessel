@@ -1,6 +1,6 @@
 const express = require('express');
 const redis = require('redis');
-const {logger, config} = require('@ucd-lib/rp-node-utils');
+const {logger, config, auth} = require('@ucd-lib/rp-node-utils');
 const session = require('express-session');
 const RedisStore = require('connect-redis')(session)
 const app = express();
@@ -21,6 +21,23 @@ app.use(session({
 
 require('./controller')(app);
 
+async function initDefaultAdmins() {
+  let admins = process.env.DEFAULT_ADMINS;
+  if( !admins ) return;
+  admins = admins.split(' ').map(admin => admin.trim());
+
+  auth._connect();
+  for( let admin of admins ) {
+    let result = await auth.redis.client.get(auth.getUserRoleKey(admin, 'admin'));
+    if( !result ) {
+      logger.info(`Setting default admin: ${admin}`);
+      auth.setUserRole(admin, 'admin');
+    }
+  }
+  await auth.redis.disconnect();
+}
+
 app.listen(config.authService.port, () => {
   logger.info('Auth service ready on port ', config.authService.port);
+  initDefaultAdmins();
 });

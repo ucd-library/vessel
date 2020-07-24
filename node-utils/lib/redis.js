@@ -16,13 +16,28 @@ class RedisClient {
     // Node Redis currently doesn't natively support promises (this is coming in v4)
     promisify.forEach(key => this.client[key] = util.promisify(this.client[key]));
 
-    this.client.on('error', function (err) {
+    this.client.on('error', (err) => {
       logger.error('Redis client error', err);
+    });
+    this.client.on('ready', () => {
+      logger.info('Redis client ready');
+    });
+    this.client.on('end', () => {
+      logger.info('Redis client closed connection');
+    });
+    this.client.on('reconnecting', () => {
+      logger.info('Redis client reconnecting');
     });
   }
 
   connect() {
     if( !this.client ) this._initClient();
+  }
+
+  disconnect() {
+    return new Promise((resolve, reject) => {
+      this.client.quit(() => resolve());
+    });
   }
 
   /**
