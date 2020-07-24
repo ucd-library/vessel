@@ -130,17 +130,18 @@ class Indexer {
    * @method insert
    * @description insert es model from uri/type
    * 
+   * @param {String} key redis key
    * @param {String} uri uri of model 
    * @param {String} id unique kafka message id
    * @param {Object} msg kafka message
    * @param {String} type rdf type of model
    */
-  async insert(uri, id, msg, type) {
+  async insert(key, uri, id, msg, type) {
     logger.info(`From ${id} sent by ${msg.sender || 'unknown'} loading ${uri} with model ${type}. ${msg.force ? 'force=true' : ''}`);
     let result = await sparql.getModel(type, uri);
     await elasticSearch.insert(result.model);
     logger.info('Updated', uri);
-    ;
+    await redis.client.del(key);
   }
 
   /**
@@ -148,10 +149,8 @@ class Indexer {
    * @description given subject uri; check if the subject rdf:type is of a
    * known es model type, if so query Fuseki using es model sparql query and
    * insert into elastic search
-   * 
-   * @param {String} uri subject uri
    */
-  async index(msg) {
+  async index(key, msg) {
     if( typeof msg === 'string' ) {
       msg = JSON.parse(msg);
     }
@@ -159,7 +158,7 @@ class Indexer {
     // if type was included in message and a known type,
     // just insert
     if( msg.type && sparql.TYPES[msg.type] ) {
-      await this.insert(msg.subject, msg.msgId, msg, msg.type);
+      await this.insert(key, msg.subject, msg.msgId, msg, msg.type);
       return;
     }
 
@@ -178,7 +177,7 @@ class Indexer {
 
     for( let type of types ) {
       if( !sparql.TYPES[type] ) continue;
-      await this.insert(msg.subject, msg.msgId, msg, type);
+      await this.insert(key, msg.subject, msg.msgId, msg, type);
       break;
     }
   }
@@ -196,7 +195,7 @@ class Indexer {
       let res = await redis.scan(options);
       for( let key of res.keys ) {
         let msg = await redis.client.get(key);
-        await this.index(msg);
+        await this.index(key, msg);
       }
 
       if( !this.run || res.cursor == '0' ) break;
