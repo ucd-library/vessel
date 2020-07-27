@@ -74,7 +74,8 @@ app.use(/^\/fuseki(\/.*|$)/, (req, res) => {
 // send all other requests to client
 app.use(/.*/, (req, res) => {
   proxy.web(req, res, {
-    target: config.gateway.serviceHosts.client
+    target: config.gateway.serviceHosts.client+req.originalUrl,
+    ignorePath: true
   });
 });
 
