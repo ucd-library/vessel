@@ -1,6 +1,3 @@
-// https://wiki.lyrasis.org/display/VIVODOC110x/Person+Model
-
-module.exports = (uri, graph='?g') => `
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX bibo: <http://purl.org/ontology/bibo/>
@@ -50,7 +47,7 @@ CONSTRUCT {
   ?vcardAddress vcard:country ?country .
 
 } WHERE {
-  GRAPH ${graph} {
+  GRAPH "{{graph}}" {
     ?subject rdf:type ?type .
 
     OPTIONAL { ?subject rdfs:label ?label . }
@@ -94,6 +91,6 @@ CONSTRUCT {
     }
 
 
-    FILTER(?subject = <${uri}>)
+    FILTER(?subject = <"{{uri}}">)
   }
-}`
+}

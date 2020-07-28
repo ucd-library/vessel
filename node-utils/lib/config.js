@@ -79,7 +79,11 @@ module.exports = {
     port : env.ELASTIC_SEARCH_PORT || '9200',
     username : env.ELASTIC_SEARCH_USERNAME || 'elastic',
     password : env.ELASTIC_SEARCH_PASSWORD || 'changeme',
-    requestTimeout : env.ELASTIC_SEARCH_REQUEST_TIME || 3*60*1000
+    requestTimeout : env.ELASTIC_SEARCH_REQUEST_TIME || 3*60*1000,
+    indexAlias : 'research-profiles',
+    fields : {
+      exclude : []
+    }
   },
 
   google : {

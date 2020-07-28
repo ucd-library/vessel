@@ -1,6 +1,7 @@
 const {Client} = require('elasticsearch');
 const waitUntil = require('./wait-until');
 const config = require('./config');
+const logger = require('./logger');
 
 class ElasticSearch {
   /**
@@ -10,7 +11,7 @@ class ElasticSearch {
   async isConnected() {
     if( this.connected ) return;
 
-    console.log('waiting for es connection');
+    logger.info('waiting for es connection');
     await waitUntil(config.elasticSearch.host, config.elasticSearch.port);
 
     // sometimes we still aren't ready....
@@ -18,7 +19,7 @@ class ElasticSearch {
       await this.client.ping({requestTimeout: 5000});
       this.connected = true;
     } catch(e) {
-      console.log(e)
+      logger.error(e)
       await this.isConnected();
     }
   }
@@ -36,7 +37,7 @@ class ElasticSearch {
     }
 
     await this.isConnected();
-    console.log('Connected to Elastic Search');
+    logger.error('Connected to Elastic Search');
   }
 
 }

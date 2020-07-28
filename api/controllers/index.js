@@ -4,18 +4,12 @@ const swaggerSpec = require('./swagger/spec.json');
 const errorHandler = require('./utils/error-handler');
 const {middleware} = require('@ucd-lib/rp-node-utils');
 
-/**
- * @swagger
- *
- * definitions:
- *   record:
- *     type: object
- */
-
-
 router.get('/', (req, res) => {
   res.json(swaggerSpec);
-})
+});
+
+router.use('/admin', middleware.admin, require('./admin'));
+router.use('/search', require('./search'));
 
 /**
  * @swagger
@@ -37,12 +31,10 @@ router.get('/', (req, res) => {
  */
 router.get('/:id', async (req, res) => {
   try {
-    res.json(await model.get(req.params.id));
+    res.json((await model.get(req.params.id))._source);
   } catch(e) {
     errorHandler(req, res, e);
   }
 });
-
-router.use('/admin', middleware.admin, require('./admin'));
 
 module.exports = router;

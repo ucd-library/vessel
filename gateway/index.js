@@ -4,6 +4,24 @@ const app = express();
 const compression = require('compression');
 const httpProxy = require('http-proxy');
 const cookieParser = require('cookie-parser');
+const cors = require('cors')({
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+  exposedHeaders : 'content-type, link, content-disposition, content-length, pragma, expires, cache-control',
+  allowedHeaders : 'authorization, range, cookie, content-type, prefer, slug, cache-control, accept',
+  credentials: true
+});
+
+// cors wrapper control
+function enableCors(req, res, next) {
+  // set cors
+  let enable = false;
+  if( req.originalUrl.match(/^\/api(\/.*|$)/) && !req.originalUrl.match(/^\/api\/admin.*/) ) {
+    enable = true;
+  }
+
+  if( enable ) cors(req, res, next);
+  else next();
+}
 
 const proxy = httpProxy.createProxyServer({
   xfwd: true,
@@ -46,6 +64,7 @@ auth.ensureSecret();
  * To allow unauthenticated request, PRIVATE_SERVER must be set to false.
  * Default is true. /auth/* will always be allowed.
  */
+app.use(enableCors);
 app.use(require('./controllers/middleware/private-instance'));
 
 /**

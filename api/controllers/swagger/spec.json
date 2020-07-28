@@ -1,10 +1,14 @@
 {
+  "openapi": "3.0.0",
   "info": {
     "title": "UC Davis - Researcher Profiles API",
     "version": "0.0.1"
   },
-  "basePath": "/api",
-  "swagger": "2.0",
+  "servers": [
+    {
+      "url": "/api"
+    }
+  ],
   "paths": {
     "/{id}": {
       "get": {
@@ -16,7 +20,7 @@
           {
             "name": "id",
             "description": "id of record",
-            "in": "path",
+            "in": "query",
             "required": true,
             "type": "string"
           }
@@ -27,15 +31,114 @@
           }
         }
       }
+    },
+    "components/schemas": {
+      "ApiSearchDocument": {
+        "description": "Application search query",
+        "properties": {
+          "offset": {
+            "type": "integer",
+            "description": "(es from), the first result you want to fetch",
+            "default": 0
+          },
+          "limit": {
+            "type": "integer",
+            "description": "max results to return",
+            "default": 10
+          }
+        }
+      }
+    },
+    "/search": {
+      "post": {
+        "description": "Application search query",
+        "tags": [
+          "Elastic Search"
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "Application search query",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "$ref": "#/components/schemas/ApiSearchDocument"
+              }
+            }
+          }
+        },
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Application search result object",
+            "schema": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "/search/es": {
+      "post": {
+        "description": "Raw elastic search query",
+        "tags": [
+          "Elastic Search"
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "Elastic search query document body; https://www.elastic.co/guide/en/elasticsearch/reference/current/search-search.html#search-search-api-request-body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Elastic search result object",
+            "schema": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "get": {
+        "description": "Raw elastic search query",
+        "tags": [
+          "Elastic Search"
+        ],
+        "parameter": [
+          {
+            "required": true,
+            "in": "query",
+            "name": "q",
+            "description": "Stringified elastic search query document body; https://www.elastic.co/guide/en/elasticsearch/reference/current/search-search.html#search-search-api-request-body",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Elastic search result object",
+            "schema": {
+              "type": "object"
+            }
+          }
+        }
+      }
     }
   },
-  "definitions": {
-    "record": {
-      "type": "object"
-    }
-  },
-  "responses": {},
-  "parameters": {},
-  "securityDefinitions": {},
+  "components": {},
   "tags": []
 }

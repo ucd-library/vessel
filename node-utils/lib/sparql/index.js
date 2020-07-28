@@ -1,11 +1,10 @@
-
-const publication = require('./queries/publication');
-const person = require('./queries/person');
-const organization = require('./queries/organization');
 const fuseki = require('../fuseki');
 const merge = require('deepmerge');
 const config = require('../config');
 const clean = require('./clean');
+const typeMap = require('./queries/map');
+const path = require('path');
+const fs = require('fs');
 // const SparqlParser = require('sparqljs').Parser;
 // const parser = new SparqlParser();
 
@@ -14,21 +13,41 @@ class SparqlModel {
   constructor() {
     this.GRAPHS = config.fuseki.graphs;
 
-    this.TYPES = {
-      'http://purl.org/ontology/bibo/AcademicArticle' : publication,
-      'http://xmlns.com/foaf/0.1/Person' : person,
-      'http://vivoweb.org/ontology/core#FacultyMember' : person,
-      'http://vivoweb.org/ontology/core#AcademicDepartment' : organization,
-      'http://vivoweb.org/ontology/core#University' : organization
+    this.TYPES = {};
+    this.MODELS = typeMap;
+    this.TEMPLATES = {};
+
+    for( let model in typeMap ) {
+      let types = typeMap[model];
+      if( typeof typeMap[model] === 'string' ) {
+        typeMap[model] = [typeMap[model]];
+      }
+
+      typeMap[model].forEach(type => this.TYPES[type] = model);
+
+      this.TEMPLATES[model] = fs.readFileSync(path.join(__dirname, 'queries', model+'.tpl.rq'), 'utf-8');
     }
   }
 
-  // parseQuery(sparql) {
-  //   return parser.parse(sparql);
-  // }
-
   hasModel(type) {
+    if( this.MODELS[type] ) return true;
     return this.TYPES[type] ? true : false;
+  }
+
+  getSparqlQuery(type, uri, graph='?graph') {
+    let model = type;
+    if( !this.MODELS[type] ) {
+      model = this.TYPES[type];
+    }
+    if( !model ) throw new Error('Unknown model or type: '+type);
+
+    if( !graph.match(/^\?/) ) {
+      graph = '<'+graph+'>';
+    }
+
+    return this.TEMPLATES[model]
+      .replace(/"{{uri}}"/, uri)
+      .replace(/"{{graph}}"/, graph);
   }
 
   async getModel(type, uri) {
@@ -53,7 +72,7 @@ class SparqlModel {
   }
 
   async _getModelForGraph(graph, type, uri) {
-    let sparqlQuery = this.TYPES[type](uri, '<'+graph+'>');
+    let sparqlQuery = this.getSparqlQuery(type, uri, graph);
     // console.log(sparqlQuery);
     let response = await fuseki.query(sparqlQuery, 'application/ld+json');
     response = await response.json();

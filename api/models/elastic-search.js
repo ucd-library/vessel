@@ -1,12 +1,17 @@
-const client = require('../lib/elastic-search-client');
+const {elasticSearch, config} = require('@ucd-lib/rp-node-utils');
+const utils = require('../lib/search-utils');
 
 class ElasticSearch {
 
   constructor() {
-    this.client = client;
     this.DEFAULT_OFFSET = 0;
     this.DEFAULT_LIMIT = 10;
-    this.alias = 'research-profiles';
+    this.connect();
+  }
+
+  async connect() {
+    await elasticSearch.connect();
+    this.client = elasticSearch.client;
   }
 
   /**
@@ -17,18 +22,101 @@ class ElasticSearch {
    * 
    * @returns {Promise} resolves to elasticsearch result
    */
-  get(id, debug=false) {
+  get(id) {
     let queryDoc = {
-      index: this.alias,
+      index: config.elasticSearch.indexAlias,
       type: '_all',
-      id: id
+      id: id,
+      _source_exclude : config.elasticSearch.fields.exclude
     }
 
-    // if( !debug ) {
-    //   queryDoc._source_exclude = config.elasticsearch.fields.exclude;
-    // }
-
     return this.client.get(queryDoc);
+  }
+
+  /**
+   * @method search
+   * @description search the elasticsearch pure es search document
+   * 
+   * @param {Object} body elasticsearch search body
+   * @param {Object} options elasticsearch main object for additional options
+   * 
+   * @returns {Promise} resolves to elasticsearch result
+   */
+  search(body = {}, options={}) {
+    options.index = config.elasticSearch.indexAlias;
+    options.body = body;
+    options._source_exclude = config.elasticSearch.fields.exclude;
+
+    return this.client.search(options);
+  }
+
+  /**
+   * @method apiSearch
+   * @description search the elasticsearch records using the ucd api
+   * search document. 
+   * 
+   * @param {Object} SearchDocument
+   * @param {Boolean} options.noLimit no limit on returned search filters.  defaults to false
+   * @param {Boolean} options.debug will return searchDocument and esBody in result
+   * 
+   * @returns {Promise} resolves to search result
+   */
+  async apiSearch(searchDocument = {}, options = {noLimit: false, debug: false}) {
+    // right now, only allow search on root records
+    if( !searchDocument.filters ) {
+      searchDocument.filters = {};
+    }
+
+    if( !options.allRecords ) {
+      searchDocument.filters.isRootRecord = {
+        type : 'keyword',
+        op : 'and',
+        value : [true]
+      }
+    }
+
+    let esBody = utils.searchDocumentToEsBody(searchDocument, options.noLimit);
+    let esResult = await this.search(esBody);
+    let result = utils.esResultToApiResult(esResult, searchDocument);
+
+    // now we need to fill on 'or' filters facets options
+    // to get counts as the client UI wants them, we need to perform a
+    // agg only query with the 'or' bucket attributes removed
+    let facets = searchDocument.facets || {};
+    for( let filter in searchDocument.filters ) {
+      // user don't care about this agg
+      if( !facets[filter] ) continue; 
+      // only need to worry about facet filters
+      if( searchDocument.filters[filter].type !== 'keyword' ) continue; 
+      // only need to worry about 'or' filters
+      if( searchDocument.filters[filter].op !== 'or' ) continue; 
+
+      let tmpSearchDoc = clone(searchDocument);
+      // we don't need results
+      tmpSearchDoc.offset = 0;
+      tmpSearchDoc.limit = 0;
+      // remove the filter
+      delete tmpSearchDoc.filters[filter]
+      // only ask for aggs on this filter
+      tmpSearchDoc.facets = {
+        [filter] : {
+          type : 'facet'
+        }
+      }
+
+      let tmpResult = await this.search(this.searchDocumentToEsBody(tmpSearchDoc));
+      tmpResult = this.esResultToApiResult(tmpResult, tmpSearchDoc);
+
+      // finally replace facets response
+      result.aggregations.facets[filter] = tmpResult.aggregations.facets[filter];
+    }
+
+    if( options.debug ) {
+      result.searchDocument = searchDocument;
+      result.esBody = esBody;
+    }
+
+    return result;
   }
 
 }
