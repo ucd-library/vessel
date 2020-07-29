@@ -1,8 +1,5 @@
-const sparql = require('./sparql');
-const fuseki = require('./fuseki');
-const kafka = require('./kafka');
-const logger = require('./logger');
-const config = require('./config');
+const {fuseki, kafka, logger, config} = require('@ucd-lib/rp-node-utils');
+const esSparqlModel = require('./es-sparql-model');
 
 class Reindex {
 
@@ -18,8 +15,8 @@ class Reindex {
     }, {'metadata.broker.list': config.kafka.host+':'+config.kafka.port});
 
     if( !type ) {
-      logger.info('Reindexing all types: ', Object.keys(sparql.TYPES));
-      for( let key in sparql.TYPES ) {
+      logger.info('Reindexing all types: ', Object.keys(esSparqlModel.TYPES));
+      for( let key in esSparqlModel.TYPES ) {
         await this._indexType(key);
       }
       

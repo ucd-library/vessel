@@ -100,6 +100,7 @@ module.exports = {
   },
 
   indexer : {
+    port : 3000,
     handleMessageDelay : 5 // seconds
   },
 
@@ -108,7 +109,8 @@ module.exports = {
     serviceHosts : {
       auth : env.AUTH_SERVICE_HOST || 'http://auth:3000',
       client : env.CLIENT_SERVICE_HOST || 'http://client:3000',
-      api : env.API_SERVICE_HOST || 'http://api:3000'
+      api : env.API_SERVICE_HOST || 'http://api:3000',
+      indexer : env.INDEXER_SERVICE_HOST || 'http://indexer:3000'
     }
   }
 }

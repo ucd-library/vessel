@@ -6,6 +6,6 @@ module.exports = {
     version: '0.0.1', // Version (required)
   },
   servers: [{
-    url : '/api'
+    url : '/'
   }]
 }

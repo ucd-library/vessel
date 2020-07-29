@@ -6,8 +6,8 @@ const httpProxy = require('http-proxy');
 const cookieParser = require('cookie-parser');
 const cors = require('cors')({
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-  exposedHeaders : 'content-type, link, content-disposition, content-length, pragma, expires, cache-control',
-  allowedHeaders : 'authorization, range, cookie, content-type, prefer, slug, cache-control, accept',
+  exposedHeaders : ['content-type', 'link', 'content-disposition', 'content-length', 'pragma', 'expires', 'cache-control'],
+  allowedHeaders : ['authorization', 'range', 'cookie', 'content-type', 'prefer', 'slug', 'cache-control', 'accept'],
   credentials: true
 });
 
@@ -27,7 +27,7 @@ const proxy = httpProxy.createProxyServer({
   xfwd: true,
   selfHandleResponse: true
 });
-proxy.on('error', err => console.log('Gateway proxy error:', err));
+proxy.on('error', err => logger.error('Gateway proxy error:', err));
 proxy.on('proxyRes', async (proxyRes, req, res) => {
   if( req.originalUrl.match(/^\/auth\/.*/) && proxyRes.headers['x-vessel-authorized-agent'] ) {
     await auth.handleLogin(res, proxyRes.headers['x-vessel-authorized-agent']);
@@ -77,6 +77,13 @@ app.use(/^\/api(\/.*|$)/, (req, res) => {
   });
 });
 
+app.use(/^\/indexer\/model\/.*/, (req, res) => {
+  proxy.web(req, res, {
+    target: config.gateway.serviceHosts.indexer+req.originalUrl.replace(/^\/indexer/, ''),
+    ignorePath: true
+  });
+});
+
 app.use(/^\/auth(\/.*|$)/, (req, res) => {
   proxy.web(req, res, {
     target: config.gateway.serviceHosts.auth+req.originalUrl,
@@ -86,7 +93,8 @@ app.use(/^\/auth(\/.*|$)/, (req, res) => {
 
 app.use(/^\/fuseki(\/.*|$)/, (req, res) => {
   proxy.web(req, res, {
-    target: 'http://'+config.fuseki.host+':'+config.fuseki.port+'/'+config.fuseki.database+'/query'
+    target: 'http://'+config.fuseki.host+':'+config.fuseki.port+'/'+config.fuseki.database+'/query',
+    ignorePath: true
   });
 });
 

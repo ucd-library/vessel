@@ -1,44 +1,55 @@
-const fuseki = require('../fuseki');
+const {fuseki, config, logger} = require('@ucd-lib/rp-node-utils');
 const merge = require('deepmerge');
-const config = require('../config');
 const clean = require('./clean');
-const typeMap = require('./queries/map');
+// const typeMap = require('./default-queries/map');
 const path = require('path');
 const fs = require('fs');
-// const SparqlParser = require('sparqljs').Parser;
-// const parser = new SparqlParser();
 
-class SparqlModel {
+class EsSparqlModel {
 
   constructor() {
     this.GRAPHS = config.fuseki.graphs;
 
     this.TYPES = {};
-    this.MODELS = typeMap;
+    this.MODELS = {};
     this.TEMPLATES = {};
 
+    this.readModels(path.join(__dirname, 'default-queries'));
+    // TODO: add check for global dir or env variable to points to additional model paths
+  }
+
+  readModels(dir) {
+    const mapPath = path.join(dir, 'map.js');
+    if( !fs.existsSync(mapPath) ) {
+      throw new Error('Unable to load models, no map.js file exists: '+dir);
+    }
+
+    let typeMap = require(mapPath);
+    this.MODELS = Object.assign(this.MODELS, typeMap);
+
     for( let model in typeMap ) {
-      let types = typeMap[model];
       if( typeof typeMap[model] === 'string' ) {
         typeMap[model] = [typeMap[model]];
       }
 
       typeMap[model].forEach(type => this.TYPES[type] = model);
 
-      this.TEMPLATES[model] = fs.readFileSync(path.join(__dirname, 'queries', model+'.tpl.rq'), 'utf-8');
+      try {
+        this.TEMPLATES[model] = fs.readFileSync(path.join(dir, model+'.tpl.rq'), 'utf-8');
+        logger.info(`Load es model ${model} for types`, typeMap[model]);
+      } catch(e) {
+        logger.error(`Unable to load es model ${model} for types`, typeMap[model], e);
+      }
     }
   }
 
   hasModel(type) {
-    if( this.MODELS[type] ) return true;
-    return this.TYPES[type] ? true : false;
+    if( this.MODELS[type] ) return type;
+    return this.TYPES[type] ? this.TYPES[type] : false;
   }
 
   getSparqlQuery(type, uri, graph='?graph') {
-    let model = type;
-    if( !this.MODELS[type] ) {
-      model = this.TYPES[type];
-    }
+    let model = this.hasModel(type);
     if( !model ) throw new Error('Unknown model or type: '+type);
 
     if( !graph.match(/^\?/) ) {
@@ -51,8 +62,9 @@ class SparqlModel {
   }
 
   async getModel(type, uri) {
-    if( !this.TYPES[type] ) {
-      throw new Error('Unknown model type: '+type);
+    let model = this.hasModel(type);
+    if( !model ) {
+      throw new Error('Unknown model type: '+model);
     }
 
     let result = {
@@ -73,7 +85,6 @@ class SparqlModel {
 
   async _getModelForGraph(graph, type, uri) {
     let sparqlQuery = this.getSparqlQuery(type, uri, graph);
-    // console.log(sparqlQuery);
     let response = await fuseki.query(sparqlQuery, 'application/ld+json');
     response = await response.json();
 
@@ -127,4 +138,4 @@ class SparqlModel {
 
 }
 
-module.exports = new SparqlModel();
+module.exports = new EsSparqlModel();

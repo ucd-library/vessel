@@ -4,9 +4,10 @@ const onError = require('./utils/error-handler');
 
 /**
  * @swagger
- * components/schemas:
+ * components:
+ *  schemas:
  *   ApiSearchDocument:
- *     description: Application search query
+ *     description: Application search query object
  *     properties:
  *       offset:
  *         type: integer
@@ -16,14 +17,164 @@ const onError = require('./utils/error-handler');
  *         type: integer
  *         description: max results to return
  *         default : 10
+ *       sort:
+ *         type: array
+ *         description: How to sort results, provide array of elastic search sort object; 
+ *            https://www.elastic.co/guide/en/elasticsearch/reference/current/sort-search-results.html
+ *         items:
+ *           type: object
+ *         default: ['_score']
+ *       filters:
+ *         type: object
+ *         $ref: '#/components/schemas/ApiSearchDocument_filters'
+ *       text:
+ *         type: string
+ *         description: text to use in search
+ *         default: ''
+ *       textFields:
+ *         type: array
+ *         items:
+ *           type: string
+ *         description: text indexes to apply 'text' query parameter to
+ *       facets:
+ *         type: object
+ *         oneOf:
+ *           - $ref: '#/components/schemas/ApiSearchDocument_facetsFacet'
+ *           - $ref: '#/components/schemas/ApiSearchDocument_facetsRange'
+ *
+ *   ApiSearchDocument_filters:
+ *     description: Query filters where key is the property to filter on and value is filter definition
+ *     type: object
+ *     oneOf:
+ *       - $ref: '#/components/schemas/ApiSearchDocument_filtersKeyword'
+ *       - $ref: '#/components/schemas/ApiSearchDocument_filtersRange'
+ *       - $ref: '#/components/schemas/ApiSearchDocument_filtersPrefix'
+ *     discriminator:
+ *       propertyName: type
+ *   
+ *   ApiSearchDocument_filtersKeyword:
+ *     description: Keyword filter where an exact match must be met.
+ *     properties:
+ *       type:
+ *         type : string
+ *         enum:
+ *           - keyword
+ *       op:
+ *         description: logic operation.  Should values be 'or' or 'and' matched
+ *         type: string
+ *         enum:
+ *            - and
+ *            - or
+ *       value:
+ *         description: values to match property to
+ *         type: array
+ *         items:
+ *           type: string
+ *     required:
+ *       - type
+ *       - op
+ *       - value
+ *
+ *   ApiSearchDocument_filtersRange:
+ *     description: Application search query object filters values parameters
+ *     properties:
+ *       type:
+ *         type : string
+ *         enum:
+ *           - range
+ *       value:
+ *         description: range value object
+ *         type: object
+ *         $ref: '#/components/schemas/ApiSearchDocument_filtersRangeValue'
+ *     required:
+ *       - type
+ *       - value
+ * 
+ *   ApiSearchDocument_filtersRangeValue:
+ *     description: Range filter value query object.  This should be a elastic search range query with one additional 
+ *        property 'includeNull'; https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-range-query.html
+ *     properties:
+ *       includeNull:
+ *         description: should null values be returned in results set
+ *         type: boolean
+ *         default: false
+ *     additionalProperties: true
+ * 
+ *   ApiSearchDocument_filtersPrefix:
+ *     description: Prefix search on property
+ *     properties:
+ *       type:
+ *         type : string
+ *         enum:
+ *           - prefix
+ *       value:
+ *         description: prefix match value
+ *         type: string
+ *     required:
+ *       - type
+ *       - value
+ * 
+ *   ApiSearchDocument_facetsFacet:
+ *     description: Return a facet as typical keyword match
+ *     properties:
+ *       type:
+ *         type: string
+ *         enum:
+ *           - facet
+ *     required:
+ *       - type
+ * 
+ *   ApiSearchDocument_facetsRange:
+ *     description: Return a facet as min/max range values.  used for range filters
+ *     properties:
+ *       type:
+ *         type: string
+ *         enum:
+ *           - range
+ *     required:
+ *       - type
+ * 
+ *   ApiSearchResult:
+ *     description: Application search query result object
+ *     properties:
+ *       total:
+ *          type: integer
+ *          description: total results for query (excludes limit/offset parameters)
+ *       offset:
+ *          type: integer
+ *          description: offset parameter used for this query
+ *       limit:
+ *          type: integer
+ *          description: limit parameter used for this query
+ *       searchDocument:
+ *          type: object
+ *          description: Query object used
+ *          $ref: '#/components/schemas/ApiSearchDocument'
+ *       results:
+ *          type: array
+ *          description: array of record objects
+ *          items:
+ *            type: object
+ *       aggregations:
+ *          type: object
+ *          $ref: '#/components/schemas/ApiSearchResult_aggregations'
+ *
+ *   ApiSearchResult_aggregations:
+ *     description: returned aggragations from provided facets is query object
+ *     properties:
+ *       facets:
+ *         type: object
+ *       ranges:
+ *         type: object
+ *
  */
 
 /**
  * @swagger
- * /search:
+ * /api/search:
  *   post:
  *     description: Application search query
- *     tags: [Elastic Search]
+ *     tags: [Search]
  *     requestBody:
  *       required: true
  *       description: Application search query
@@ -33,13 +184,14 @@ const onError = require('./utils/error-handler');
  *             type: object
  *             $ref : '#/components/schemas/ApiSearchDocument'
  * 
- *     produces:
- *       - application/json
  *     responses:
  *       200:
- *         description: Application search result object
- *         schema:
- *           type: object
+ *         description: Api search result object
+ *         content:
+ *           application/json:
+ *              schema:
+ *                type: object
+ *                $ref : '#/components/schemas/ApiSearchResult'
  */
 router.post('/', async (req, res) => {
   if( !req.body ) {
@@ -53,6 +205,29 @@ router.post('/', async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/search:
+ *   get:
+ *     description: Raw elastic search query
+ *     tags: [Search]
+ *     parameters:
+ *       - required: true
+ *         in: query
+ *         name: q
+ *         description: Stringified ApiSearchDocument Object
+ *         schema:
+ *           type: string
+ * 
+ *     responses:
+ *       200:
+ *         description: Api search result object
+ *         content:
+ *           application/json:
+ *              schema:
+ *                type: object
+ *                $ref : '#/components/schemas/ApiSearchResult'
+ */
 router.get('/', async (req, res) => {
   try {
     var q = JSON.parse(req.query.q || '{}');
@@ -62,28 +237,29 @@ router.get('/', async (req, res) => {
   }
 });
 
-  /**
-   * @swagger
-   * /search/es:
-   *   post:
-   *     description: Raw elastic search query
-   *     tags: [Elastic Search]
-   *     requestBody:
-   *       required: true
-   *       description: Elastic search query document body; https://www.elastic.co/guide/en/elasticsearch/reference/current/search-search.html#search-search-api-request-body
-   *       content:
-   *         application/json:
-   *           schema:
-   *             type: object
-   * 
-   *     produces:
-   *       - application/json
-   *     responses:
-   *       200:
-   *         description: Elastic search result object
-   *         schema:
-   *           type: object
-   */
+/**
+ * @swagger
+ * /api/search/es:
+ *   post:
+ *     description: Application search query
+ *     tags: [Search]
+ *     requestBody:
+ *       required: true
+ *       description: Application search query
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             $ref : '#/components/schemas/ApiSearchDocument'
+ * 
+ *     responses:
+ *       200:
+ *         description: ElasticSearch search result object
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ */
 router.post('/es', async (req, res) => {
   if( !req.body ) {
     return res.json({error: true, message: 'no body sent'});
@@ -96,28 +272,28 @@ router.post('/es', async (req, res) => {
   }
 });
 
- /**
-   * @swagger
-   * /search/es:
-   *   get:
-   *     description: Raw elastic search query
-   *     tags: [Elastic Search]
-   *     parameter:
-   *       - required: true
-   *         in: query
-   *         name: q
-   *         description: Stringified elastic search query document body; https://www.elastic.co/guide/en/elasticsearch/reference/current/search-search.html#search-search-api-request-body
-   *         schema:
-   *           type: string
-   * 
-   *     produces:
-   *       - application/json
-   *     responses:
-   *       200:
-   *         description: Elastic search result object
-   *         schema:
-   *           type: object
-   */
+/**
+ * @swagger
+ * /api/search/es:
+ *   get:
+ *     description: Raw elastic search query
+ *     tags: [Search]
+ *     parameters:
+ *       - required: true
+ *         in: query
+ *         name: q
+ *         description: Stringified elastic search query document body; https://www.elastic.co/guide/en/elasticsearch/reference/current/search-search.html#search-search-api-request-body
+ *         schema:
+ *           type: string
+ * 
+ *     responses:
+ *       200:
+ *         description: ElasticSearch search result object
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ */
 router.get('/es', async (req, res) => {
   try {
     var q = JSON.parse(req.query.q || '{}');

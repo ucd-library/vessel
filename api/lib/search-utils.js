@@ -106,8 +106,7 @@ class SearchModelUtils {
       esBody.sort = query.sort;
     } else {
       esBody.sort = [
-        '_score',
-        { 'name.raw' : 'asc' }
+        '_score'
       ]
     }
 

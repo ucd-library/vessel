@@ -27,15 +27,15 @@ class ElasticSearch {
    */
   async ensureIndex(alias, schemaName, schema) {
     let exits = await this.client.indices.existsAlias({name: alias});
-    console.log(`Alias exists: ${alias}`);
+    logger.info(`Alias exists: ${alias}`);
     if( exits ) return;
 
-    console.log(`No alias exists: ${alias}, creating...`);
+    logger.info(`No alias exists: ${alias}, creating...`);
 
     let indexName = await this.createIndex(alias, schemaName, schema);
     await this.client.indices.putAlias({index: indexName, name: alias});
     
-    console.log(`Index ${indexName} created pointing at alias ${alias}`);
+    logger.info(`Index ${indexName} created pointing at alias ${alias}`);
   }
 
   async insert(record) {

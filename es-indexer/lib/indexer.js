@@ -1,5 +1,6 @@
-const {kafka, redis, fuseki, sparql, logger, config} = require('@ucd-lib/rp-node-utils');
+const {kafka, redis, fuseki, logger, config} = require('@ucd-lib/rp-node-utils');
 const elasticSearch = require('./elastic-search');
+const esSparqlModel = require('./es-sparql-model');
 
 class Indexer {
 
@@ -102,12 +103,12 @@ class Indexer {
   }
 
   getKnownModelType(msg) {
-    if( msg.type && sparql.TYPES[msg.type] ) {
+    if( msg.type && esSparqlModel.hasModel(msg.type) ) {
       return msg.type;
     }
     if( msg.types ) {
       for( let type of msg.types ) {
-        if( sparql.TYPES[type] ) return type;
+        if( esSparqlModel.hasModel(type) ) return type;
       }
     }
 
@@ -138,7 +139,7 @@ class Indexer {
    */
   async insert(key, uri, id, msg, type) {
     logger.info(`From ${id} sent by ${msg.sender || 'unknown'} loading ${uri} with model ${type}. ${msg.force ? 'force=true' : ''}`);
-    let result = await sparql.getModel(type, uri);
+    let result = await esSparqlModel.getModel(type, uri);
     await elasticSearch.insert(result.model);
     logger.info('Updated', uri);
     await redis.client.del(key);
@@ -157,7 +158,7 @@ class Indexer {
 
     // if type was included in message and a known type,
     // just insert
-    if( msg.type && sparql.TYPES[msg.type] ) {
+    if( msg.type && esSparqlModel.hasModel(msg.type) ) {
       await this.insert(key, msg.subject, msg.msgId, msg, msg.type);
       return;
     }
@@ -176,7 +177,7 @@ class Indexer {
     let types = [...new Set(body.results.bindings.map(term => term.type.value))];
 
     for( let type of types ) {
-      if( !sparql.TYPES[type] ) continue;
+      if( !esSparqlModel.hasModel(type) ) continue;
       await this.insert(key, msg.subject, msg.msgId, msg, type);
       break;
     }

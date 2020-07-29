@@ -1,4 +1,4 @@
-
+// TODO: this is just bad.
 class CleanModel {
 
   run(model) {
