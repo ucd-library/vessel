@@ -11,7 +11,6 @@ router.get('/', (req, res) => {
   res.json(JSON.parse(fs.readFileSync(path.join(__dirname, 'swagger/spec.json'), 'utf-8')));
 });
 
-// router.use('/admin', middleware.admin, require('./admin'));
 router.use('/search', require('./search'));
 
 /**

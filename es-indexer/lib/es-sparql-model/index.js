@@ -89,7 +89,7 @@ class EsSparqlModel {
     response = await response.json();
 
     // TODO: this is wrong
-    uri = uri.replace('http://experts.library.ucdavis.edu/individual/', 'ucdrp:');
+    uri = uri.replace(config.fuseki.rootPrefix.uri, config.fuseki.rootPrefix.prefix+':');
     if( !response['@graph'] && response['@id'] ) {
       if( response['@context'] ) delete response['@context'];
       let tmp = {'@graph':[response]};

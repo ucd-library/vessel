@@ -57,7 +57,11 @@ module.exports = {
     host : env.FUSEKI_HOST || 'fuseki',
     port : env.FUSEKI_PORT || 3030,
     database : env.FUSEKI_DATABASE || 'vivo',
-    graphs
+    graphs,
+    rootPrefix : {
+      uri : 'http://experts.library.ucdavis.edu/individual/',
+      prefix: 'ucdrp'
+    }
   },
 
   redis : {
