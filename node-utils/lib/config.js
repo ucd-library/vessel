@@ -4,7 +4,7 @@ const {URL} = require('url');
 // order matters.  Top graphs take precident
 let graphs = env.FUSEKI_GRAPHS || '';
 if( graphs ) {
-  graphs = graph.split(';').map(g => g.trim());
+  graphs = graphs.split(';').map(g => g.trim());
 } else {
   graphs = [
     'https://experts.library.ucdavis.edu/individual',
