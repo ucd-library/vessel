@@ -29,6 +29,11 @@ class SearchModelUtils {
     if( esResult.hits ) {
       response.total = esResult.hits.total;
 
+      // TODO: did the API change?
+      if( typeof response.total === 'object' && response.total.value ) {
+        response.total = response.total.value;
+      }
+
       if( esResult.hits.hits ) {
         response.results = esResult.hits.hits
           .map(item => {
