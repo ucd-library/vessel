@@ -4,11 +4,11 @@ const {URL} = require('url');
 // order matters.  Top graphs take precident
 let graphs = env.FUSEKI_GRAPHS || '';
 if( graphs ) {
-  graphs = graphs.split(';').map(g => g.trim());
+  graphs = graphs.split(/\s+/).map(g => g.trim());
 } else {
   graphs = [
-    'https://experts.library.ucdavis.edu/individual',
-    'http://iam.ucdavis.edu/ns'
+    'http://iam.ucdavis.edu/',
+    'http://oapolicy.universityofcalifornia.edu/'
   ]
 }
 
