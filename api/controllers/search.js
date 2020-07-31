@@ -175,6 +175,13 @@ const onError = require('./utils/error-handler');
  *   post:
  *     description: Application search query
  *     tags: [Search]
+ *     parameters:
+ *       - required: false
+ *         in: query
+ *         name: debug
+ *         description: include elastic search body in response
+ *         schema:
+ *           type: string
  *     requestBody:
  *       required: true
  *       description: Application search query
@@ -199,7 +206,8 @@ router.post('/', async (req, res) => {
   }
 
   try {
-    res.json(await model.apiSearch(req.body));
+    let opts = {debug: req.query.debug === 'true'};
+    res.json(await model.apiSearch(req.body, opts));
   } catch(e) {
     onError(req, res, e, 'Error with search query');
   }
@@ -218,6 +226,12 @@ router.post('/', async (req, res) => {
  *         description: Stringified ApiSearchDocument Object
  *         schema:
  *           type: string
+ *       - required: false
+ *         in: query
+ *         name: debug
+ *         description: include elastic search body in response
+ *         schema:
+ *           type: string
  * 
  *     responses:
  *       200:
@@ -230,8 +244,9 @@ router.post('/', async (req, res) => {
  */
 router.get('/', async (req, res) => {
   try {
-    var q = JSON.parse(req.query.q || '{}');
-    res.json(await model.apiSearch(q));
+    let opts = {debug: req.query.debug === 'true'};
+    let q = JSON.parse(req.query.q || '{}');
+    res.json(await model.apiSearch(q, opts));
   } catch(e) {
     onError(req, res, e, 'Error with search query');
   }

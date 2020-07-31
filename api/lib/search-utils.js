@@ -291,4 +291,4 @@ class SearchModelUtils {
 
 }
 
-module.exports = SearchModelUtils;
+module.exports = new SearchModelUtils();

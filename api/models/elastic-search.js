@@ -62,17 +62,8 @@ class ElasticSearch {
    * @returns {Promise} resolves to search result
    */
   async apiSearch(searchDocument = {}, options = {noLimit: false, debug: false}) {
-    // right now, only allow search on root records
     if( !searchDocument.filters ) {
       searchDocument.filters = {};
-    }
-
-    if( !options.allRecords ) {
-      searchDocument.filters.isRootRecord = {
-        type : 'keyword',
-        op : 'and',
-        value : [true]
-      }
     }
 
     let esBody = utils.searchDocumentToEsBody(searchDocument, options.noLimit);

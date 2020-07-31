@@ -85,6 +85,17 @@
         "tags": [
           "Search"
         ],
+        "parameters": [
+          {
+            "required": false,
+            "in": "query",
+            "name": "debug",
+            "description": "include elastic search body in response",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "required": true,
           "description": "Application search query",
@@ -122,6 +133,15 @@
             "in": "query",
             "name": "q",
             "description": "Stringified ApiSearchDocument Object",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "required": false,
+            "in": "query",
+            "name": "debug",
+            "description": "include elastic search body in response",
             "schema": {
               "type": "string"
             }
