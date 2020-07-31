@@ -7,8 +7,8 @@ if( graphs ) {
   graphs = graphs.split(/\s+/).map(g => g.trim());
 } else {
   graphs = [
-    'https://experts.library.ucdavis.edu/individual',
-    'http://iam.ucdavis.edu/ns'
+    'http://iam.ucdavis.edu/',
+    'http://oapolicy.universityofcalifornia.edu/'
   ]
 }
 
