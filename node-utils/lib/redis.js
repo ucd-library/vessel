@@ -3,7 +3,7 @@ const util = require('util');
 const config = require('./config');
 const logger = require('./logger');
 
-const promisify = ['get', 'set', 'del', 'keys', 'expire', 'send_command'];
+const promisify = ['get', 'set', 'del', 'keys', 'expire', 'send_command', 'save'];
 
 class RedisClient {
 

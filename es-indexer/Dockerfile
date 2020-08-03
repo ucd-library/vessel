@@ -12,6 +12,5 @@ RUN npm install --production
 COPY lib lib
 COPY controllers controllers
 COPY index.js .
-COPY reindex.js .
 
 CMD node index.js

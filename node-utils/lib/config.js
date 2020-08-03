@@ -70,11 +70,13 @@ module.exports = {
     prefixes : {
       debouncer : 'debouncer-',
       indexer : 'indexer-',
+      deleteIndex : 'indexercmd-delete-index-',
       session : 'session-',
       roles : 'role-'
     },
     keys : {
-      serverSecret : 'server-secret'
+      serverSecret : 'server-secret',
+      setAlias : 'indexercmd-set-alias'
     }
   },
 

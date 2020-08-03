@@ -12,6 +12,7 @@ PREFIX ucdrp: <http://experts.library.ucdavis.edu/individual/>
 
 CONSTRUCT {
   ?subject rdf:type ?type .
+  ?subject rdf:type "publication" .
 
   ?subject rdfs:label ?label .
   ?subject bibo:abstract ?abstract .

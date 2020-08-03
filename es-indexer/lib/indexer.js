@@ -1,6 +1,7 @@
 const {kafka, redis, fuseki, logger, config} = require('@ucd-lib/rp-node-utils');
 const elasticSearch = require('./elastic-search');
 const esSparqlModel = require('./es-sparql-model');
+const reindex = require('./reindex');
 
 class Indexer {
 
@@ -68,6 +69,13 @@ class Indexer {
       return;
     }
 
+    // if the msg has the cmd attribute, it's not a index insert
+    // handle command and exit
+    if( await this.handleCmdMsg(payload) ) {
+      this.resetMessageDelayHandler();
+      return;
+    }
+
     // unlike the debouncer, lookup subject types 
     // we will only debounce known types
     if( !payload.type || payload.types ) {
@@ -115,6 +123,41 @@ class Indexer {
     return null;
   }
 
+  /**
+   * @method handleCmdMsg
+   * @description handle the special kafka messages with the 'cmd' flag.  These are mostly
+   * used for creating new indexes (with a new schema) and swapping the alias pointer when
+   * complete
+   * 
+   * @param {Object} payload kafka message payload
+   * 
+   * @returns {Boolean} 
+   */
+  async handleCmdMsg(payload) {
+    if( !payload.cmd ) return false;
+
+    if( payload.cmd === reindex.COMMANDS.CREATE_INDEX ) {
+      logger.info(`Creating new index ${payload.index}`);
+      await elasticSearch.createIndex(config.elasticSearch.indexAlias, payload.index);
+
+    } else if( payload.cmd === reindex.COMMANDS.DELETE_INDEX ) {
+      // set for later, needs to be done after indexing
+      // There might be more than one, so this is a prefix
+      await redis.client.set(config.redis.prefixes.deleteIndex+payload.index, JSON.stringify(payload));
+
+    } else if( payload.cmd === reindex.COMMANDS.SET_ALIAS ) {
+      // set for later, needs to be done after indexing
+      await redis.client.set(config.redis.keys.setAlias, JSON.stringify(payload));
+    }
+
+    return true;
+  }
+
+  /**
+   * @method resetMessageDelayHandler
+   * @description every time a message comes in the kafka queue we reset the timer.
+   * When the timer fires we start the actual es update.
+   */
   resetMessageDelayHandler() {
     if( this.lastMessageTimer ) {
       clearTimeout(this.lastMessageTimer);
@@ -138,10 +181,10 @@ class Indexer {
    * @param {String} type rdf type of model
    */
   async insert(key, uri, id, msg, type) {
-    logger.info(`From ${id} sent by ${msg.sender || 'unknown'} loading ${uri} with model ${type}. ${msg.force ? 'force=true' : ''}`);
+    logger.info(`From ${id} sent by ${msg.sender || 'unknown'} loading ${uri} with model ${esSparqlModel.hasModel(type)}. ${msg.force ? 'force=true' : ''}`);
     let result = await esSparqlModel.getModel(type, uri);
-    await elasticSearch.insert(result.model);
-    logger.info('Updated', uri);
+    await elasticSearch.insert(result.model, msg.index);
+    logger.info(`Updated ${uri} into ${msg.index || 'default alias'}`);
     await redis.client.del(key);
   }
 
@@ -183,7 +226,10 @@ class Indexer {
     }
   }
 
-
+  /**
+   * @methd handleMessages
+   * @description loop through all redis keys for indexer
+   */
   async handleMessages() {
     if( !this.run ) return;
 
@@ -202,8 +248,46 @@ class Indexer {
       if( !this.run || res.cursor == '0' ) break;
       options.cursor = res.cursor;
     }
+
+    // now that we have finished indexing, check for commands
+    await this.setAliasCmd();
+    await this.deleteIndexCmd();
+
+    await redis.client.save();
   }
 
+  async setAliasCmd() {
+    let payload;
+    try {
+      payload = await redis.client.get(config.redis.keys.setAlias);
+      if( !payload ) return;
+      payload = JSON.parse(payload);
+      logger.info(`Setting alias ${config.elasticSearch.indexAlias} to ${payload.index}`);
+      await elasticSearch.client.indices.putAlias({index: payload.index, name: config.elasticSearch.indexAlias});
+      await redis.client.del(config.redis.keys.setAlias);
+    } catch(e) {
+      logger.error('Failed to run set-index', e);
+    }
+  }
+
+  async deleteIndexCmd() {
+    let payload;
+    try {
+      payload = await redis.client.keys(config.redis.prefixes.deleteIndex+'*');
+      if( !payload ) return;
+      if( !payload.length ) return;
+
+      for( let key of payload ) {
+        let index = key.replace(config.redis.prefixes.deleteIndex, '');
+        logger.info(`Removing index ${index}`);
+        await elasticSearch.client.indices.delete({index});
+        await redis.client.del(key);
+      }
+
+    } catch(e) {
+      logger.error('Failed to run delete-index', payload, e);
+    }
+  }
 
 }
 
