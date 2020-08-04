@@ -112,6 +112,7 @@ module.exports = {
 
   gateway : {
     port : 3000,
+    allowedPaths : env.ALLOWED_PATHS ? ALLOWED_PATHS.split(/\s+/).map(g => g.trim()) : [],
     serviceHosts : {
       auth : env.AUTH_SERVICE_HOST || 'http://auth:3000',
       client : env.CLIENT_SERVICE_HOST || 'http://client:3000',

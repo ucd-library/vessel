@@ -32,7 +32,10 @@ proxy.on('proxyRes', async (proxyRes, req, res) => {
   if( req.originalUrl.match(/^\/auth\/.*/) && proxyRes.headers['x-vessel-authorized-agent'] ) {
     await auth.handleLogin(res, proxyRes.headers['x-vessel-authorized-agent']);
   } else if( req.originalUrl.match(/^\/auth\/logout/) ) {
-    auth.handleLogout(res);
+    console.log('here');
+    auth.handleLogout(req, res);
+    res.redirect('/');
+    return;
   }
 
   for( let key in proxyRes.headers ) {

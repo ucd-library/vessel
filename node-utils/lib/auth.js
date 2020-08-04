@@ -94,10 +94,10 @@ class Auth {
     );
   }
 
-  handleLogout(res) {
+  handleLogout(req, res) {
     res.clearCookie(config.jwt.cookieName,  {
       httpOnly: true,
-      sameSite : true
+      sameSite : 'lax'
     });
   }
 

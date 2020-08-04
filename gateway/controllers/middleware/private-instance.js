@@ -1,10 +1,22 @@
-const {config, auth} = require('@ucd-lib/rp-node-utils');
+const {config, auth, logger} = require('@ucd-lib/rp-node-utils');
+
+const ALLOWED_PATHS = config.gateway.allowedPaths.map(path => {
+  if( !path.match(/^\^/) ) path = '^'+path;
+  return new RegExp(path);
+});
+ALLOWED_PATHS.push(/^\/auth\/.*/);
+
+if( config.server.private ) {
+  logger.info(`Server is set to private with the following paths open to public: `, ALLOWED_PATHS);
+}
 
 module.exports = async (req, res, next) => {
   if( config.server.private === false ) return next();
 
-  if( req.originalUrl.match(/^\/auth\/.*/) ) {
-    return next();
+  for( let pathRe in ALLOWED_PATHS ) {
+    if( req.originalUrl.match(pathRe) ) {
+      return next();
+    }
   }
 
   let token = auth.getTokenFromRequest(req);
