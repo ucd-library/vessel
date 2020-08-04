@@ -13,7 +13,7 @@ if( config.server.private ) {
 module.exports = async (req, res, next) => {
   if( config.server.private === false ) return next();
 
-  for( let pathRe in ALLOWED_PATHS ) {
+  for( let pathRe of ALLOWED_PATHS ) {
     if( req.originalUrl.match(pathRe) ) {
       return next();
     }
