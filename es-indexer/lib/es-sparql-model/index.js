@@ -68,6 +68,8 @@ class EsSparqlModel {
     }
 
     let result = {
+      model : type,
+      database : config.fuseki.database,
       graphs : {},
       model : {}
     }

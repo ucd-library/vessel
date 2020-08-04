@@ -25,13 +25,45 @@
       "type" : "keyword"
     },
 
+    "Authorship.identifiers.@id" : {
+      "type" : "keyword"
+    },
+
     "doi" : {
       "type" : "keyword"
     },
 
-    "hasContactInfo" : {
-      "type": "object",
-      "enabled": false
+    "hasContactInfo.familyName" : {
+      "type" : "keyword",
+      "fields": {
+        "text" : {
+          "type" : "text",
+          "analyzer": "autocomplete", 
+          "search_analyzer": "autocomplete_search"
+        }
+      }
+    },
+
+    "hasContactInfo.giveName" : {
+      "type" : "keyword",
+      "fields": {
+        "text" : {
+          "type" : "text",
+          "analyzer": "autocomplete", 
+          "search_analyzer": "autocomplete_search"
+        }
+      }
+    },
+
+    "hasContactInfo.title" : {
+      "type" : "keyword",
+      "fields": {
+        "text" : {
+          "type" : "text",
+          "analyzer": "autocomplete", 
+          "search_analyzer": "autocomplete_search"
+        }
+      }
     },
 
     "hasSubjectArea.label" : {

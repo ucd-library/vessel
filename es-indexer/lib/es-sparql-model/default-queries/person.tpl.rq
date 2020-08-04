@@ -12,7 +12,7 @@ PREFIX ucdrp: <http://experts.library.ucdavis.edu/individual/>
 
 CONSTRUCT {
   ?subject rdf:type ?type .
-  ?subject rdf:type "person" .
+  ?subject rdf:type ucdrp:person .
 
   ?subject rdfs:label ?label .
   ?subject vivo:scopusId ?scopusId .

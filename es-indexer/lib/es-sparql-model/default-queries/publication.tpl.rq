@@ -12,7 +12,7 @@ PREFIX ucdrp: <http://experts.library.ucdavis.edu/individual/>
 
 CONSTRUCT {
   ?subject rdf:type ?type .
-  ?subject rdf:type "publication" .
+  ?subject rdf:type ucdrp:publication .
 
   ?subject rdfs:label ?label .
   ?subject bibo:abstract ?abstract .
@@ -30,7 +30,9 @@ CONSTRUCT {
   ?authorVcardName vcard:middleName ?authorMiddleName .
   ?authorVcardName vcard:familyName ?authorFamilyName .
   ?author vivo:orcid ?authorOrcid .
-  ?author rdfs:label ?authorLabel .
+  # ?author rdfs:label ?authorLabel .
+  ?author vivo:identifiers ?authorPerson .
+  ?authorPerson rdf:type ?authorPersonType .
 
   ?subject obo:hasContactInfo ?hasContactInfo .
   ?hasContactInfo vcard:hasURL ?contactInfoHasUrl .
@@ -75,9 +77,9 @@ CONSTRUCT {
       }
       OPTIONAL{ 
         ?author vivo:relates ?authorPerson .
-        ?authorPerson rdf:type foaf:Person .
+        ?authorPerson rdf:type ?authorPersonType .
         OPTIONAL { ?authorPerson vivo:orcidid ?authorOrcid . }
-        OPTIONAL { ?authorPerson rdfs:label ?authorLabel . }
+        # OPTIONAL { ?authorPerson rdfs:label ?authorLabel . }
       }
     }
 
@@ -111,6 +113,6 @@ CONSTRUCT {
       OPTIONAL { ?publicationDate vivo:dateTime ?dateTime . }
     }
 
-    FILTER(?subject = <"{{uri}}">)
+    FILTER(?subject = <"{{uri}}"> && ?authorPersonType IN (vcard:Individual, vivo:FacultyMember, foaf:Person))
   }
 }

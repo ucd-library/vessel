@@ -82,7 +82,9 @@ class Reindex {
         await this._indexType(key);
       }
     } else {
-      await this._indexType(type);
+      for( let type of esSparqlModel.MODELS[opts.type] ) {
+        await this._indexType(type);
+      }
     }
 
     if( this.state.newIndex ) {
