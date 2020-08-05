@@ -24,7 +24,7 @@ VESSEL is combined with:
   - Redis
   - Client web application: https://github.com/ucd-library/rp-ucd-client
 
-In the https://github.com/ucd-library/rp-ucd-deployment library to create the Researcher Profiles application.
+... In the https://github.com/ucd-library/rp-ucd-deployment library to create the Researcher Profiles application.  Please see the README file in [rp-ucd-deployment](https://github.com/ucd-library/rp-ucd-deployment) for full implementation documentation.
 
 # Development
 
