@@ -1,6 +1,6 @@
 const {config, auth, logger} = require('@ucd-lib/rp-node-utils');
 
-const ALLOWED_PATHS = config.gateway.allowedPaths.map(path => {
+const ALLOWED_PATHS = config.server.allowedPaths.map(path => {
   if( !path.match(/^\^/) ) path = '^'+path;
   return new RegExp(path);
 });
@@ -30,10 +30,16 @@ module.exports = async (req, res, next) => {
     return res.status(401).json({error: true, message: 'Unauthorized'});
   }
 
-  if( !auth.isAdmin(req.jwt) ) {
-    res.status(403).json({error: true, message: 'Forbidden'});
-    return;
+  if( config.server.allowedRoles.includes('all') ) {
+    return next();
   }
 
-  next();
+  let roles = (req.jwt || {}).roles || [];
+  for( let role of roles ) {
+    if( config.server.allowedRoles.includes(role) ) {
+      return next();
+    }
+  }
+
+  res.status(403).json({error: true, message: 'Forbidden'});
 }

@@ -7,6 +7,10 @@
       "type" : "keyword"
     },
 
+    "uri" : {
+      "type" : "keyword"
+    },
+
     "@type" : {
       "type" : "keyword"
     },

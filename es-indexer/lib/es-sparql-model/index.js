@@ -82,6 +82,9 @@ class EsSparqlModel {
     }
 
     clean.run(result.model);
+    result.model.uri = uri;
+    result.model.indexerTimestamp = Date.now();
+
     return result;
   }
 

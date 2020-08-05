@@ -16,6 +16,8 @@ module.exports = {
   server : {
     url : env.SERVER_URL || 'http://localhost:8080',
     private : env.PRIVATE_SERVER ? env.PRIVATE_SERVER.trim().toLowerCase() === 'true' : true,
+    allowedPaths : env.ALLOWED_PATHS ? env.ALLOWED_PATHS.split(/\s+/).map(g => g.trim()) : [],
+    allowedRoles : env.ALLOWED_ROLES ? env.ALLOWED_ROLES.split(/\s+/).map(g => g.trim()) : ['admin'],
     env : env.SERVER_ENV || 'dev'
   },
 
@@ -112,7 +114,6 @@ module.exports = {
 
   gateway : {
     port : 3000,
-    allowedPaths : env.ALLOWED_PATHS ? env.ALLOWED_PATHS.split(/\s+/).map(g => g.trim()) : [],
     serviceHosts : {
       auth : env.AUTH_SERVICE_HOST || 'http://auth:3000',
       client : env.CLIENT_SERVICE_HOST || 'http://client:3000',
