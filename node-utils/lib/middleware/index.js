@@ -1,3 +1,4 @@
 module.exports = {
-  admin : require('./admin')
+  admin : require('./admin'),
+  httpLogging : require('./http-logging')
 }

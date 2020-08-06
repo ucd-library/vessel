@@ -1,5 +1,11 @@
-const N3 = require('n3');
-
+/**
+ * @function get-changes
+ * @description extract all unique subjects and objects from parsed rdf
+ * 
+ * @param {Object} quads N3-quads object from n3 library
+ * 
+ * @returns {Array}
+ */
 module.exports = quads => {
   let subjects = {};
 

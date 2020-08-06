@@ -18,6 +18,15 @@ class Debouncer {
     })
   }
 
+  /**
+   * @method connect
+   * @description connect to redis and kafka, ensure kafka topcs, query for kafka watermarks,
+   * query for kafka committed offset, start listening to kafka stream from last committed offset.
+   * Finally, after a small delay, check to see if any messages are stashed in redis that were 
+   * never executed
+   * 
+   * @returns {Promise}
+   */
   async connect() {
     await redis.connect();
 
@@ -43,7 +52,7 @@ class Debouncer {
       // assign to front of committed offset
       await this.kafkaConsumer.assign(topics);
     } catch(e) {
-      console.error('kafka init error', e);
+      logger.error('kafka init error', e);
     }
 
     this.listen();
@@ -53,14 +62,27 @@ class Debouncer {
     }, 1000);
   }
 
+  /**
+   * @method listen
+   * @description Start consuming messages from kafka, register onMessage as the handler.
+   */
   async listen() {
     try {
       await this.kafkaConsumer.consume(msg => this.onMessage(msg));
     } catch(e) {
-      console.error('kafka consume error', e);
+      logger.error('kafka consume error', e);
     }
   }
 
+  /**
+   * @method onMessage
+   * @description handle a kafka message.  Messages should be the raw patch from the
+   * kafka-fuseki-connector extension.  This method parses the rdf patch and makes a 
+   * unqiue list of all subject and object uris, places the uris in redis, resets
+   * the message handler timeout (the main part of the debouncer).
+   * 
+   * @param {Object} msg kafka message
+   */
   async onMessage(msg) {
     this.run = false;
 
@@ -82,6 +104,12 @@ class Debouncer {
     this.resetMessageDelayHandler();
   }
 
+  /**
+   * @method resetMessageDelayHandler
+   * @description reset the timer for the main handleMessages loop. Defaults to 5s.
+   * So there must be no messages for 5s before messages are handled.  A new message
+   * in the handleMessage loop will break the loop and reset the timer.
+   */
   resetMessageDelayHandler() {
     if( this.lastMessageTimer ) {
       clearTimeout(this.lastMessageTimer);
@@ -94,6 +122,16 @@ class Debouncer {
     }, config.debouncer.handleMessageDelay * 1000);
   }
 
+  /**
+   * @method sendKey
+   * @description Called from the main handleMessages loop. Handles the redis key
+   * message by parsing out the subject, sending the subject to the kafka indexer topic
+   * and finally deleting the redis key.
+   * 
+   * @param {String} key redis key 
+   * 
+   * @return {Promise}
+   */
   async sendKey(key) {
     logger.info('Sending subject to indexer: ', key.replace(config.redis.prefixes.debouncer, ''));
     let received = await redis.client.get(key);
@@ -111,6 +149,14 @@ class Debouncer {
     await redis.client.del(key);
   }
 
+  /**
+   * @method handleMessages
+   * @description Called when no message has come in for 5s. Scans redis for
+   * the debouncer prefix keys, keys are handled in sendKey() method.  Main loop
+   * breaks if the this.run flag is set to false (see onMessage)
+   * 
+   * @returns {Promise}.
+   */
   async handleMessages() {
     if( !this.run ) return;
 
@@ -119,7 +165,8 @@ class Debouncer {
       pattern : config.redis.prefixes.debouncer+'*',
       count : '1'
     };
-    while( 1 ) {
+
+    while( 1 ) { // Yes!
       let res = await redis.scan(options);
       for( let key of res.keys ) {
         await this.sendKey(key);

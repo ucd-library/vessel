@@ -35,23 +35,26 @@ class Reindex {
    * @param {Object} opts 
    * @param {String} opts.type Es model type to reindex.  ex: person, organization, etc. If not provided, 
    * all types will be reindexed
-   * @param {Boolean} opts.updateSchema
+   * @param {Boolean} opts.updateSchema rebuild entire schema, replacing current when complete
    */
   async run(opts={}) {
     if( this.state.state !== this.STATES.STOPPED ) return;
 
+    // keep track of our current state
     this.state = {
       type : opts.type || 'all',
       state : this.STATES.RUNNING,
       newIndex : opts.updateSchema ? `${config.elasticSearch.indexAlias}-${Date.now()}` : null
     }
 
+    // make sure we have created the producer
     if( !this.kafkaProducer ) {
       this.kafkaProducer = new kafka.Producer({
         'metadata.broker.list': config.kafka.host+':'+config.kafka.port
       })
     }
     
+    // connect to kafka and ensure index topic
     await this.kafkaProducer.connect();
     await kafka.utils.ensureTopic({
       topic : config.kafka.topics.index,
@@ -59,6 +62,8 @@ class Reindex {
       replication_factor: 1
     }, {'metadata.broker.list': config.kafka.host+':'+config.kafka.port});
 
+    // if we are creating a new index (via update schema opt) find current indexes and sav
+    // send command to create the new index that subjects will be inserted into
     let currentIndexes = [];
     if( this.state.newIndex ) {
       // store for removal message below
@@ -76,18 +81,20 @@ class Reindex {
       });
     }
 
-    if( !opts.type ) {
+    if( !opts.type ) { // reindex all types
       logger.info('Reindexing all types: ', Object.keys(esSparqlModel.TYPES));
       for( let key in esSparqlModel.TYPES ) {
         await this._indexType(key);
       }
-    } else {
+    } else { // reindex single type
       for( let type of esSparqlModel.MODELS[opts.type] ) {
         await this._indexType(type);
       }
     }
 
     if( this.state.newIndex ) {
+
+      // if we are rebuilding the entire schema, set the alias to our new index
       logger.info(`Sending ${this.COMMANDS.SET_ALIAS} ${this.state.newIndex} command to index topic`);
       this.kafkaProducer.produce({
         topic : config.kafka.topics.index,
@@ -99,6 +106,7 @@ class Reindex {
         key : 'reindexer'
       });
 
+      // delete the prior indexes, this is just cleanup
       for( let index of currentIndexes ) {
         logger.info(`Sending ${this.COMMANDS.DELETE_INDEX} ${index.index} command to index topic`);
         this.kafkaProducer.produce({
@@ -157,6 +165,14 @@ class Reindex {
     }
   }
 
+  /**
+   * @method getSubjectsForType
+   * @description get all subjects for a certain types.  Allows for pagination
+   * 
+   * @param {String} type rdf type
+   * @param {Number} page 
+   * @param {Number} count 
+   */
   async getSubjectsForType(type, page, count=100) {
     let response = await fuseki.query(`PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
     SELECT ?subject WHERE {

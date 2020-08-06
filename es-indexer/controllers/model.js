@@ -1,6 +1,9 @@
 const router = require('express').Router();
 const model = require('../lib/es-sparql-model');
 
+/**
+ * Get an on-the-fly es model
+ */
 router.get('/:type/:uri', async (req, res) => {
   try {
     let type = decodeURIComponent(req.params.type);

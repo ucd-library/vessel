@@ -1,5 +1,13 @@
 const auth = require('../auth');
 
+/**
+ * @function admin
+ * @description express middleware for only allowing admin access to endpoint
+ * 
+ * @param {Object} req 
+ * @param {Object} res 
+ * @param {Function} next 
+ */
 module.exports = async (req, res, next) => {
   let token = auth.getTokenFromRequest(req);
   if( !token ) return res.status(401).json({error: true, message: 'Unauthorized'});

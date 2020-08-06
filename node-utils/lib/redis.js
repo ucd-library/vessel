@@ -3,6 +3,7 @@ const util = require('util');
 const config = require('./config');
 const logger = require('./logger');
 
+// commands we want to wrap in promises, feel free to add to this list
 const promisify = ['get', 'set', 'del', 'keys', 'expire', 'send_command', 'save'];
 
 class RedisClient {
@@ -30,10 +31,20 @@ class RedisClient {
     });
   }
 
+  /**
+   * @method connect
+   * @description create/connect redis client
+   */
   connect() {
     if( !this.client ) this._initClient();
   }
 
+  /**
+   * @method disconnect
+   * @description disconnect redis client
+   * 
+   * @returns {Promise}
+   */
   disconnect() {
     return new Promise((resolve, reject) => {
       this.client.quit(() => resolve());
@@ -42,7 +53,7 @@ class RedisClient {
 
   /**
    * @method scan
-   * @description https://redis.io/commands/scan
+   * @description wrapper for https://redis.io/commands/scan
    * 
    * @param {Object} options 
    * @param {Number} options.curser

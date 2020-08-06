@@ -10,6 +10,16 @@ class Fuseki {
     this.database = config.fuseki.database;
   }
 
+  /**
+   * @method query
+   * @description send SPARQL query to fuseki.  Can provide optional response
+   * type but defaults to 'application/sparql-results+json'
+   * 
+   * @param {String} query SPARQL statement
+   * @param {String} responseType Optional.  response mime type, defaults to application/sparql-results+json
+   * 
+   * @returns {Promise} resolves to fetch response object
+   */
   async query(query, responseType) {
     return fetch(this.url+'/'+this.database, {
       method : 'POST',
@@ -21,17 +31,33 @@ class Fuseki {
     });
   }
 
-  async update(query) {
+  /**
+   * @method update
+   * @description send SPARQL update to fuseki.
+   * 
+   * @param {String} update SPARQL statement
+   * 
+   * @returns {Promise} resolves to fetch response object
+   */
+  async update(update) {
     return fetch(this.url+'/'+this.database, {
       method : 'POST',
       headers : this._setAuthorization({
         accept : 'application/sparql-results+json,*/*;q=0.9',
         'Content-Type': 'application/sparql-update'
       }),
-      body : query
+      body : update
     });
   }
 
+  /**
+   * @method _setAuthorization
+   * @description helper method for setting authorization header in fuseki query
+   * 
+   * @param {Object} headers 
+   * 
+   * @returns {Object}
+   */
   _setAuthorization(headers) {
     if( this.username || this.password ) {
       headers.authorization = 'Basic '+Buffer.from(this.username+':'+this.password).toString('base64');

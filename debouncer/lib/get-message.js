@@ -2,6 +2,7 @@ const {kafka, config} = require('@ucd-lib/rp-node-utils');
 
 let offset = 836;
 
+// sample script for dumping a message from a specific offset
 (async function() {
   this.kafkaConsumer = new kafka.Consumer({
     'group.id': 'get-message-cmd',

@@ -9,6 +9,13 @@ class ElasticSearch {
     this.connect();
   }
 
+  /**
+   * @method connect
+   * @description setup elastic search connection using the main elastic search library
+   * and set client for this elastic search wrapper model.
+   * 
+   * @returns {Promise}
+   */
   async connect() {
     await elasticSearch.connect();
     this.client = elasticSearch.client;

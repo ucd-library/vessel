@@ -3,6 +3,11 @@ const elasticSearch = require('./elastic-search');
 const esSparqlModel = require('./es-sparql-model');
 const reindex = require('./reindex');
 
+/**
+ * @class Indexer
+ * @description main indexer that reads kafka stream, debounces uris, queries fuseki and
+ * finally inserts model into elastic search
+ */
 class Indexer {
 
   constructor() {
@@ -16,6 +21,13 @@ class Indexer {
     })
   }
 
+  /**
+   * @method connect
+   * @description connect to redis, kafka and elastic search. Ensure kafka topic.  Query 
+   * for kafka watermarks and last commited offset.  Register consumer to last committed 
+   * offset and start reading kafka stream.  After a small delay, check to see if any messages 
+   * are stashed in redis that were never executed
+   */
   async connect() {
     await redis.connect();
     await elasticSearch.connect();
@@ -46,6 +58,10 @@ class Indexer {
     }, 1000);
   }
 
+  /**
+   * @method listen
+   * @description Start consuming messages from kafka, register onMessage as the handler.
+   */
   async listen() {
     try {
       await this.kafkaConsumer.consume(msg => this.onMessage(msg));
@@ -54,6 +70,22 @@ class Indexer {
     }
   }
 
+  /**
+   * @method onMessage
+   * @description handle a kafka message.  Messages should subject index requests or index
+   * commands. Resets the message handler timeout (the main part of the debouncer).
+   * 
+   * Subject index request message:
+   * {
+   *   subject: [uri],
+   *   sender: [label] optional,
+   *   force: [boolean] optional,
+   *   type: [uri] optional
+   * }
+   * 
+   * 
+   * @param {Object} msg kafka message
+   */
   async onMessage(msg) {
     this.run = false;
 
@@ -96,7 +128,7 @@ class Indexer {
     let modelType = this.getKnownModelType(payload);
     if( !modelType ) {
       logger.info(`Ignoring message ${payload.msgId} with subject ${payload.subject} sent by ${payload.sender || 'unknown'}: Type has no model ${payload.type} ${JSON.stringify(payload.types || [])}`);
-      return; // ignore. TODO: do we want to log this?
+      return;
     }
 
     // If force flag, directly index.  Don't debounce.
@@ -110,6 +142,14 @@ class Indexer {
     this.resetMessageDelayHandler();
   }
 
+  /**
+   * @method getKnownModelType
+   * @description see if type provided in message is a known type
+   * 
+   * @param {Object} msg 
+   * 
+   * @returns {String|null}
+   */
   getKnownModelType(msg) {
     if( msg.type && esSparqlModel.hasModel(msg.type) ) {
       return msg.type;
@@ -128,6 +168,11 @@ class Indexer {
    * @description handle the special kafka messages with the 'cmd' flag.  These are mostly
    * used for creating new indexes (with a new schema) and swapping the alias pointer when
    * complete
+   * 
+   * {
+   *   cmd : [String]
+   *   index : [String]
+   * }
    * 
    * @param {Object} payload kafka message payload
    * 
@@ -228,7 +273,8 @@ class Indexer {
 
   /**
    * @methd handleMessages
-   * @description loop through all redis keys for indexer
+   * @description Called when no message has come in for 5s. Scans redis for
+   * the indexer prefix keys
    */
   async handleMessages() {
     if( !this.run ) return;
@@ -256,6 +302,10 @@ class Indexer {
     await redis.client.save();
   }
 
+  /**
+   * @method setAliasCmd
+   * @description Run the set-alias command
+   */
   async setAliasCmd() {
     let payload;
     try {
@@ -270,6 +320,10 @@ class Indexer {
     }
   }
 
+  /**
+   * @method deleteIndexCmd
+   * @description run the delete-index command
+   */
   async deleteIndexCmd() {
     let payload;
     try {

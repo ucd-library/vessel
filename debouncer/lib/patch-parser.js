@@ -1,6 +1,15 @@
 const N3 = require('n3');
 const parser = new N3.Parser({format: 'N-Quads'});
 
+/**
+ * @function patch-parser
+ * @description parse rdf-path message, which is a little bit of syntactic sugar
+ * around the N-Quads format so N3 node library is used.
+ * 
+ * @param {String} patch raw patch from kafka-fuseki-connector
+ * 
+ * @returns {Object}
+ */
 module.exports = (patch) => {
   let lines = [];
 

@@ -1,5 +1,6 @@
 const {kafka, elasticSearch, config} = require('@ucd-lib/rp-node-utils');
 
+// WIP for indexer analysis
 class IndexStats {
 
   constructor() {

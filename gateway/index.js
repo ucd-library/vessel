@@ -1,4 +1,4 @@
-const {logger, config, auth} = require('@ucd-lib/rp-node-utils')
+const {logger, config, auth} = require('@ucd-lib/rp-node-utils');
 const express = require('express');
 const app = express();
 const compression = require('compression');
@@ -13,7 +13,8 @@ const cors = require('cors')({
 
 // cors wrapper control
 function enableCors(req, res, next) {
-  // set cors
+  
+  // set cors for /api requests
   let enable = false;
   if( req.originalUrl.match(/^\/api(\/.*|$)/) && !req.originalUrl.match(/^\/api\/admin.*/) ) {
     enable = true;
@@ -23,25 +24,37 @@ function enableCors(req, res, next) {
   else next();
 }
 
+// setup main proxy server
 const proxy = httpProxy.createProxyServer({
   xfwd: true,
   selfHandleResponse: true
 });
 proxy.on('error', err => logger.error('Gateway proxy error:', err));
 proxy.on('proxyRes', async (proxyRes, req, res) => {
+
+  // if this is a response from the authorization service, check for authorized agent header
   if( req.originalUrl.match(/^\/auth\/.*/) && proxyRes.headers['x-vessel-authorized-agent'] ) {
+    // mint jwt token and set in cookie
     await auth.handleLogin(res, proxyRes.headers['x-vessel-authorized-agent']);
+
+  // if this is a logout request, handle here (destroy cookie)
   } else if( req.originalUrl.match(/^\/auth\/logout/) ) {
-    console.log('here');
     auth.handleLogout(req, res);
-    res.redirect('/');
+    res.redirect(config.authService.logoutRedirect);
     return;
   }
 
+  // make sure we set all headers from response
+  // since we are handling reponses manually in this function
+  // we have to set headers ourselves
   for( let key in proxyRes.headers ) {
     res.setHeader(key, proxyRes.headers[key]);
   }
+
+  // set response status code
   res.status(proxyRes.statusCode);
+
+  // pipe body to original express response
   proxyRes.pipe(res);
 });
 
@@ -101,7 +114,7 @@ app.use(/^\/fuseki(\/.*|$)/, (req, res) => {
   });
 });
 
-// send all other requests to client
+// send all other requests to defined above to client
 app.use(/.*/, (req, res) => {
   proxy.web(req, res, {
     target: config.gateway.serviceHosts.client+req.originalUrl,
@@ -114,4 +127,5 @@ app.use(/.*/, (req, res) => {
  */
 app.listen(config.gateway.port, () => {
   logger.info('gateway listening on port: '+config.gateway.port);
+  require('./lib/default-admins')();
 })

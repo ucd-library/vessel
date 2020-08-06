@@ -18,6 +18,14 @@ class EsSparqlModel {
     // TODO: add check for global dir or env variable to points to additional model paths
   }
 
+  /**
+   * @method readModels
+   * @description read in the map.js and *.tpl.rq files that define an
+   * elastic search model/record.  All files are expected to be in the same
+   * directory
+   * 
+   * @param {String} dir 
+   */
   readModels(dir) {
     const mapPath = path.join(dir, 'map.js');
     if( !fs.existsSync(mapPath) ) {
@@ -43,11 +51,31 @@ class EsSparqlModel {
     }
   }
 
+  /**
+   * @method hasModel
+   * @description give a type (es model name or rdf uri) return the 
+   * es model name if a model is registered or false.
+   * 
+   * @param {String} type 
+   * 
+   * @returns {String|Boolean}
+   */
   hasModel(type) {
     if( this.MODELS[type] ) return type;
     return this.TYPES[type] ? this.TYPES[type] : false;
   }
 
+  /**
+   * @method getSparqlQuery
+   * @description given a type (es model name or rdf uri), subject uri and optional graph
+   * uri, return the SPARQL query
+   * 
+   * @param {String} type es model name or rdf uri
+   * @param {String} uri subject uri
+   * @param {String} graph graph uri, defaults to sparql variable ?graph
+   * 
+   * @returns {String}
+   */
   getSparqlQuery(type, uri, graph='?graph') {
     let model = this.hasModel(type);
     if( !model ) throw new Error('Unknown model or type: '+type);
@@ -61,6 +89,16 @@ class EsSparqlModel {
       .replace(/"{{graph}}"/, graph);
   }
 
+  /**
+   * @method getModel
+   * @description get a es model from model name or rdf type uri and a subject uri.  Gets
+   * model for all registered graphs and merges.
+   * 
+   * @param {String} type es model name or rdf uri
+   * @param {String} uri subject uri
+   * 
+   * @returns {Object}
+   */
   async getModel(type, uri) {
     let model = this.hasModel(type);
     if( !model ) {
@@ -88,6 +126,16 @@ class EsSparqlModel {
     return result;
   }
 
+  /**
+   * @method _getModelForGraph
+   * @description get a es model for a specific graph
+   * 
+   * @param {String} graph graph uri
+   * @param {String} type es model name or rdf uri
+   * @param {String} uri subject uri
+   * 
+   * @returns {Object}
+   */
   async _getModelForGraph(graph, type, uri) {
     let sparqlQuery = this.getSparqlQuery(type, uri, graph);
     let response = await fuseki.query(sparqlQuery, 'application/ld+json');
@@ -105,6 +153,17 @@ class EsSparqlModel {
     return model[uri] || {};
   }
 
+  /**
+   * @method _constructModel
+   * @description loop through returned sparql response and contruct in JSON-LD
+   * like es model object
+   * 
+   * @param {Array|Object} graph 
+   * @param {String} id uri to crawl
+   * @param {Object} crawled already crawled uri hash
+   * 
+   * @return Object
+   */
   _constructModel(graph, id, crawled={}) {
     if( crawled[id] ) return graph;
     crawled[id] = true;

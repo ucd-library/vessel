@@ -43,6 +43,10 @@ class Consumer {
     });
   }
 
+  /**
+   * @method _sleep
+   * @description simple setTimeout promise wrapper
+   */
   _sleep() {
     return new Promise((resolve, reject) => {
       setTimeout(() => resolve(), this.loopInterval);
@@ -64,6 +68,12 @@ class Consumer {
     });
   }
 
+  /**
+   * @method disconnect
+   * @description disconnect client
+   * 
+   * @return {Promise}
+   */
   disconnect() {
     return new Promise((resolve, reject) => {
       this.client.disconnect((err, data) => {
@@ -119,6 +129,16 @@ class Consumer {
     });
   }
 
+  /**
+   * @method _topicHelper
+   * @description given a topic as a string or object, ensures the topic
+   * is a Array or objects that have the partition set to 0.  This structure
+   * is how most methods of kafka library expect topics.
+   * 
+   * @param {Object|String} topic 
+   * 
+   * @returns {Array}
+   */
   _topicHelper(topic) {
     if( typeof topic === 'string' ) topic = {topic};
     if( !Array.isArray(topic) ) topic = [topic];

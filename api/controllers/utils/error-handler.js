@@ -9,6 +9,15 @@ function notFound(req, res, error, message) {
   });
 }
 
+/**
+ * @function error-handler
+ * @description handle api errors
+ * 
+ * @param {Object} req 
+ * @param {Object} res 
+ * @param {Error} error 
+ * @param {String} description 
+ */
 module.exports = (req, res, error, description='') => {
   if( defs[error.message] ) {
     return defs[error.message](req, res, error);
