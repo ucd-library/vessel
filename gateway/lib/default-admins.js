@@ -18,5 +18,4 @@ module.exports = async function initDefaultAdmins() {
       auth.setUserRole(admin, 'admin');
     }
   }
-  await auth.redis.disconnect();
 }
