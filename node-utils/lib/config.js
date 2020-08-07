@@ -34,6 +34,7 @@ module.exports = {
     host : env.AUTH_SERVICE_HOST || 'auth',
     port : env.AUTH_SERVICE_PORT || 3000,
     logoutRedirect : env.AUTH_SERVICE_LOGOUT_REDIRECT || '/',
+    loginRedirect : env.AUTH_SERVICE_LOGIN_REDIRECT || '/',
     session : {
       name : env.AUTH_SESSION_NAME,
       cookieSecret : env.AUTH_SESSION_COOKIE_SECRET || 'testing123',

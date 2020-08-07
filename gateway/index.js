@@ -36,6 +36,8 @@ proxy.on('proxyRes', async (proxyRes, req, res) => {
   if( req.originalUrl.match(/^\/auth\/.*/) && proxyRes.headers['x-vessel-authorized-agent'] ) {
     // mint jwt token and set in cookie
     await auth.handleLogin(res, proxyRes.headers['x-vessel-authorized-agent']);
+    res.redirect(config.authService.loginRedirect);
+    return;
 
   // if this is a logout request, handle here (destroy cookie)
   } else if( req.originalUrl.match(/^\/auth\/logout/) ) {
