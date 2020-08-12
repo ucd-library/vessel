@@ -26,7 +26,6 @@ function enableCors(req, res, next) {
 
 // setup main proxy server
 const proxy = httpProxy.createProxyServer({
-  xfwd: true,
   selfHandleResponse: true
 });
 proxy.on('error', err => logger.error('Gateway proxy error:', err));

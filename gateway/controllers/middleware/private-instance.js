@@ -32,14 +32,14 @@ module.exports = async (req, res, next) => {
   // Grab the user provided token (Cookie or Authorization header)
   let token = auth.getTokenFromRequest(req);
   if( !token ) {
-    return res.status(401).json({error: true, message: 'Unauthorized'});
+    return handleAuthPortalRedirect(req, res);
   }
 
   // Verify the header
   try {
     req.jwt = await auth.verifyToken(token);
   } catch(e) {
-    return res.status(401).json({error: true, message: 'Unauthorized'});
+    return handleAuthPortalRedirect(req, res);
   }
 
   // All authenticated users are allowed
@@ -57,4 +57,17 @@ module.exports = async (req, res, next) => {
 
   // reject request
   res.status(403).json({error: true, message: 'Forbidden'});
+}
+
+function handleAuthPortalRedirect(req, res) {
+  if( req.originalUrl.match(/^\/(api|indexer|fuseki)/) ) {
+    res.status(401).json({error: true, message: 'Unauthorized'});
+    return;
+  }
+
+  if( config.authService.loginPortal ) {
+    return res.redirect(config.authService.loginPortal);
+  }
+
+  res.status(401).json({error: true, message: 'Unauthorized'});
 }
