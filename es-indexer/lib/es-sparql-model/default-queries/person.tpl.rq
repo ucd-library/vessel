@@ -28,8 +28,8 @@ CONSTRUCT {
   ?subject vivo:hasResearchArea ?hasResearchArea .
   ?hasResearchArea rdfs:label ?researchAreaLabel .
 
-  ?subject obo:contactInfoFor ?contactInfoFor .
-  ?contactInfoFor vcard:giveName ?givenName .
+  ?subject obo:hasContactInfo ?contactInfoFor .
+  ?contactInfoFor vcard:givenName ?givenName .
   ?contactInfoFor vcard:familyName ?familyName .
   ?contactInfoFor vcard:additionalName ?additionalName .
   ?contactInfoFor vcard:honorificPrefix ?honorificPrefix .

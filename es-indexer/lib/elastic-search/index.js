@@ -122,6 +122,28 @@ class ElasticSearch {
                 },
                 autocomplete_search : {
                   tokenizer: "lowercase"
+                },
+                // first_letter : {
+                //   filter : [
+                //    "lowercase"
+                //   ],
+                //   tokenizer : "first_letter"
+                // }
+              },
+              char_filter: {
+                first_letter_filter: {
+                  type: "pattern_replace",
+                  pattern: "(.).*",
+                  replacement: "$1"
+                }
+              },
+              normalizer: {
+                first_letter_normilizer: {
+                  type: "custom",
+                  char_filter: ["first_letter_filter"],
+                  filter: [
+                    "lowercase"
+                  ]
                 }
               },
               tokenizer: {
@@ -133,7 +155,12 @@ class ElasticSearch {
                     "letter",
                     "digit"
                   ]
-                }
+                },
+                // first_letter : {
+                //   pattern : "^(.).*$",
+                //   group : 1,
+                //   type : "pattern"
+                // }
               }
             }
           },

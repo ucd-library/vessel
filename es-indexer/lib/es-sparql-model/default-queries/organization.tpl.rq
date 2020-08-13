@@ -27,7 +27,7 @@ CONSTRUCT {
 
   ?subject vivo:affiliatedOrganization ?affiliatedOrganization .
 
-  ?subject obo:contactInfoFor ?contactInfoFor .
+  ?subject obo:hasContactInfo ?contactInfoFor .
 
   ?contactInfoFor vcard:hasEmail ?vcardEmail .
   ?vcardEmail vcard:email ?email .
