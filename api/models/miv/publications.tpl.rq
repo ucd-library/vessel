@@ -31,7 +31,7 @@ CONSTRUCT {
 
 } WHERE {
   
-  bind (ucdrp:?in_pub as ?pub)
+  bind (<{{publication}}> as ?pub)
   
   values(?pub_p ?pub_cp) {
     (rdfs:label cite:title)

@@ -8,7 +8,7 @@ class Citation {
 
   convert(data, opts={}) {
     if( !opts.style ) opts.style = 'ris';
-    return this.engine.set(data).get(opt);
+    return this.engine.set(data).format('bibliography',opts);
   }
 
 
