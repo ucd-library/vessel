@@ -22,6 +22,8 @@ router.get('/:username', async (req, res) => {
       return onError(req, res, new Error('Invalid parameters'), 'You must be logged in or supply a username');
     }
 
+    res.set('content-type', 'text/plain');
+    res.set('Content-Disposition', `attachment; filename="${username}.ris"`);
     res.send(await model.export(username));
   } catch(e) {
     onError(req, res, e, 'Failed to generate MIV export');
