@@ -31,11 +31,8 @@ class Miv {
 
       graph = graph['@graph'] ? graph['@graph'] : graph;
       pubs[i] = this.formatAuthors(this.getPub(graph), graph);
-      // pubs[i] = pubs[i];
-
       // if( i === 5 ) break;
     }
-    // pubs = pubs.splice(0, 5);
     
     return citation.convert(pubs);
   }
