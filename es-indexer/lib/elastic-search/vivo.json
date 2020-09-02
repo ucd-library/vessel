@@ -118,6 +118,10 @@
           "type" : "text",
           "analyzer": "autocomplete", 
           "search_analyzer": "autocomplete_search"
+        },
+        "firstLetter" : {
+          "type" : "keyword",
+          "normalizer": "first_letter_normilizer"
         }
       }
     },
