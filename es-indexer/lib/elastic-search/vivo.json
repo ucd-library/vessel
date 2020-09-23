@@ -74,7 +74,7 @@
       }
     },
 
-    "hasSubjectArea.label" : {
+    "hasResearchArea.label" : {
       "type" : "keyword",
       "fields": {
         "text" : {
@@ -89,7 +89,7 @@
       "type" : "keyword"
     },
 
-    "Journal.label" : {
+    "hasPublicationVenue.label" : {
       "type" : "keyword",
       "fields": {
         "text" : {
@@ -100,7 +100,7 @@
       }
     },
 
-    "Journal.issn" : {
+    "hasPublicationVenue.issn" : {
       "type" : "keyword",
       "fields": {
         "text" : {

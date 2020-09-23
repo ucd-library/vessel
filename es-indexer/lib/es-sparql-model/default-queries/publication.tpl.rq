@@ -43,7 +43,7 @@ CONSTRUCT {
   ?subject vivo:hasSubjectArea ?subjectArea .
   ?subjectArea rdfs:label ?subjectAreaLabel .
 
-  ?subject bibo:Journal ?publicationVenue .
+  ?subject vivo:hasPublicationVenue ?publicationVenue .
   ?publicationVenue rdfs:label ?publicationVenueLabel .
   ?publicationVenue bibo:issn ?publicationVenueIssn .
 

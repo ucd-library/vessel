@@ -182,8 +182,16 @@ class Reindex {
     LIMIT ${count}
     OFFSET ${page*100}
     `);
-    response = await response.json();
-    return [...new Set(response.results.bindings.map(term => term.subject.value))];
+
+    try {
+      response = await response.text();
+      response = JSON.parse(response);
+      
+      return [...new Set(response.results.bindings.map(term => term.subject.value))];
+    } catch(e) {
+      logger.error('Failed: reindex.getSubjectsForType: '+type+', '+page,  'reponse=', response, e);
+    }
+    return [];
   }
 
 
