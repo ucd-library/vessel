@@ -21,7 +21,7 @@ CONSTRUCT {
   ?subject bibo:issue ?issue .
   ?subject bibo:pageStart ?pageStart .
   ?subject bibo:pageEnd ?pageEnd .
-  ?publicationDate vivo:dateTime ?dateTime .
+  ?subject vivo:publicationDate ?dateTime .
 
   ?subject vivo:Authorship ?author .
   ?author vivo:rank ?authorRank .
@@ -49,8 +49,6 @@ CONSTRUCT {
 
   ?subject vivo:informationResourceSupportedBy ?supportedBy .
   ?supportedBy rdfs:label ?supportedByLabel .
-
-  ?subject vivo:publicationDate ?publicationDateTime .
 
 } WHERE {
   GRAPH "{{graph}}" { 
