@@ -19,7 +19,7 @@
         "parameters": [
           {
             "name": "id",
-            "description": "id of record",
+            "description": "id of record, comma separate for multiple id response",
             "in": "path",
             "required": true,
             "schema": {
@@ -29,12 +29,12 @@
         ],
         "responses": {
           "200": {
-            "description": "Requested record",
+            "description": "Requested record(s)",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "description": "record"
+                  "description": "record or array of records"
                 }
               }
             }

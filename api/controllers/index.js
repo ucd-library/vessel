@@ -23,23 +23,34 @@ router.use('/miv', require('./miv'));
  *     tags: [Get Record]
  *     parameters:
  *       - name: id
- *         description: id of record
+ *         description: id of record, comma separate for multiple id response
  *         in: path
  *         required: true
  *         schema:
  *           type: string
  *     responses:
  *       200:
- *         description: Requested record
+ *         description: Requested record(s)
  *         content:
  *          application/json:
  *            schema:
  *              type: object
- *              description: record
+ *              description: record or array of records
  */
 router.get('/:id', async (req, res) => {
   try {
-    res.json((await model.get(req.params.id))._source);
+    let id = req.params.id;
+    if( id.includes(',') ) {
+      let ids = id.split(',');
+      let arr = [];
+
+      for( id of ids ) {
+        arr.push((await model.get(id))._source);
+      }
+      res.json(arr);
+    } else {
+      res.json((await model.get(id))._source);
+    }
   } catch(e) {
     errorHandler(req, res, e);
   }
