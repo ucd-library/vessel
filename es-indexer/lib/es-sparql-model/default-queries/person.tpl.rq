@@ -40,6 +40,7 @@ CONSTRUCT {
   ?vcardEmail rdf:type ?emailType .
 
   ?contactInfoFor vcard:title ?title .
+  ?contactInfoFor vcard:organization ?organization .
   ?contactInfoFor vcard:telephone ?telephone .
   ?contactInfoFor vcard:geo ?geo .
 
@@ -59,7 +60,7 @@ CONSTRUCT {
   ?positionOrg rdfs:end ?positionEndTimeValue .
 
 } WHERE {
-  GRAPH "{{graph}}" { 
+  GRAPH "{{graph}}" {
 
     ?subject rdf:type ?type .
     OPTIONAL { ?subject rdfs:label ?label . }
@@ -83,56 +84,60 @@ CONSTRUCT {
     OPTIONAL {
       ?subject obo:ARG_2000028 ?contactInfoFor .
 
-      OPTIONAL { 
-        ?contactInfoFor vcard:hasName ?vcardName . 
+      OPTIONAL {
+        ?contactInfoFor vcard:hasName ?vcardName .
         OPTIONAL { ?vcardName vcard:givenName ?givenName . }
-        OPTIONAL { ?vcardName vcard:familyName ?familyName . }     
+        OPTIONAL { ?vcardName vcard:familyName ?familyName . }
         OPTIONAL { ?vcardName vcard:additionalName ?additionalName . }
         OPTIONAL { ?vcardName vcard:honorificPrefix ?honorificPrefix . }
         OPTIONAL { ?vcardName vcard:honorificSuffix ?honorificSuffix . }
       }
 
-      OPTIONAL { 
+      OPTIONAL {
         ?contactInfoFor vcard:hasEmail ?vcardEmail .
         OPTIONAL { ?vcardEmail vcard:email ?email . }
         OPTIONAL { ?vcardEmail rdf:type ?emailType . }
       }
 
-      OPTIONAL { 
-        ?contactInfoFor vcard:hasTitle ?vcardTitle . 
-        ?vcardTitle vcard:title ?title . 
+      OPTIONAL {
+        ?contactInfoFor vcard:hasTitle ?vcardTitle .
+        ?vcardTitle vcard:title ?title .
       }
 
-      OPTIONAL { 
-        ?contactInfoFor vcard:hasTelephone ?vcardTelephone . 
-        ?vcardTelephone vcard:telephone ?telephone . 
+      OPTIONAL {
+        ?contactInfoFor vcard:hasOrganizationalUnit/vcard:title ?organization .
       }
 
-      OPTIONAL { 
+      OPTIONAL {
+        ?contactInfoFor vcard:hasTelephone ?vcardTelephone .
+        ?vcardTelephone vcard:telephone ?telephone .
+      }
+
+      OPTIONAL {
         ?contactInfoFor vcard:hasGeo ?vcardGeo .
-        ?vcardGeo vcard:geo ?geo . 
+        ?vcardGeo vcard:geo ?geo .
       }
 
-      OPTIONAL { 
-        ?contactInfoFor vcard:hasURL ?vcardURL . 
+      OPTIONAL {
+        ?contactInfoFor vcard:hasURL ?vcardURL .
         OPTIONAL { ?vcardURL vcard:url ?url . }
         OPTIONAL { ?vcardURL vcard:rank ?urlRank . }
         OPTIONAL { ?vcardURL vcard:label ?urlLabel . }
       }
     }
 
-    OPTIONAL { 
+    OPTIONAL {
       ?subject vitro:mainImage ?mainImage .
       ?mainImage vitro:filename ?mainImagFilename .
     }
 
     OPTIONAL {
       ?subject vivo:relatedBy ?position .
-      ?position rdf:type vivo:Position . 
-      
+      ?position rdf:type vivo:Position .
+
       OPTIONAL { ?position rdfs:label ?positionLabel . }
 
-      OPTIONAL { 
+      OPTIONAL {
         ?position vivo:relates ?positionOrg .
         ?positionOrg rdfs:label ?positionOrgLabel .
       }
@@ -141,12 +146,12 @@ CONSTRUCT {
         ?position vivo:dateTimeInternal ?positionDateTime .
       }
 
-      OPTIONAL { 
+      OPTIONAL {
         ?positionDateTime vivo:start ?positionStartTime .
         ?positionStartTime rdfs:label ?positionStartTimeValue .
       }
 
-      OPTIONAL { 
+      OPTIONAL {
         ?positionDateTime vivo:end ?positionEndTime .
         ?positionEndTime rdfs:label ?positionEndTimeValue .
       }
