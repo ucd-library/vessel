@@ -43,6 +43,7 @@ CONSTRUCT {
   ?contactInfoFor vcard:organization ?organization .
   ?contactInfoFor vcard:telephone ?telephone .
   ?contactInfoFor vcard:geo ?geo .
+  ?contactInfoFor vivo:rank ?vcardRank .
 
   ?contactInfoFor vcard:hasURL ?vcardURL .
   ?vcardURL vcard:url ?url .
@@ -92,6 +93,8 @@ CONSTRUCT {
         OPTIONAL { ?vcardName vcard:honorificPrefix ?honorificPrefix . }
         OPTIONAL { ?vcardName vcard:honorificSuffix ?honorificSuffix . }
       }
+
+      OPTIONAL { ?contactInfoFor vivo:rank ?vcardRank . }
 
       OPTIONAL {
         ?contactInfoFor vcard:hasEmail ?vcardEmail .
