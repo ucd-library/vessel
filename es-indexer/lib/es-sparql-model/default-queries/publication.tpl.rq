@@ -110,6 +110,6 @@ CONSTRUCT {
       OPTIONAL { ?publicationDate vivo:dateTime ?dateTime . }
     }
 
-    FILTER(?subject = <"{{uri}}"> && ?authorPersonType IN (vcard:Individual, vivo:FacultyMember, foaf:Person))
+    FILTER(?subject = <"{{uri}}"> && ?authorPersonType IN (vcard:Individual, vivo:FacultyMember, vivo:NonAcademic, foaf:Person))
   }
 }
