@@ -49,6 +49,7 @@ const onError = require('./utils/error-handler');
  *       - $ref: '#/components/schemas/ApiSearchDocument_filtersKeyword'
  *       - $ref: '#/components/schemas/ApiSearchDocument_filtersRange'
  *       - $ref: '#/components/schemas/ApiSearchDocument_filtersPrefix'
+ *       - $ref: '#/components/schemas/ApiSearchDocument_filtersExists'
  *     discriminator:
  *       propertyName: type
  *   
@@ -113,6 +114,16 @@ const onError = require('./utils/error-handler');
  *     required:
  *       - type
  *       - value
+ * 
+ *   ApiSearchDocument_filtersExists:
+ *     description: Filters results so that parameter(s) must exist
+ *     properties:
+ *       type:
+ *         type : string
+ *         enum:
+ *           - exists
+ *     required:
+ *       - type
  * 
  *   ApiSearchDocument_facetsFacet:
  *     description: Return a facet as typical keyword match

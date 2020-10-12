@@ -290,6 +290,9 @@
           },
           {
             "$ref": "#/components/schemas/ApiSearchDocument_filtersPrefix"
+          },
+          {
+            "$ref": "#/components/schemas/ApiSearchDocument_filtersExists"
           }
         ],
         "discriminator": {
@@ -375,6 +378,20 @@
         "required": [
           "type",
           "value"
+        ]
+      },
+      "ApiSearchDocument_filtersExists": {
+        "description": "Filters results so that parameter(s) must exist",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "exists"
+            ]
+          }
+        },
+        "required": [
+          "type"
         ]
       },
       "ApiSearchDocument_facetsFacet": {
