@@ -74,9 +74,6 @@ class IndexStats {
       });
     }
 
-    console.log(subjects);
-
-
     await this.kafkaConsumer.disconnect();
   }
 

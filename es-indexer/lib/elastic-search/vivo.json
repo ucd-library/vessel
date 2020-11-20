@@ -29,6 +29,14 @@
       "type" : "keyword"
     },
 
+    "citation.publication" : {
+      "type" : "text"
+    },
+
+    "citation.label" : {
+      "type" : "text"
+    },
+
     "Authorship.identifiers.@id" : {
       "type" : "keyword"
     },

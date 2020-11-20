@@ -139,6 +139,9 @@ class EsSparqlModel {
   async _getModelForGraph(graph, type, uri) {
     let sparqlQuery = this.getSparqlQuery(type, uri, graph);
     let response = await fuseki.query(sparqlQuery, 'application/ld+json');
+
+    // let t = await response.text();
+    // response = JSON.parse(t);
     response = await response.json();
 
     // TODO: this is wrong

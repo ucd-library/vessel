@@ -61,6 +61,16 @@ CONSTRUCT {
   ?positionOrg rdfs:start ?positionStartTimeValue .
   ?positionOrg rdfs:end ?positionEndTimeValue .
 
+  ?subject ucdrp:citation ?citation .
+  ?citation rdfs:label ?citationLabel .
+  ?citation ucdrp:publication ?citationPublicationVenueLabel .
+  # ?citation rdf:type vivo:Authorship .
+  # ?citation vivo:rank ?citationAuthorRank .
+  # ?citation vivo:hasPublicationVenue ?citationPublicationVenue .
+  # ?citationPublicationVenue rdf:type ?citationPublicationVenueType .
+  # ?citationPublicationVenue rdfs:label ?citationPublicationVenueLabel .
+  # ?citationPublicationVenue bibo:issn ?citationPublicationVenueIssn .
+
 } WHERE {
   GRAPH "{{graph}}" {
 
@@ -160,7 +170,24 @@ CONSTRUCT {
         ?positionDateTime vivo:end ?positionEndTime .
         ?positionEndTime rdfs:label ?positionEndTimeValue .
       }
+    }
 
+    OPTIONAL {
+      ?citation rdf:type bibo:AcademicArticle .
+      ?citation rdfs:label ?citationLabel .
+      ?citation vivo:relatedBy ?citationAuthor .
+      ?citationAuthor vivo:relates ?subject .
+      # OPTIONAL { ?citationAuthor vivo:rank ?citationAuthorRank . }
+      OPTIONAL {
+        ?citationAuthor vivo:relates ?authorIndividual .
+        ?authorIndividual rdf:type vcard:Individual .
+      }
+      OPTIONAL {
+        ?citation vivo:hasPublicationVenue ?citationPublicationVenue .
+        ?citationPublicationVenue rdfs:label ?citationPublicationVenueLabel .
+        # ?citationPublicationVenue rdf:type ?citationPublicationVenueType .
+        # ?citationPublicationVenue bibo:issn ?citationPublicationVenueIssn .
+      }
     }
 
     FILTER(?subject = <"{{uri}}">)
