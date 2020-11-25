@@ -2,7 +2,6 @@ const citation = require('../../lib/citation');
 const {fuseki} = require('@ucd-lib/rp-node-utils');
 const fs = require('fs');
 const path = require('path');
-const { pbkdf2Sync } = require('crypto');
 
 class Miv {
 
