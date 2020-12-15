@@ -127,6 +127,7 @@ class SearchModelUtils {
       esBody.query.bool.must = [{
         multi_match : {
           query : query.text,
+          type : 'most_fields',
           fields : query.textFields
         }
       }];

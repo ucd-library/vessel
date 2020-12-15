@@ -37,6 +37,22 @@
       "type" : "text"
     },
 
+    "lastCitation.publication" : {
+      "type" : "text"
+    },
+
+    "lastCitation.label" : {
+      "type" : "text"
+    },
+
+    "top20Citation.publication" : {
+      "type" : "text"
+    },
+
+    "top20Citation.label" : {
+      "type" : "text"
+    },
+
     "Authorship.identifiers.@id" : {
       "type" : "keyword"
     },

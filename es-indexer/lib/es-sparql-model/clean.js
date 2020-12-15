@@ -9,6 +9,38 @@ class CleanModel {
     this.cleanObject(model, 'hasSubjectArea');
     this.cleanObject(model, 'Journal');
 
+    // author count
+    if( model.citation ) {
+      if( !Array.isArray(model.citation) ) {
+        model.citation = [model.citation];
+      }
+      model.top20Citation = [];
+      model.lastCitation = [];
+      
+      model.citation = model.citation.map(item => {
+        item.authorsCount = asArray(item.authors).length;
+
+        let author = asArray(item.authors).find(author => asArray(author.identifiers).includes(model['@id']));
+        if( author ) item.rank = author['vivo:rank'];
+
+        if( item.authorsCount && item.rank ) {
+          // is person last author
+          if( item.authorsCount === item.rank ) {
+            model.lastCitation.push(item);
+          }
+
+          // is person top 20% rank in citation
+          if( item.rank / item.authorsCount <= .2 ) {
+            model.top20Citation.push(item);
+          }
+        }
+
+        delete item.authors;
+        return item;
+      });
+    }
+
+
     return model;
   }
 
@@ -28,6 +60,12 @@ class CleanModel {
     }
   }
 
+}
+
+function asArray(val) {
+  if( !val ) return [];
+  if( !Array.isArray(val) ) return [val];
+  return val;
 }
 
 module.exports = new CleanModel();

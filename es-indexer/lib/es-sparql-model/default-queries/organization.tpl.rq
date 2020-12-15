@@ -91,6 +91,6 @@ CONSTRUCT {
     }
 
 
-    FILTER(?subject = <"{{uri}}">)
+    FILTER(?subject = "{{uri}}")
   }
 }

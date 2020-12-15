@@ -8,7 +8,8 @@ if( graphs ) {
 } else {
   graphs = [
     'http://iam.ucdavis.edu/',
-    'http://oapolicy.universityofcalifornia.edu/'
+    'http://oapolicy.universityofcalifornia.edu/',
+    'http://experts.ucdavis.edu/oap/'
   ]
 }
 

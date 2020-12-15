@@ -64,6 +64,15 @@ CONSTRUCT {
   ?subject ucdrp:citation ?citation .
   ?citation rdfs:label ?citationLabel .
   ?citation ucdrp:publication ?citationPublicationVenueLabel .
+  # ?citation vivo:rank ?citationAuthorRank .
+
+  ?citation ucdrp:authors ?citationAuthors .
+  ?citationAuthors vivo:rank ?citationAuthorRank .
+  # ?citationAuthors vivo:identifiers ?citationAuthorIdentifier .
+  # ?citationsAuthor vivo:rank ?citationAuthorsRank .
+
+  ?citationAuthors vivo:identifiers  ?authorPerson .
+
   # ?citation rdf:type vivo:Authorship .
   # ?citation vivo:rank ?citationAuthorRank .
   # ?citation vivo:hasPublicationVenue ?citationPublicationVenue .
@@ -178,9 +187,23 @@ CONSTRUCT {
       ?citation vivo:relatedBy ?citationAuthor .
       ?citationAuthor vivo:relates ?subject .
       # OPTIONAL { ?citationAuthor vivo:rank ?citationAuthorRank . }
+      # OPTIONAL {
+      #   ?citationAuthor vivo:relates ?authorIndividual .
+      #   ?authorIndividual rdf:type vcard:Individual .
+      # }
       OPTIONAL {
-        ?citationAuthor vivo:relates ?authorIndividual .
-        ?authorIndividual rdf:type vcard:Individual .
+        ?citation vivo:relatedBy ?citationAuthors .
+        ?citationAuthors rdf:type vivo:Authorship .
+
+        OPTIONAL {
+          ?citationAuthors vivo:rank ?citationAuthorRank .
+        }
+
+        OPTIONAL {
+          ?citationAuthors vivo:relates ?authorPerson .
+          ?authorPerson rdf:type ?authorPersonType .
+        }
+
       }
       OPTIONAL {
         ?citation vivo:hasPublicationVenue ?citationPublicationVenue .
@@ -190,6 +213,8 @@ CONSTRUCT {
       }
     }
 
-    FILTER(?subject = <"{{uri}}">)
+    FILTER(
+      ?subject = "{{uri}}" && 
+      ?authorPersonType IN (vcard:Individual, vivo:FacultyMember, vivo:NonAcademic, foaf:Person))
   }
 }

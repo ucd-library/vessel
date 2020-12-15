@@ -9,6 +9,7 @@ class EsSparqlModel {
 
   constructor() {
     this.GRAPHS = config.fuseki.graphs;
+    this.GRAPHS.push('http://experts.ucdavis.edu/oap/');
 
     this.TYPES = {};
     this.MODELS = {};
@@ -83,10 +84,13 @@ class EsSparqlModel {
     if( !graph.match(/^\?/) ) {
       graph = '<'+graph+'>';
     }
+    if( uri.match('http(s)?:\/\/') ) {
+      uri = '<'+uri+'>';
+    }
 
     return this.TEMPLATES[model]
-      .replace(/"{{uri}}"/, uri)
-      .replace(/"{{graph}}"/, graph);
+      .replace(/"{{uri}}"/g, uri)
+      .replace(/"{{graph}}"/g, graph);
   }
 
   /**
@@ -106,7 +110,7 @@ class EsSparqlModel {
     }
 
     let result = {
-      model : type,
+      type,
       database : config.fuseki.database,
       graphs : {},
       model : {}
