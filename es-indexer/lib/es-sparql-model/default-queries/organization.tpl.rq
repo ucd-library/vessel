@@ -47,50 +47,48 @@ CONSTRUCT {
   ?vcardAddress vcard:country ?country .
 
 } WHERE {
-  GRAPH "{{graph}}" {
-    ?subject rdf:type ?type .
+  ?subject rdf:type ?type .
 
-    OPTIONAL { ?subject rdfs:label ?label . }
-    OPTIONAL { ?subject vivo:abbreviation ?abbreviation . }
-    OPTIONAL { ?subject vivo:overview ?overview . }
+  OPTIONAL { ?subject rdfs:label ?label . }
+  OPTIONAL { ?subject vivo:abbreviation ?abbreviation . }
+  OPTIONAL { ?subject vivo:overview ?overview . }
 
-    OPTIONAL {
-      ?subject vivo:dateTimeValue ?dateTimeValue .
-      ?dateTimeValue vivo:dateTime ?dateTime .
-    }
-
-    OPTIONAL { ?subject obo:BFO_0000050 ?partOfOrg . }
-    OPTIONAL { ?hasPartOrg obo:BFO_0000051 ?subject . }
-
-    OPTIONAL { ?subject vivo:hasSuccessorOrganization ?hasSuccessorOrganization . }
-    OPTIONAL { ?hasPredecessorOrganization vivo:hasPredecessorOrganization ?subject . }
-
-    OPTIONAL { ?subject vivo:affiliatedOrganization ?affiliatedOrganization . }
-
-    OPTIONAL {
-      ?subject obo:ARG_2000028 ?contactInfoFor .
-
-      OPTIONAL { ?contactInfoFor vcard:hasEmail ?vcardEmail . }
-      OPTIONAL { ?vcardEmail vcard:email ?email . }
-      OPTIONAL { ?vcardEmail rdf:type ?emailType . }
-
-      OPTIONAL { ?contactInfoFor vcard:hasGeo ?vcardGeo . }
-      OPTIONAL { ?vcardGeo vcard:geo ?geo . }
-
-      OPTIONAL { ?contactInfoFor vcard:hasURL ?vcardURL . }
-      OPTIONAL { ?vcardURL vcard:url ?url . }
-      OPTIONAL { ?vcardURL vcard:rank ?urlRank . }
-      OPTIONAL { ?vcardURL vcard:label ?urlLabel . }
-
-      OPTIONAL { ?contactInfoFor vcard:hasAddress ?vcardAddress . }
-      OPTIONAL { ?vcardAddress vcard:locality ?locality . }
-      OPTIONAL { ?vcardAddress vcard:postalCode ?postalCode . }
-      OPTIONAL { ?vcardAddress vcard:streetAddress ?streetAddress . }
-      OPTIONAL { ?vcardAddress vcard:region ?region . }
-      OPTIONAL { ?vcardAddress vcard:country ?country . }
-    }
-
-
-    FILTER(?subject = "{{uri}}")
+  OPTIONAL {
+    ?subject vivo:dateTimeValue ?dateTimeValue .
+    ?dateTimeValue vivo:dateTime ?dateTime .
   }
+
+  OPTIONAL { ?subject obo:BFO_0000050 ?partOfOrg . }
+  OPTIONAL { ?hasPartOrg obo:BFO_0000051 ?subject . }
+
+  OPTIONAL { ?subject vivo:hasSuccessorOrganization ?hasSuccessorOrganization . }
+  OPTIONAL { ?hasPredecessorOrganization vivo:hasPredecessorOrganization ?subject . }
+
+  OPTIONAL { ?subject vivo:affiliatedOrganization ?affiliatedOrganization . }
+
+  OPTIONAL {
+    ?subject obo:ARG_2000028 ?contactInfoFor .
+
+    OPTIONAL { ?contactInfoFor vcard:hasEmail ?vcardEmail . }
+    OPTIONAL { ?vcardEmail vcard:email ?email . }
+    OPTIONAL { ?vcardEmail rdf:type ?emailType . }
+
+    OPTIONAL { ?contactInfoFor vcard:hasGeo ?vcardGeo . }
+    OPTIONAL { ?vcardGeo vcard:geo ?geo . }
+
+    OPTIONAL { ?contactInfoFor vcard:hasURL ?vcardURL . }
+    OPTIONAL { ?vcardURL vcard:url ?url . }
+    OPTIONAL { ?vcardURL vcard:rank ?urlRank . }
+    OPTIONAL { ?vcardURL vcard:label ?urlLabel . }
+
+    OPTIONAL { ?contactInfoFor vcard:hasAddress ?vcardAddress . }
+    OPTIONAL { ?vcardAddress vcard:locality ?locality . }
+    OPTIONAL { ?vcardAddress vcard:postalCode ?postalCode . }
+    OPTIONAL { ?vcardAddress vcard:streetAddress ?streetAddress . }
+    OPTIONAL { ?vcardAddress vcard:region ?region . }
+    OPTIONAL { ?vcardAddress vcard:country ?country . }
+  }
+
+
+  FILTER(?subject = "{{uri}}")
 }

@@ -98,15 +98,26 @@
       }
     },
 
+
+
+    "hasSubjectArea.@id" : {
+      "type" : "keyword"
+    },
+    "hasSubjectArea.label" : {
+      "type" : "keyword"
+    },
+    "hasSubjectArea.prefLabel" : {
+      "type" : "keyword"
+    },
+
+    "hasResearchArea.@id" : {
+      "type" : "keyword"
+    },
     "hasResearchArea.label" : {
-      "type" : "keyword",
-      "fields": {
-        "text" : {
-          "type" : "text",
-          "analyzer": "autocomplete", 
-          "search_analyzer": "autocomplete_search"
-        }
-      }
+      "type" : "keyword"
+    },
+    "hasResearchArea.prefLabel" : {
+      "type" : "keyword"
     },
 
     "issue" : {
@@ -150,6 +161,21 @@
       }
     },
 
+    "prefLabel" : {
+      "type" : "keyword",
+      "fields": {
+        "text" : {
+          "type" : "text",
+          "analyzer": "autocomplete", 
+          "search_analyzer": "autocomplete_search"
+        },
+        "firstLetter" : {
+          "type" : "keyword",
+          "normalizer": "first_letter_normilizer"
+        }
+      }
+    },
+
     "pageEnd" : {
       "type" : "integer"
     },
@@ -164,8 +190,55 @@
 
     "volume" : {
       "type" : "keyword"
-    }
+    },
 
+    "broader.@id" : {
+      "type" : "keyword"
+    },
+    "broader.label" : {
+      "type" : "keyword",
+      "fields": {
+        "text" : {
+          "type" : "text",
+          "analyzer": "autocomplete", 
+          "search_analyzer": "autocomplete_search"
+        }
+      }
+    },
+    "broader.prefLabel" : {
+      "type" : "keyword",
+      "fields": {
+        "text" : {
+          "type" : "text",
+          "analyzer": "autocomplete", 
+          "search_analyzer": "autocomplete_search"
+        }
+      }
+    },
+
+    "narrower.@id" : {
+      "type" : "keyword"
+    },
+    "narrower.label" : {
+      "type" : "keyword",
+      "fields": {
+        "text" : {
+          "type" : "text",
+          "analyzer": "autocomplete", 
+          "search_analyzer": "autocomplete_search"
+        }
+      }
+    },
+    "narrower.prefLabel" : {
+      "type" : "keyword",
+      "fields": {
+        "text" : {
+          "type" : "text",
+          "analyzer": "autocomplete", 
+          "search_analyzer": "autocomplete_search"
+        }
+      }
+    }
 
   }
 }

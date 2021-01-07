@@ -8,6 +8,9 @@ PREFIX vcard: <http://www.w3.org/2006/vcard/ns#>
 PREFIX cito: <http://purl.org/spar/cito/>
 PREFIX obo: <http://purl.obolibrary.org/obo/>
 PREFIX ucdrp: <http://experts.library.ucdavis.edu/individual/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX free: <http://experts.ucdavis.edu/sub/free#>
+PREFIX for: <http://experts.ucdavis.edu/sub/FoR#>
 
 CONSTRUCT {
   ?subject rdf:type ?type .
@@ -41,6 +44,7 @@ CONSTRUCT {
 
   ?subject vivo:hasSubjectArea ?subjectArea .
   ?subjectArea rdfs:label ?subjectAreaLabel .
+  ?subjectArea skos:prefLabel ?subjectAreaPrefLabel .
 
   ?subject vivo:hasPublicationVenue ?publicationVenue .
   ?publicationVenue rdfs:label ?publicationVenueLabel .
@@ -50,66 +54,65 @@ CONSTRUCT {
   ?supportedBy rdfs:label ?supportedByLabel .
 
 } WHERE {
-  GRAPH "{{graph}}" {
 
-    ?subject rdf:type ?type .
-    OPTIONAL { ?subject rdfs:label ?label . }
-    OPTIONAL { ?subject bibo:abstract ?abstract . }
-    OPTIONAL { ?subject bibo:doi ?doi . }
-    OPTIONAL { ?subject bibo:volume ?volume . }
-    OPTIONAL { ?subject bibo:pageStart ?pageStart . }
-    OPTIONAL { ?subject bibo:pageEnd ?pageEnd . }
+  ?subject rdf:type ?type .
+  OPTIONAL { ?subject rdfs:label ?label . }
+  OPTIONAL { ?subject bibo:abstract ?abstract . }
+  OPTIONAL { ?subject bibo:doi ?doi . }
+  OPTIONAL { ?subject bibo:volume ?volume . }
+  OPTIONAL { ?subject bibo:pageStart ?pageStart . }
+  OPTIONAL { ?subject bibo:pageEnd ?pageEnd . }
 
+  OPTIONAL {
+    ?subject vivo:relatedBy ?author .
+    ?author rdf:type vivo:Authorship .
+    OPTIONAL { ?author vivo:rank ?authorRank . }
     OPTIONAL {
-      ?subject vivo:relatedBy ?author .
-      ?author rdf:type vivo:Authorship .
-      OPTIONAL { ?author vivo:rank ?authorRank . }
-      OPTIONAL {
-        ?author vivo:relates ?authorIndividual .
-        ?authorIndividual rdf:type vcard:Individual .
-        ?authorIndividual vcard:hasName ?authorVcardName .
-        OPTIONAL { ?authorVcardName vcard:givenName ?authorGivenName . }
-        OPTIONAL { ?authorVcardName vcard:middleName ?authorMiddleName . }
-        OPTIONAL { ?authorVcardName vcard:familyName ?authorFamilyName . }
-      }
-      OPTIONAL{
-        ?author vivo:relates ?authorPerson .
-        ?authorPerson rdf:type ?authorPersonType .
-        OPTIONAL { ?authorPerson vivo:orcidid ?authorOrcid . }
-        # OPTIONAL { ?authorPerson rdfs:label ?authorLabel . }
-      }
+      ?author vivo:relates ?authorIndividual .
+      ?authorIndividual rdf:type vcard:Individual .
+      ?authorIndividual vcard:hasName ?authorVcardName .
+      OPTIONAL { ?authorVcardName vcard:givenName ?authorGivenName . }
+      OPTIONAL { ?authorVcardName vcard:middleName ?authorMiddleName . }
+      OPTIONAL { ?authorVcardName vcard:familyName ?authorFamilyName . }
     }
-
-    OPTIONAL {
-      ?subject obo:ARG_2000028 ?hasContactInfo .
-      ?hasContactInfo vcard:hasURL ?contactInfoHasUrl .
-      OPTIONAL { ?contactInfoHasUrl vcard:url ?contactInfoUrl . }
-      OPTIONAL { ?contactInfoHasUrl vivo:rank ?contactInfoRank . }
-      OPTIONAL { ?contactInfoHasUrl rdfs:label ?contactInfoLabel . }
+    OPTIONAL{
+      ?author vivo:relates ?authorPerson .
+      ?authorPerson rdf:type ?authorPersonType .
+      OPTIONAL { ?authorPerson vivo:orcidid ?authorOrcid . }
+      # OPTIONAL { ?authorPerson rdfs:label ?authorLabel . }
     }
-
-    OPTIONAL {
-      ?subject vivo:hasSubjectArea ?subjectArea .
-      ?subjectArea rdfs:label ?subjectAreaLabel .
-      ?subjectArea rdf:type ?subjectAreaType .
-    }
-
-    OPTIONAL {
-      ?subject vivo:hasPublicationVenue ?publicationVenue .
-      ?publicationVenue rdf:type ?publicationVenueType .
-      ?publicationVenue bibo:issn ?publicationVenueIssn .
-    }
-
-    OPTIONAL {
-      ?subject vivo:informationResourceSupportedBy ?supportedBy .
-      ?supportedBy rdfs:label ?supportedByLabel .
-    }
-
-    OPTIONAL {
-      ?subject vivo:dateTimeValue ?publicationDate .
-      OPTIONAL { ?publicationDate vivo:dateTime ?dateTime . }
-    }
-
-    FILTER(?subject = "{{uri}}" && ?authorPersonType IN (vcard:Individual, vivo:FacultyMember, vivo:NonAcademic, foaf:Person))
   }
+
+  OPTIONAL {
+    ?subject obo:ARG_2000028 ?hasContactInfo .
+    ?hasContactInfo vcard:hasURL ?contactInfoHasUrl .
+    OPTIONAL { ?contactInfoHasUrl vcard:url ?contactInfoUrl . }
+    OPTIONAL { ?contactInfoHasUrl vivo:rank ?contactInfoRank . }
+    OPTIONAL { ?contactInfoHasUrl rdfs:label ?contactInfoLabel . }
+  }
+
+  OPTIONAL {
+    ?subject vivo:hasSubjectArea ?subjectArea .
+    ?subjectArea rdfs:label ?subjectAreaLabel .
+    OPTIONAL { ?subjectArea skos:prefLabel ?subjectAreaPrefLabel . }
+  }
+
+  OPTIONAL {
+    ?subject vivo:hasPublicationVenue ?publicationVenue .
+    ?publicationVenue rdf:type ?publicationVenueType .
+    ?publicationVenue bibo:issn ?publicationVenueIssn .
+  }
+
+  OPTIONAL {
+    ?subject vivo:informationResourceSupportedBy ?supportedBy .
+    ?supportedBy rdfs:label ?supportedByLabel .
+  }
+
+  OPTIONAL {
+    ?subject vivo:dateTimeValue ?publicationDate .
+    OPTIONAL { ?publicationDate vivo:dateTime ?dateTime . }
+  }
+
+  FILTER(?subject = "{{uri}}" && ?authorPersonType IN (vcard:Individual, vivo:FacultyMember, vivo:NonAcademic, foaf:Person))
+
 }

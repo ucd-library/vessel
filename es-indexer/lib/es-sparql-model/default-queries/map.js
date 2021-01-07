@@ -1,6 +1,13 @@
 module.exports = {
   // https://wiki.lyrasis.org/display/VIVODOC110x/Person+Model
-  person : ['http://xmlns.com/foaf/0.1/Person', 'http://vivoweb.org/ontology/core#NonAcademic','http://vivoweb.org/ontology/core#FacultyMember'],
+  person : {
+    types : ['http://xmlns.com/foaf/0.1/Person', 'http://vivoweb.org/ontology/core#NonAcademic','http://vivoweb.org/ontology/core#FacultyMember'],
+    additionalProperties : {
+      citation : 'person-citations'
+    }
+  },
+
+  'subject-area' : ['http://www.w3.org/2004/02/skos/core#Concept'],
 
   // https://wiki.lyrasis.org/display/VIVODOC110x/Publication+Model
   publication : ['http://purl.org/ontology/bibo/AcademicArticle','http://purl.org/ontology/bibo/Book','http://purl.org/ontology/bibo/Chapter','http://vivoweb.org/ontology/core#ConferencePaper'],

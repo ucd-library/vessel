@@ -52,6 +52,7 @@ router.get('/:id', async (req, res) => {
       res.json((await model.get(id))._source);
     }
   } catch(e) {
+    console.log(e);
     errorHandler(req, res, e);
   }
 });

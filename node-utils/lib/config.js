@@ -9,7 +9,7 @@ if( graphs ) {
   graphs = [
     'http://iam.ucdavis.edu/',
     'http://oapolicy.universityofcalifornia.edu/',
-    'http://experts.ucdavis.edu/oap/'
+    'http://experts.ucdavis.edu/'
   ]
 }
 

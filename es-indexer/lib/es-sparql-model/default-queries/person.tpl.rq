@@ -9,6 +9,9 @@ PREFIX cito: <http://purl.org/spar/cito/>
 PREFIX obo: <http://purl.obolibrary.org/obo/>
 PREFIX ucd: <http://experts.ucdavis.edu/schema#>
 PREFIX ucdrp: <http://experts.library.ucdavis.edu/individual/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX free: <http://experts.ucdavis.edu/sub/free#>
+PREFIX for: <http://experts.ucdavis.edu/sub/FoR#>
 
 CONSTRUCT {
   ?subject rdf:type ?type .
@@ -26,7 +29,8 @@ CONSTRUCT {
   ?orcidId vivo:confirmedOrcidId ?confirmedOrcidId .
 
   ?subject vivo:hasResearchArea ?hasResearchArea .
-  ?hasResearchArea rdfs:label ?researchAreaLabel .
+  ?hasResearchArea rdfs:label ?hasResearchAreaLabel .
+  ?hasResearchArea skos:prefLabel ?hasResearchAreaPrefLabel .
 
   ?subject obo:hasContactInfo ?contactInfoFor .
   ?contactInfoFor vcard:givenName ?givenName .
@@ -61,27 +65,7 @@ CONSTRUCT {
   ?positionOrg rdfs:start ?positionStartTimeValue .
   ?positionOrg rdfs:end ?positionEndTimeValue .
 
-  ?subject ucdrp:citation ?citation .
-  ?citation rdfs:label ?citationLabel .
-  ?citation ucdrp:publication ?citationPublicationVenueLabel .
-  # ?citation vivo:rank ?citationAuthorRank .
-
-  ?citation ucdrp:authors ?citationAuthors .
-  ?citationAuthors vivo:rank ?citationAuthorRank .
-  # ?citationAuthors vivo:identifiers ?citationAuthorIdentifier .
-  # ?citationsAuthor vivo:rank ?citationAuthorsRank .
-
-  ?citationAuthors vivo:identifiers  ?authorPerson .
-
-  # ?citation rdf:type vivo:Authorship .
-  # ?citation vivo:rank ?citationAuthorRank .
-  # ?citation vivo:hasPublicationVenue ?citationPublicationVenue .
-  # ?citationPublicationVenue rdf:type ?citationPublicationVenueType .
-  # ?citationPublicationVenue rdfs:label ?citationPublicationVenueLabel .
-  # ?citationPublicationVenue bibo:issn ?citationPublicationVenueIssn .
-
 } WHERE {
-  GRAPH "{{graph}}" {
 
     ?subject rdf:type ?type .
     OPTIONAL { ?subject rdfs:label ?label . }
@@ -99,7 +83,8 @@ CONSTRUCT {
 
     OPTIONAL {
       ?subject vivo:hasResearchArea ?hasResearchArea .
-      ?hasResearchArea rdfs:label ?researchAreaLabel .
+      ?hasResearchArea rdfs:label ?hasResearchAreaLabel .
+      OPTIONAL { ?hasResearchArea skos:prefLabel ?hasResearchAreaPrefLabel . }
     }
 
     OPTIONAL {
@@ -181,40 +166,5 @@ CONSTRUCT {
       }
     }
 
-    OPTIONAL {
-      ?citation rdf:type bibo:AcademicArticle .
-      ?citation rdfs:label ?citationLabel .
-      ?citation vivo:relatedBy ?citationAuthor .
-      ?citationAuthor vivo:relates ?subject .
-      # OPTIONAL { ?citationAuthor vivo:rank ?citationAuthorRank . }
-      # OPTIONAL {
-      #   ?citationAuthor vivo:relates ?authorIndividual .
-      #   ?authorIndividual rdf:type vcard:Individual .
-      # }
-      OPTIONAL {
-        ?citation vivo:relatedBy ?citationAuthors .
-        ?citationAuthors rdf:type vivo:Authorship .
-
-        OPTIONAL {
-          ?citationAuthors vivo:rank ?citationAuthorRank .
-        }
-
-        OPTIONAL {
-          ?citationAuthors vivo:relates ?authorPerson .
-          ?authorPerson rdf:type ?authorPersonType .
-        }
-
-      }
-      OPTIONAL {
-        ?citation vivo:hasPublicationVenue ?citationPublicationVenue .
-        ?citationPublicationVenue rdfs:label ?citationPublicationVenueLabel .
-        # ?citationPublicationVenue rdf:type ?citationPublicationVenueType .
-        # ?citationPublicationVenue bibo:issn ?citationPublicationVenueIssn .
-      }
-    }
-
-    FILTER(
-      ?subject = "{{uri}}" && 
-      ?authorPersonType IN (vcard:Individual, vivo:FacultyMember, vivo:NonAcademic, foaf:Person))
-  }
+    FILTER( ?subject = "{{uri}}" )
 }
