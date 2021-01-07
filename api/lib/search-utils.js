@@ -42,7 +42,6 @@ class SearchModelUtils {
             if( item.highlight ) {
               let field = Object.keys(item.highlight)[0];
               item._source._snippet = {field, value : item.highlight[field][0]}
-              console.log(item._source._snippet);
             }            
             return item._source;
           });
