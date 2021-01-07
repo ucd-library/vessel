@@ -34,7 +34,7 @@ class ElasticSearch {
       index: config.elasticSearch.indexAlias,
       type: '_all',
       id: id,
-      _source_exclude : config.elasticSearch.fields.exclude
+      _source_excludes : config.elasticSearch.fields.exclude.join(',')
     }
 
     return this.client.get(queryDoc);
@@ -52,7 +52,7 @@ class ElasticSearch {
   search(body = {}, options={}) {
     options.index = config.elasticSearch.indexAlias;
     options.body = body;
-    options._source_exclude = config.elasticSearch.fields.exclude;
+    options._source_excludes = config.elasticSearch.fields.exclude.join(',');
 
     return this.client.search(options);
   }

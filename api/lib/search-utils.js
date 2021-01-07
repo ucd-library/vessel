@@ -1,3 +1,4 @@
+const {logger} = require('@ucd-lib/rp-node-utils');
 
 class SearchModelUtils {
 
@@ -38,6 +39,11 @@ class SearchModelUtils {
         response.results = esResult.hits.hits
           .map(item => {
             item._source._score = item._score;
+            if( item.highlight ) {
+              let field = Object.keys(item.highlight)[0];
+              item._source._snippet = {field, value : item.highlight[field][0]}
+              console.log(item._source._snippet);
+            }            
             return item._source;
           });
       }
@@ -97,6 +103,12 @@ class SearchModelUtils {
    */
   searchDocumentToEsBody(query, noLimit=false) {
     let esBody = {
+      highlight : {
+        order: 'score',
+        fields: {
+          "*": {}
+        }
+      },
       from : query.offset !== undefined ? query.offset : 0,
       size : query.limit !== undefined ? query.limit : 10
     }
