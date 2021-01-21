@@ -40,7 +40,9 @@ class SearchModelUtils {
           .map(item => {
             item._source._score = item._score;
             if( item.highlight ) {
-              let field = Object.keys(item.highlight)[0];
+              let fields = Object.keys(item.highlight);
+              let field = fields[0];
+              if (field === '@type' && fields.length > 1) field = fields[1];
               item._source._snippet = {field, value : item.highlight[field][0]}
             }            
             return item._source;
