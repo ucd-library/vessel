@@ -1,7 +1,7 @@
 // TODO: this is just bad.
 class CleanModel {
 
-  run(model) {
+  run(model, args) {
     if( model.pageStart ) model.pageStart = model.pageStart.replace(/\D*/g, '');
     if( model.pageEnd ) model.pageEnd = model.pageEnd.replace(/\D*/g, '');
 
@@ -9,13 +9,15 @@ class CleanModel {
     this.cleanObject(model, 'hasSubjectArea');
     this.cleanObject(model, 'Journal');
 
+    model._ = {};
+
     // author count
     if( model.citation ) {
       if( !Array.isArray(model.citation) ) {
         model.citation = [model.citation];
       }
-      model.top20Citation = [];
-      model.lastCitation = [];
+      model._.top20Citation = [];
+      model._.lastCitation = [];
       
       model.citation = model.citation.map(item => {
         item.authorsCount = asArray(item.authors).length;
@@ -26,12 +28,12 @@ class CleanModel {
         if( item.authorsCount && item.rank ) {
           // is person last author
           if( item.authorsCount === item.rank ) {
-            model.lastCitation.push(item);
+            model._.lastCitation.push(item);
           }
 
           // is person top 20% rank in citation
           if( item.rank / item.authorsCount <= .2 ) {
-            model.top20Citation.push(item);
+            model._.top20Citation.push(item);
           }
         }
 
@@ -40,6 +42,10 @@ class CleanModel {
       });
     }
 
+    // for individual label indexing.
+    if( model.label ) {
+      model._[dashToCamel(args.modelType || 'default')+'Label'] = model.label;
+    }
 
     return model;
   }
@@ -60,6 +66,10 @@ class CleanModel {
     }
   }
 
+}
+
+function dashToCamel(str) {
+  return str.replace(/-([a-z])/g, g => g[1].toUpperCase());
 }
 
 function asArray(val) {

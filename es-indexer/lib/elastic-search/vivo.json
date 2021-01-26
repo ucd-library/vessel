@@ -1,6 +1,29 @@
 {
   "dynamic" : false,
 
+  "dynamic_templates": [
+    {
+      "labels": {
+        "match_mapping_type": "string",
+        "match":   "*Label",
+        "mapping": {
+          "type" : "keyword",
+          "fields": {
+            "text" : {
+              "type" : "text",
+              "analyzer": "autocomplete", 
+              "search_analyzer": "autocomplete_search"
+            },
+            "firstLetter" : {
+              "type" : "keyword",
+              "normalizer": "first_letter_normilizer"
+            }
+          }
+        }
+      }
+    }
+  ],
+
   "properties" : {
 
     "@id" : {
@@ -13,6 +36,11 @@
 
     "@type" : {
       "type" : "keyword"
+    },
+
+    "_" : {
+      "type" : "object",
+      "dynamic" : true
     },
 
     "abstract" : {
@@ -45,11 +73,11 @@
       "type" : "text"
     },
 
-    "top20Citation.publication" : {
+    "_.top20Citation.publication" : {
       "type" : "text"
     },
 
-    "top20Citation.label" : {
+    "_.top20Citation.label" : {
       "type" : "text"
     },
 

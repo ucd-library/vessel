@@ -133,7 +133,7 @@ class EsSparqlModel {
       result.model[prop] = propResult[prop];
     }
 
-    clean.run(result.model);
+    clean.run(result.model, {type, modelType: model});
     result.model.uri = uri;
     result.model.indexerTimestamp = Date.now();
 
