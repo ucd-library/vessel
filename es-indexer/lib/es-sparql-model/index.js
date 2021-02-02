@@ -1,5 +1,5 @@
 const {fuseki, config, logger} = require('@ucd-lib/rp-node-utils');
-const clean = require('./clean');
+const postProcess = require('./post-process');
 const path = require('path');
 const fs = require('fs');
 
@@ -133,7 +133,7 @@ class EsSparqlModel {
       result.model[prop] = propResult[prop];
     }
 
-    clean.run(result.model, {type, modelType: model});
+    await postProcess.run(result.model, {type, modelType: model});
     result.model.uri = uri;
     result.model.indexerTimestamp = Date.now();
 

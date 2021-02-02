@@ -127,7 +127,9 @@
     },
 
 
-
+    "_.allSubjectArea" : {
+      "type" : "keyword"
+    },
     "hasSubjectArea.@id" : {
       "type" : "keyword"
     },
@@ -138,6 +140,9 @@
       "type" : "keyword"
     },
 
+    "_.allResearchArea" : {
+      "type" : "keyword"
+    },
     "hasResearchArea.@id" : {
       "type" : "keyword"
     },

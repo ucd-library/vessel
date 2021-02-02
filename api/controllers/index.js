@@ -13,6 +13,7 @@ router.get('/', (req, res) => {
 
 router.use('/search', require('./search'));
 router.use('/miv', require('./miv'));
+router.use('/subject-terms', require('./subject-terms'));
 
 /**
  * @swagger
