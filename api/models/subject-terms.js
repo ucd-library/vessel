@@ -93,6 +93,64 @@ class SubjectTerms {
     return terms;
   }
 
+  /**
+   * @method random
+   * @description return random list of keywords
+   * 
+   * @param {Number} count
+   * 
+   * @returns {Array} 
+   */
+  async random(count=10) {
+    let queryDoc = {
+      index: config.elasticSearch.indexAlias,
+      body : {
+        query : {
+          function_score: {
+            query: { 
+              bool : {
+                should : [
+                  {exists : { field: 'hasResearchArea.@id' }},
+                  {exists : { field: 'hasSubjectArea.@id' }}
+                ]
+              }
+            },
+            random_score: {
+              seed: (Math.random() * 100000)+'',
+              field: "_seq_no"
+            }
+          }
+        },
+        size : count
+      },
+      _source_includes : 'hasSubjectArea.@id,hasResearchArea.@id'
+    }
+
+    let terms = new Set();
+    let results = await this.client.search(queryDoc);
+    results.hits.hits.forEach(item => {
+      if( item._source.hasSubjectArea ) {
+        item._source.hasSubjectArea.forEach(term => {
+          terms.add(term['@id']);
+        });
+      }
+      if( item._source.hasResearchArea ) {
+        item._source.hasResearchArea.forEach(term => {
+          terms.add(term['@id']);
+        });
+      }
+    });
+
+    let ids = Array.from(terms).splice(0, count);
+
+    results = await this.client.mget({
+      index: config.elasticSearch.indexAlias,
+      body : {ids}
+    });
+
+    return results.docs.map(item => item._source);
+  }
+
 }
 
 module.exports = new SubjectTerms();

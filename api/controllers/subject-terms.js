@@ -62,4 +62,36 @@ router.get('/narrower/:id', async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ *
+ * /api/subject-term/random/{count}:
+ *   get:
+ *     description: Get random list of terms
+ *     tags: [Subject Term Random]
+ *     parameters:
+ *       - name: count
+ *         description: number of terms to return
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Terms array
+ *         content:
+ *           application/json:
+ *              schema:
+ *                type: object
+ */
+router.get('/random/:count', async (req, res) => {
+  let count = req.params.count !== undefined ? parseInt(req.params.count) : 10;
+
+  try {
+    res.send(await model.random(count));
+  } catch(e) {
+    onError(req, res, e, 'Failed to get random terms');
+  }
+});
+
 module.exports = router;
