@@ -78,7 +78,8 @@ module.exports = {
       indexer : 'indexer-',
       deleteIndex : 'indexercmd-delete-index-',
       session : 'session-',
-      roles : 'role-'
+      roles : 'role-',
+      authProperties : 'auth-props-'
     },
     keys : {
       serverSecret : 'server-secret',

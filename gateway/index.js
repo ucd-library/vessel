@@ -34,7 +34,8 @@ proxy.on('proxyRes', async (proxyRes, req, res) => {
   // if this is a response from the authorization service, check for authorized agent header
   if( req.originalUrl.match(/^\/auth\/.*/) && proxyRes.headers['x-vessel-authorized-agent'] ) {
     // mint jwt token and set in cookie
-    await auth.handleLogin(res, proxyRes.headers['x-vessel-authorized-agent']);
+    let body = await readBody(proxyRes);
+    await auth.handleLogin(res, proxyRes.headers['x-vessel-authorized-agent'], JSON.parse(body).properties);
     res.redirect(config.authService.loginRedirect);
     return;
 
@@ -58,6 +59,16 @@ proxy.on('proxyRes', async (proxyRes, req, res) => {
   // pipe body to original express response
   proxyRes.pipe(res);
 });
+
+function readBody(res) {
+  return new Promise((resolve, reject) => {
+    let body = '';
+    res.on('data', chunk => body += chunk);
+    res.on('end', () => {
+      resolve(body.toString())
+    }); 
+  });
+}
 
 /**
  * HTTP Logging

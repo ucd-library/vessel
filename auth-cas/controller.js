@@ -5,7 +5,8 @@ const AGENT_DOMAIN = process.env.CAS_AGENT_DOMAIN || getRootDomain(process.env.C
 
 let cas = new CASAuthentication({
   cas_url     : process.env.CAS_URL,
-  service_url : config.server.url
+  service_url : config.server.url,
+  session_info : 'session_info'
 });
 
 function init(app) {
@@ -27,7 +28,11 @@ function init(app) {
       if( username ) {
         logger.info('CAS Service: CAS login success: '+username);
         res.set('X-VESSEL-AUTHORIZED-AGENT', username+'@'+AGENT_DOMAIN)
-            .json({success: true, username: username+'@'+AGENT_DOMAIN});
+            .json({
+              success: true, 
+              username: username+'@'+AGENT_DOMAIN,
+              properties: req.session[cas.session_info]
+            });
       } else {
         logger.info('CAS Service: CAS login failure');
         res.status(401).send();

@@ -181,11 +181,18 @@ class Auth {
    * 
    * @param {Object} res express response
    * @param {String} username 
+   * @param {Object} properties additional properties from auth serives
    */
-  async handleLogin(res, username) {
+  async handleLogin(res, username, properties={}) {
     this._connect();
     let roles = ((await redis.client.keys(this.getUserRoleKey(username, '*'))) || [])
       .map(role => role.replace(this.getUserRoleKey(username, ''), ''));
+
+    properties.username = username;
+    redis.client.set(
+      config.redis.prefixes.authProperties+username,
+      JSON.stringify(properties)
+    );
 
     res.cookie(
       config.jwt.cookieName, 
