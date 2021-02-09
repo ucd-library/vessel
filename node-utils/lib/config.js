@@ -65,8 +65,8 @@ module.exports = {
     database : env.FUSEKI_DATABASE || 'vivo',
     graphs,
     rootPrefix : {
-      uri : 'http://experts.library.ucdavis.edu/individual/',
-      prefix: 'ucdrp'
+      uri : 'http://experts.ucdavis.edu/',
+      prefix: 'experts'
     }
   },
 
