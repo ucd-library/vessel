@@ -128,17 +128,14 @@ class SubjectTerms {
 
     let terms = new Set();
     let results = await this.client.search(queryDoc);
+
     results.hits.hits.forEach(item => {
-      if( item._source.hasSubjectArea ) {
-        item._source.hasSubjectArea.forEach(term => {
-          terms.add(term['@id']);
-        });
-      }
-      if( item._source.hasResearchArea ) {
-        item._source.hasResearchArea.forEach(term => {
-          terms.add(term['@id']);
-        });
-      }
+      asArray(item._source.hasSubjectArea).forEach(term => {
+        terms.add(term['@id']);
+      });
+      asArray(item._source.hasResearchArea).forEach(term => {
+        terms.add(term['@id']);
+      });
     });
 
     let ids = Array.from(terms).splice(0, count);
@@ -152,5 +149,12 @@ class SubjectTerms {
   }
 
 }
+
+function asArray(items) {
+  if( !items ) return [];
+  if( !Array.isArray(items) ) return [items];
+  return items;
+}
+
 
 module.exports = new SubjectTerms();

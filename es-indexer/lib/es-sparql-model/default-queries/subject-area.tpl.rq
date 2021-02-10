@@ -7,14 +7,15 @@ PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 PREFIX vcard: <http://www.w3.org/2006/vcard/ns#>
 PREFIX cito: <http://purl.org/spar/cito/>
 PREFIX obo: <http://purl.obolibrary.org/obo/>
-PREFIX ucdrp: <http://experts.ucdavis.edu/schema#>
+PREFIX experts: <http://experts.ucdavis.edu/>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX ucdrp: <http://experts.ucdavis.edu/schema#>
 PREFIX free: <http://experts.ucdavis.edu/sub/free#>
 PREFIX for: <http://experts.ucdavis.edu/sub/FoR#>
 
 CONSTRUCT {
   ?subject rdf:type ?type .
-  ?subject rdf:type ucdrp:subjectArea .
+  ?subject rdf:type skos:Concept .
 
   ?subject rdfs:label ?label .
   ?subject skos:prefLabel ?prefLabel .
