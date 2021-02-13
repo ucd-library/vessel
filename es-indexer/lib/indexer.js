@@ -1,6 +1,5 @@
-const {kafka, redis, fuseki, logger, config} = require('@ucd-lib/rp-node-utils');
+const {kafka, redis, fuseki, logger, config, esSparqlModel} = require('@ucd-lib/rp-node-utils');
 const elasticSearch = require('./elastic-search');
-const esSparqlModel = require('./es-sparql-model');
 const reindex = require('./reindex');
 
 /**
@@ -127,7 +126,7 @@ class Indexer {
 
     let modelType = this.getKnownModelType(payload);
     if( !modelType ) {
-      logger.info(`Ignoring message ${payload.msgId} with subject ${payload.subject} sent by ${payload.sender || 'unknown'}: Type has no model ${payload.type} ${JSON.stringify(payload.types || [])}`);
+      logger.info(`Ignoring message ${payload.msgId} with subject ${payload.subject} sent by ${payload.sender || 'unknown'}: Type has no model ${modelType} ${JSON.stringify(payload.types || [])}`);
       return;
     }
 

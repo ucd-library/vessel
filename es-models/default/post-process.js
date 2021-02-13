@@ -2,7 +2,7 @@ const fetch = require('node-fetch');
 
 class PostProcess {
 
-  async run(model, args) {
+  async run(model, args, esSparqlModel) {
     if( model.pageStart ) model.pageStart = model.pageStart.replace(/\D*/g, '');
     if( model.pageEnd ) model.pageEnd = model.pageEnd.replace(/\D*/g, '');
 
@@ -50,28 +50,28 @@ class PostProcess {
 
     // create the broader subjects index
     if( model.hasSubjectArea ) {
-      model._.allSubjectArea = await this.getBroaderSubjectTerms(model.hasSubjectArea);
+      model._.allSubjectArea = await this.getBroaderSubjectTerms(model.hasSubjectArea, esSparqlModel);
     }
     if( model.hasResearchArea ) {
-      model._.allResearchArea = await this.getBroaderSubjectTerms(model.hasResearchArea);
+      model._.allResearchArea = await this.getBroaderSubjectTerms(model.hasResearchArea, esSparqlModel);
     }
 
     return model;
   }
 
-  async getBroaderSubjectTerms(terms) {
+  async getBroaderSubjectTerms(terms, esSparqlModel) {
     if( !Array.isArray(terms) ) {
       terms = [terms];
     }
 
     let unique = new Set();
-    for( let item of terms ) {
-      try {
-        let response = await fetch('http://api:3000/api/subject-terms/broader/'+encodeURIComponent(item['@id']));
-        let results = await response.json();
-        results.forEach(item => unique.add(item['@id']));
-      } catch(e) {
-        console.warn('Failed to fetch broader subject terms: '+item['@id']);
+    for( let item of terms ) {   
+      unique.add(item['@id']);
+
+      let response = await esSparqlModel.getModel('concept', item['@id']);
+
+      if( response && response.model && response.model.broader ) {
+        await this.getBroaderSubjectTerms(response.model.broader, esSparqlModel);
       }
     }
     return Array.from(unique);

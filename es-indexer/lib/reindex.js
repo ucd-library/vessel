@@ -1,5 +1,4 @@
-const {fuseki, kafka, logger, config} = require('@ucd-lib/rp-node-utils');
-const esSparqlModel = require('./es-sparql-model');
+const {fuseki, kafka, logger, config, esSparqlModel} = require('@ucd-lib/rp-node-utils');
 const elasticSearch = require('./elastic-search');
 
 

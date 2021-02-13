@@ -7,15 +7,15 @@ PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 PREFIX vcard: <http://www.w3.org/2006/vcard/ns#>
 PREFIX cito: <http://purl.org/spar/cito/>
 PREFIX obo: <http://purl.obolibrary.org/obo/>
-PREFIX experts: <http://experts.ucdavis.edu/>
-PREFIX ucdrp: <http://experts.ucdavis.edu/schema#>
+PREFIX experts: <http://experts.ucdavis.edu/schema#>
+PREFIX ucdrp: <http://experts.ucdavis.edu/>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-PREFIX free: <http://experts.ucdavis.edu/sub/free#>
-PREFIX for: <http://experts.ucdavis.edu/sub/FoR#>
+PREFIX free: <http://experts.ucdavis.edu/subject/free#>
+PREFIX for: <http://experts.ucdavis.edu/subject/FoR#>
 
 CONSTRUCT {
   ?subject rdf:type ?type .
-  ?subject rdf:type ucdrp:person .
+  ?subject rdf:type experts:person .
 
   ?subject rdfs:label ?label .
   ?subject vivo:scopusId ?scopusId .
@@ -23,7 +23,7 @@ CONSTRUCT {
   ?subject vivo:eRACommonsId ?eRACommonsId .
   ?subject vivo:overview ?overview .
 
-  ?subject ucdrp:casId ?casId .
+  ?subject experts:casId ?casId .
 
   ?subject vivo:orcidId ?orcidId .
   ?orcidId vivo:confirmedOrcidId ?confirmedOrcidId .
@@ -48,7 +48,7 @@ CONSTRUCT {
   ?contactInfoFor vcard:telephone ?telephone .
   ?contactInfoFor vcard:geo ?geo .
   ?contactInfoFor vivo:rank ?vcardRank .
-  ?contactInfoFor ucdrp:identifier ?identifier .
+  ?contactInfoFor experts:identifier ?identifier .
 
   ?contactInfoFor vcard:hasURL ?vcardURL .
   ?vcardURL vcard:url ?url .

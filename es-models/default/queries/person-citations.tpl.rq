@@ -7,18 +7,18 @@ PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 PREFIX vcard: <http://www.w3.org/2006/vcard/ns#>
 PREFIX cito: <http://purl.org/spar/cito/>
 PREFIX obo: <http://purl.obolibrary.org/obo/>
-PREFIX experts: <http://experts.ucdavis.edu/>
-PREFIX ucdrp: <http://experts.ucdavis.edu/schema#>
+PREFIX experts: <http://experts.ucdavis.edu/schema#>
+PREFIX ucdrp: <http://experts.ucdavis.edu/>
 
 CONSTRUCT {
   ?subject rdf:type ?type .
-  ?subject rdf:type ucdrp:person .
+  ?subject rdf:type experts:person .
 
-  ?subject ucdrp:citation ?citation .
+  ?subject experts:citation ?citation .
   ?citation rdfs:label ?citationLabel .
-  ?citation ucdrp:publication ?citationPublicationVenueLabel .
+  ?citation experts:publication ?citationPublicationVenueLabel .
 
-  ?citation ucdrp:authors ?citationAuthors .
+  ?citation experts:authors ?citationAuthors .
   ?citationAuthors vivo:rank ?citationAuthorRank .
   ?citationAuthors vivo:identifiers  ?authorPerson .
 } WHERE {

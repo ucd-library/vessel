@@ -64,9 +64,13 @@ module.exports = {
     port : env.FUSEKI_PORT || 3030,
     database : env.FUSEKI_DATABASE || 'vivo',
     graphs,
+    schemaPrefix : {
+      uri : 'http://experts.ucdavis.edu/schema#',
+      prefix: 'experts'
+    },
     rootPrefix : {
       uri : 'http://experts.ucdavis.edu/',
-      prefix: 'experts'
+      prefix: 'ucdrp'
     }
   },
 
@@ -115,6 +119,11 @@ module.exports = {
   indexer : {
     port : 3000,
     handleMessageDelay : 5 // seconds
+  },
+
+  models : {
+    serviceName : env.MODELS_SERVICE_NAME || 'models',
+    port : 3000,
   },
 
   gateway : {

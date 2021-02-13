@@ -10,8 +10,8 @@ PREFIX obo: <http://purl.obolibrary.org/obo/>
 PREFIX experts: <http://experts.ucdavis.edu/>
 PREFIX ucdrp: <http://experts.ucdavis.edu/schema#>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-PREFIX free: <http://experts.ucdavis.edu/sub/free#>
-PREFIX for: <http://experts.ucdavis.edu/sub/FoR#>
+PREFIX free: <http://experts.ucdavis.edu/subject/free#>
+PREFIX for: <http://experts.ucdavis.edu/subject/FoR#>
 
 CONSTRUCT {
   ?subject rdf:type ?type .

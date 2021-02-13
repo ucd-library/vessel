@@ -1,4 +1,4 @@
-const {elasticSearch, config} = require('@ucd-lib/rp-node-utils');
+const {elasticSearch, config, esSparqlModel} = require('@ucd-lib/rp-node-utils');
 
 class SubjectTerms {
 
@@ -44,7 +44,11 @@ class SubjectTerms {
         if( !Array.isArray(broader) ) broader = [broader];
 
         for( let term of broader ) {
-          await this.broader(term['@id'], terms);
+          try {
+            await this.broader(term['@id'], terms);
+          } catch(e) {
+            logger.warn('failed to get broader term for: '+term['@id']);
+          }
         }
       }
     }

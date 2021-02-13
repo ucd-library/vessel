@@ -5,6 +5,7 @@ module.exports = {
   elasticSearch : require('./lib/elastic-search'),
   redis : require('./lib/redis'),
   'wait-util' : require('./lib/wait-until'),
+  esSparqlModel : require('./lib/es-sparql-models'),
   logger : require('./lib/logger'),
   auth : require('./lib/auth'),
   middleware : require('./lib/middleware')

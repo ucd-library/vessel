@@ -1,20 +1,24 @@
-const {fuseki, config, logger} = require('@ucd-lib/rp-node-utils');
-const postProcess = require('./post-process');
+const {logger, config, fuseki} = require('@ucd-lib/rp-node-utils');
+const postProcess = require('../default/post-process');
 const path = require('path');
 const fs = require('fs');
 
 class EsSparqlModel {
 
   constructor() {
-    // this.GRAPHS = config.fuseki.graphs;
-    // this.GRAPHS.push('http://experts.ucdavis.edu/oap/');
-
     this.TYPES = {};
     this.MODELS = {};
     this.TEMPLATES = {};
 
-    this.readModels(path.join(__dirname, 'default-queries'));
-    // TODO: add check for global dir or env variable to points to additional model paths
+    this.readModels(path.join(__dirname, '..', 'default', 'queries'));
+
+    if( process.env.MODEL_FOLDER ) {
+      this.readModels(process.env.MODEL_FOLDER);
+    }
+    if( process.env.CUSTOM_POST_PROCESSOR ) {
+      logger.info('Using custom model post processor: '+process.env.CUSTOM_POST_PROCESSOR);
+      postProcess = require(process.env.CUSTOM_POST_PROCESSOR);
+    }
   }
 
   /**
@@ -26,6 +30,8 @@ class EsSparqlModel {
    * @param {String} dir 
    */
   readModels(dir) {
+    logger.info('Loading models from: '+dir);
+
     const mapPath = path.join(dir, 'map.js');
     if( !fs.existsSync(mapPath) ) {
       throw new Error('Unable to load models, no map.js file exists: '+dir);
@@ -95,6 +101,12 @@ class EsSparqlModel {
       if( !model ) throw new Error('Unknown model or type: '+type);
     }
 
+    if( uri.startsWith(config.fuseki.rootPrefix.prefix+':') ) {
+      uri = uri.replace(config.fuseki.rootPrefix.prefix+':', config.fuseki.rootPrefix.uri);
+    } else if( uri.startsWith(config.fuseki.schemaPrefix.prefix+':') ) {
+      uri = uri.replace(config.fuseki.schemaPrefix.prefix+':', config.fuseki.schemaPrefix.uri);
+    }
+
     if( uri.match('http(s)?:\/\/') ) {
       uri = '<'+uri+'>';
     }
@@ -110,10 +122,12 @@ class EsSparqlModel {
    * 
    * @param {String} type es model name or rdf uri
    * @param {String} uri subject uri
+   * @param {Object} options additional options
+   * @param {Boolean} options.verbose include SPARQL queries
    * 
    * @returns {Object}
    */
-  async getModel(type, uri) {
+  async getModel(type, uri, opts={}) {
     let model = this.hasModel(type);
     if( !model ) {
       throw new Error('Unknown model type: '+model);
@@ -121,21 +135,34 @@ class EsSparqlModel {
 
     let result = {
       type,
+      modelType: model,
+      uri,
+      timestamp : Date.now(),
       database : config.fuseki.database,
       model : {}
+    }
+
+    if( opts.verbose ) {
+      result.sparql = [this.getSparqlQuery(type, uri)];
     }
 
     result.model = await this._requestModel(type, uri);
 
     for( let prop in this.MODELS[model].additionalProperties ) {
       type = this.MODELS[model].additionalProperties[prop];
+      if( opts.verbose ) {
+        result.sparql = [this.getSparqlQuery(type, uri)];
+      }
       let propResult = await this._requestModel(type, uri);
       result.model[prop] = propResult[prop];
     }
 
-    await postProcess.run(result.model, {type, modelType: model});
-    result.model.uri = uri;
-    result.model.indexerTimestamp = Date.now();
+    await postProcess.run(result.model, {
+      type, 
+      modelType: result.modelType,
+      uri: result.uri,
+      timestamp: result.timestamp 
+    }, this);
 
     return result;
   }
@@ -154,6 +181,7 @@ class EsSparqlModel {
     let response = await fuseki.query(sparqlQuery, 'application/ld+json');
 
     // let t = await response.text();
+    // console.log(t);
     // response = JSON.parse(t);
     response = await response.json();
 
