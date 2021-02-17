@@ -10,10 +10,14 @@ app.get('/', (req, res) => {
   });
 });
 
-app.get('/:type/:uri', async (req, res) => {
+app.get(/\/.+/, async (req, res) => {
+  let path = req.path.replace(/\/(model\/)?/, '').split('/');
+  let type = path.shift();
+  let uri = path.join('/');
+
   try {
-    let type = decodeURIComponent(req.params.type);
-    let uri = decodeURIComponent(req.params.uri);
+    type = decodeURIComponent(type);
+    uri = decodeURIComponent(uri);
     let verbose = req.query.verbose ? true : false;
 
     res.json(await model.getModel(type, uri, {verbose}));

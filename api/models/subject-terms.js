@@ -132,8 +132,10 @@ class SubjectTerms {
 
     let terms = new Set();
     let results = await this.client.search(queryDoc);
+    console.log(results.hits.hits);
 
     results.hits.hits.forEach(item => {
+      console.log(asArray(item._source.hasSubjectArea), asArray(item._source.hasResearchArea));
       asArray(item._source.hasSubjectArea).forEach(term => {
         terms.add(term['@id']);
       });
@@ -143,6 +145,7 @@ class SubjectTerms {
     });
 
     let ids = Array.from(terms).splice(0, count);
+    console.log(ids);
 
     results = await this.client.mget({
       index: config.elasticSearch.indexAlias,

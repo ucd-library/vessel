@@ -5,7 +5,7 @@ const onError = require('./utils/error-handler');
 /**
  * @swagger
  *
- * /api/subject-term/broader/{id}:
+ * /api/concept/broader/{id}:
  *   get:
  *     description: Get broader terms for provided subject id
  *     tags: [Subject Term Broader]
@@ -24,7 +24,7 @@ const onError = require('./utils/error-handler');
  *              schema:
  *                type: object
  */
-router.get('/broader/:id', async (req, res) => {
+router.get('/concept/:id', async (req, res) => {
   try {
     res.send(await model.broader(req.params.id));
   } catch(e) {
@@ -35,7 +35,7 @@ router.get('/broader/:id', async (req, res) => {
 /**
  * @swagger
  *
- * /api/subject-term/narrower/{id}:
+ * /api/concept/narrower/{id}:
  *   get:
  *     description: Get narrower terms for provided subject id
  *     tags: [Subject Term Narrower]
@@ -65,7 +65,7 @@ router.get('/narrower/:id', async (req, res) => {
 /**
  * @swagger
  *
- * /api/subject-term/random/{count}:
+ * /api/concept/random/{count}:
  *   get:
  *     description: Get random list of terms
  *     tags: [Subject Term Random]

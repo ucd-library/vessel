@@ -8,10 +8,11 @@ PREFIX vcard: <http://www.w3.org/2006/vcard/ns#>
 PREFIX cito: <http://purl.org/spar/cito/>
 PREFIX obo: <http://purl.obolibrary.org/obo/>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-PREFIX ucdrp: <http://experts.ucdavis.edu/>
 PREFIX experts: <http://experts.ucdavis.edu/schema#>
+PREFIX ucdrp: <http://experts.ucdavis.edu/>
 PREFIX free: <http://experts.ucdavis.edu/subject/free#>
 PREFIX for: <http://experts.ucdavis.edu/subject/FoR#>
+
 CONSTRUCT {
   ?subject rdf:type ?type .
   ?subject rdf:type skos:Concept .

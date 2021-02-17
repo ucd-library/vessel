@@ -7,8 +7,8 @@ PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 PREFIX vcard: <http://www.w3.org/2006/vcard/ns#>
 PREFIX cito: <http://purl.org/spar/cito/>
 PREFIX obo: <http://purl.obolibrary.org/obo/>
-PREFIX experts: <http://experts.ucdavis.edu/>
-PREFIX ucdrp: <http://experts.ucdavis.edu/schema#>
+PREFIX experts: <http://experts.ucdavis.edu/schema#>
+PREFIX ucdrp: <http://experts.ucdavis.edu/>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX free: <http://experts.ucdavis.edu/subject/free#>
 PREFIX for: <http://experts.ucdavis.edu/subject/FoR#>
@@ -71,10 +71,14 @@ CONSTRUCT {
     OPTIONAL {
       ?author vivo:relates ?authorIndividual .
       ?authorIndividual rdf:type vcard:Individual .
-      ?authorIndividual vcard:hasName ?authorVcardName .
-      OPTIONAL { ?authorVcardName vcard:givenName ?authorGivenName . }
-      OPTIONAL { ?authorVcardName vcard:middleName ?authorMiddleName . }
-      OPTIONAL { ?authorVcardName vcard:familyName ?authorFamilyName . }
+      
+      OPTIONAL {
+        ?authorIndividual vcard:hasName ?authorVcardName .
+        ?authorVcardName rdf:type vcard:Name .
+        OPTIONAL { ?authorVcardName vcard:givenName ?authorGivenName . }
+        OPTIONAL { ?authorVcardName vcard:middleName ?authorMiddleName . }
+        OPTIONAL { ?authorVcardName vcard:familyName ?authorFamilyName . }
+      }
     }
     OPTIONAL{
       ?author vivo:relates ?authorPerson .

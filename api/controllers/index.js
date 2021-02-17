@@ -13,12 +13,12 @@ router.get('/', (req, res) => {
 
 router.use('/search', require('./search'));
 router.use('/miv', require('./miv'));
-router.use('/subject-terms', require('./subject-terms'));
+router.use('/concept', require('./concept'));
 
 /**
  * @swagger
  *
- * /api/{id}:
+ * /api/record/{id}:
  *   get:
  *     description: Get research profile record by id
  *     tags: [Get Record]
@@ -38,9 +38,9 @@ router.use('/subject-terms', require('./subject-terms'));
  *              type: object
  *              description: record or array of records
  */
-router.get('/:id', async (req, res) => {
+router.get(/\/record\/.*/, async (req, res) => {
   try {
-    let id = req.params.id;
+    let id = req.originalUrl.replace(/\/api\/record\//, '');
     if( id.includes(',') ) {
       let ids = id.split(',');
       let arr = [];
