@@ -24,6 +24,7 @@ CONSTRUCT {
   ?subject vivo:overview ?overview .
 
   ?subject experts:casId ?casId .
+  ?subject experts:identifier ?identifier .
 
   ?subject vivo:orcidId ?orcidId .
   ?orcidId vivo:confirmedOrcidId ?confirmedOrcidId .
@@ -48,7 +49,7 @@ CONSTRUCT {
   ?contactInfoFor vcard:telephone ?telephone .
   ?contactInfoFor vcard:geo ?geo .
   ?contactInfoFor vivo:rank ?vcardRank .
-  ?contactInfoFor experts:identifier ?identifier .
+  ?contactInfoFor experts:identifier ?contactInfoForIdentifier .
 
   ?contactInfoFor vcard:hasURL ?vcardURL .
   ?vcardURL vcard:url ?url .
@@ -74,7 +75,8 @@ CONSTRUCT {
     OPTIONAL { ?subject vivo:eRACommonsId ?eRACommonsId . }
     OPTIONAL { ?subject vivo:overview ?overview . }
 
-    OPTIONAL { ?subject ucdrp:casId ?casId . }
+    OPTIONAL { ?subject experts:casId ?casId . }
+    OPTIONAL { ?subject experts:identifier ?identifier . }
 
     OPTIONAL {
       ?subject vivo:orcidId ?orcidId .
@@ -100,7 +102,7 @@ CONSTRUCT {
       }
 
       OPTIONAL { ?contactInfoFor vivo:rank ?vcardRank . }
-      OPTIONAL { ?contactInfoFor ucdrp:identifier ?identifier . }
+      OPTIONAL { ?contactInfoFor experts:identifier ?contactInfoForIdentifier . }
 
       OPTIONAL {
         ?contactInfoFor vcard:hasEmail ?vcardEmail .

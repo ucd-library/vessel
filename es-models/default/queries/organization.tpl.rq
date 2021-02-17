@@ -12,7 +12,7 @@ PREFIX ucdrp: <http://experts.ucdavis.edu/>
 
 CONSTRUCT {
   ?subject rdf:type ?type .
-  ?subject rdf:type ucdrp:organization .
+  ?subject rdf:type experts:organization .
 
   ?subject rdfs:label ?label .
   ?subject vivo:abbreviation ?abbreviation .

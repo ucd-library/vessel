@@ -24,7 +24,7 @@ const onError = require('./utils/error-handler');
  *              schema:
  *                type: object
  */
-router.get('/concept/:id', async (req, res) => {
+router.get('/broader/:id', async (req, res) => {
   try {
     res.send(await model.broader(req.params.id));
   } catch(e) {

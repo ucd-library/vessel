@@ -134,6 +134,7 @@ class ElasticSearch {
                 first_letter_filter: {
                   type: "pattern_replace",
                   pattern: "(.).*",
+                  // pattern: ".*([a-zA-Z]).*", TODO
                   replacement: "$1"
                 }
               },

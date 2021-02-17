@@ -15,7 +15,7 @@ PREFIX for: <http://experts.ucdavis.edu/subject/FoR#>
 
 CONSTRUCT {
   ?subject rdf:type ?type .
-  ?subject rdf:type ucdrp:publication .
+  ?subject rdf:type experts:work .
 
   ?subject rdfs:label ?label .
   ?subject bibo:abstract ?abstract .

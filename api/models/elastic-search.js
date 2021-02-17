@@ -1,4 +1,5 @@
 const {elasticSearch, config} = require('@ucd-lib/rp-node-utils');
+const { esResultToApiResult } = require('../lib/search-utils');
 const utils = require('../lib/search-utils');
 
 class ElasticSearch {
@@ -29,15 +30,37 @@ class ElasticSearch {
    * 
    * @returns {Promise} resolves to elasticsearch result
    */
-  get(id) {
-    let queryDoc = {
-      index: config.elasticSearch.indexAlias,
-      type: '_all',
-      id: id,
-      _source_excludes : config.elasticSearch.fields.exclude.join(',')
+  async get(id) {
+    // try by index id
+    try {
+      let result = await this.client.get({
+        index: config.elasticSearch.indexAlias,
+        type: '_all',
+        id: id,
+        _source_excludes : config.elasticSearch.fields.exclude.join(',')
+      });
+      return result;
+    } catch(e) {}
+
+    // try by known identifiers
+    let result = await this.search({
+      query : {
+        bool : {
+          should : [
+            {term : {doi : id}},
+            {term: {'hasContactInfo.hasEmail.email': id}},
+            {term: {'identifier': id}},
+            {term: {'casId': id}}
+          ]
+        }
+      }
+    });
+
+    if( result.hits.hits.length ) {
+      return result.hits.hits[0];
     }
 
-    return this.client.get(queryDoc);
+    throw new Error('Not found: '+id);
   }
 
   /**

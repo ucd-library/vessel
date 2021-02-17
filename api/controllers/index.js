@@ -46,11 +46,11 @@ router.get(/\/record\/.*/, async (req, res) => {
       let arr = [];
 
       for( id of ids ) {
-        arr.push((await model.get(id))._source);
+        arr.push((await model.get(decodeURIComponent(id)))._source);
       }
       res.json(arr);
     } else {
-      res.json((await model.get(id))._source);
+      res.json((await model.get(decodeURIComponent(id)))._source);
     }
   } catch(e) {
     console.log(e);

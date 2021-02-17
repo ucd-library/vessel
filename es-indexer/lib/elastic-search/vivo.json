@@ -34,6 +34,14 @@
       "type" : "keyword"
     },
 
+    "casId" : {
+      "type" : "keyword"
+    },
+
+    "identifier" : {
+      "type" : "keyword"
+    },
+
     "@type" : {
       "type" : "keyword"
     },
@@ -126,6 +134,9 @@
       }
     },
 
+    "hasContactInfo.hasEmail.email" : {
+      "type" : "keyword"
+    },
 
     "_.allSubjectArea" : {
       "type" : "keyword"
