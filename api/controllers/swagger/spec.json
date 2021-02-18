@@ -10,7 +10,100 @@
     }
   ],
   "paths": {
-    "/api/{id}": {
+    "/api/concept/broader/{id}": {
+      "get": {
+        "description": "Get broader terms for provided subject id",
+        "tags": [
+          "Subject Term Broader"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "description": "id of subject term",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Terms array",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/concept/narrower/{id}": {
+      "get": {
+        "description": "Get narrower terms for provided subject id",
+        "tags": [
+          "Subject Term Narrower"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "description": "id of subject term",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Terms array",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/concept/random/{count}": {
+      "get": {
+        "description": "Get random list of terms",
+        "tags": [
+          "Subject Term Random"
+        ],
+        "parameters": [
+          {
+            "name": "count",
+            "description": "number of terms to return",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Terms array",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/record/{id}": {
       "get": {
         "description": "Get research profile record by id",
         "tags": [
@@ -30,6 +123,38 @@
         "responses": {
           "200": {
             "description": "Requested record(s)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "record or array of records"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/resolve/{id}": {
+      "get": {
+        "description": "Get research profile record id any unique id",
+        "tags": [
+          "Get Record"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "description": "id a unique associated with record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "record id",
             "content": {
               "application/json": {
                 "schema": {
@@ -237,99 +362,6 @@
         "responses": {
           "200": {
             "description": "ElasticSearch search result object",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/subject-term/broader/{id}": {
-      "get": {
-        "description": "Get broader terms for provided subject id",
-        "tags": [
-          "Subject Term Broader"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "description": "id of subject term",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Terms array",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/subject-term/narrower/{id}": {
-      "get": {
-        "description": "Get narrower terms for provided subject id",
-        "tags": [
-          "Subject Term Narrower"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "description": "id of subject term",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Terms array",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/subject-term/random/{count}": {
-      "get": {
-        "description": "Get random list of terms",
-        "tags": [
-          "Subject Term Random"
-        ],
-        "parameters": [
-          {
-            "name": "count",
-            "description": "number of terms to return",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Terms array",
             "content": {
               "application/json": {
                 "schema": {

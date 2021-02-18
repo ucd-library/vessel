@@ -59,6 +59,45 @@ router.get(/\/record\/.*/, async (req, res) => {
 });
 
 /**
+ * @swagger
+ *
+ * /api/resolve/{id}:
+ *   get:
+ *     description: Get research profile record id any unique id
+ *     tags: [Get Record]
+ *     parameters:
+ *       - name: id
+ *         description: id a unique associated with record
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: record id
+ *         content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              description: record or array of records
+ */
+router.get(/\/resolve\/.*/, async (req, res) => {
+  try {
+    let id = req.originalUrl.replace(/\/api\/resolve\//, '');
+    id = decodeURIComponent(id);
+    let result = await model.get(id);
+    if( result && result._source && result._source['@id'] ) {
+      res.json({success: true, '@id': result._source['@id'], originalId: id});
+    } else {
+      res.json({error: true, message: 'not found', id});
+    }
+  } catch(e) {
+    console.log(e);
+    errorHandler(req, res, e);
+  }
+});
+
+/**
  * We are defining a couple external service endpoints here.
  * There aren't many
  */
