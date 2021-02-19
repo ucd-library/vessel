@@ -1,6 +1,29 @@
 {
   "dynamic" : false,
 
+  "dynamic_templates": [
+    {
+      "labels": {
+        "match_mapping_type": "string",
+        "match":   "*Label",
+        "mapping": {
+          "type" : "keyword",
+          "fields": {
+            "text" : {
+              "type" : "text",
+              "analyzer": "autocomplete", 
+              "search_analyzer": "autocomplete_search"
+            },
+            "firstLetter" : {
+              "type" : "keyword",
+              "normalizer": "first_letter_normilizer"
+            }
+          }
+        }
+      }
+    }
+  ],
+
   "properties" : {
 
     "@id" : {
@@ -11,8 +34,21 @@
       "type" : "keyword"
     },
 
+    "casId" : {
+      "type" : "keyword"
+    },
+
+    "identifier" : {
+      "type" : "keyword"
+    },
+
     "@type" : {
       "type" : "keyword"
+    },
+
+    "_" : {
+      "type" : "object",
+      "dynamic" : true
     },
 
     "abstract" : {
@@ -27,6 +63,30 @@
 
     "Authorship.@id" : {
       "type" : "keyword"
+    },
+
+    "citation.publication" : {
+      "type" : "text"
+    },
+
+    "citation.label" : {
+      "type" : "text"
+    },
+
+    "lastCitation.publication" : {
+      "type" : "text"
+    },
+
+    "lastCitation.label" : {
+      "type" : "text"
+    },
+
+    "_.top20Citation.publication" : {
+      "type" : "text"
+    },
+
+    "_.top20Citation.label" : {
+      "type" : "text"
     },
 
     "Authorship.identifiers.@id" : {
@@ -74,15 +134,34 @@
       }
     },
 
+    "hasContactInfo.hasEmail.email" : {
+      "type" : "keyword"
+    },
+
+    "_.allSubjectArea" : {
+      "type" : "keyword"
+    },
+    "hasSubjectArea.@id" : {
+      "type" : "keyword"
+    },
+    "hasSubjectArea.label" : {
+      "type" : "keyword"
+    },
+    "hasSubjectArea.prefLabel" : {
+      "type" : "keyword"
+    },
+
+    "_.allResearchArea" : {
+      "type" : "keyword"
+    },
+    "hasResearchArea.@id" : {
+      "type" : "keyword"
+    },
     "hasResearchArea.label" : {
-      "type" : "keyword",
-      "fields": {
-        "text" : {
-          "type" : "text",
-          "analyzer": "autocomplete", 
-          "search_analyzer": "autocomplete_search"
-        }
-      }
+      "type" : "keyword"
+    },
+    "hasResearchArea.prefLabel" : {
+      "type" : "keyword"
     },
 
     "issue" : {
@@ -126,6 +205,21 @@
       }
     },
 
+    "prefLabel" : {
+      "type" : "keyword",
+      "fields": {
+        "text" : {
+          "type" : "text",
+          "analyzer": "autocomplete", 
+          "search_analyzer": "autocomplete_search"
+        },
+        "firstLetter" : {
+          "type" : "keyword",
+          "normalizer": "first_letter_normilizer"
+        }
+      }
+    },
+
     "pageEnd" : {
       "type" : "integer"
     },
@@ -140,8 +234,55 @@
 
     "volume" : {
       "type" : "keyword"
-    }
+    },
 
+    "broader.@id" : {
+      "type" : "keyword"
+    },
+    "broader.label" : {
+      "type" : "keyword",
+      "fields": {
+        "text" : {
+          "type" : "text",
+          "analyzer": "autocomplete", 
+          "search_analyzer": "autocomplete_search"
+        }
+      }
+    },
+    "broader.prefLabel" : {
+      "type" : "keyword",
+      "fields": {
+        "text" : {
+          "type" : "text",
+          "analyzer": "autocomplete", 
+          "search_analyzer": "autocomplete_search"
+        }
+      }
+    },
+
+    "narrower.@id" : {
+      "type" : "keyword"
+    },
+    "narrower.label" : {
+      "type" : "keyword",
+      "fields": {
+        "text" : {
+          "type" : "text",
+          "analyzer": "autocomplete", 
+          "search_analyzer": "autocomplete_search"
+        }
+      }
+    },
+    "narrower.prefLabel" : {
+      "type" : "keyword",
+      "fields": {
+        "text" : {
+          "type" : "text",
+          "analyzer": "autocomplete", 
+          "search_analyzer": "autocomplete_search"
+        }
+      }
+    }
 
   }
 }

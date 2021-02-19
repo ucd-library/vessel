@@ -1,21 +1,24 @@
-const {fuseki, config, logger} = require('@ucd-lib/rp-node-utils');
-const merge = require('deepmerge');
-const clean = require('./clean');
-// const typeMap = require('./default-queries/map');
+const {logger, config, fuseki} = require('@ucd-lib/rp-node-utils');
+const postProcess = require('../default/post-process');
 const path = require('path');
 const fs = require('fs');
 
 class EsSparqlModel {
 
   constructor() {
-    this.GRAPHS = config.fuseki.graphs;
-
     this.TYPES = {};
     this.MODELS = {};
     this.TEMPLATES = {};
 
-    this.readModels(path.join(__dirname, 'default-queries'));
-    // TODO: add check for global dir or env variable to points to additional model paths
+    this.readModels(path.join(__dirname, '..', 'default', 'queries'));
+
+    if( process.env.MODEL_FOLDER ) {
+      this.readModels(process.env.MODEL_FOLDER);
+    }
+    if( process.env.CUSTOM_POST_PROCESSOR ) {
+      logger.info('Using custom model post processor: '+process.env.CUSTOM_POST_PROCESSOR);
+      postProcess = require(process.env.CUSTOM_POST_PROCESSOR);
+    }
   }
 
   /**
@@ -27,6 +30,8 @@ class EsSparqlModel {
    * @param {String} dir 
    */
   readModels(dir) {
+    logger.info('Loading models from: '+dir);
+
     const mapPath = path.join(dir, 'map.js');
     if( !fs.existsSync(mapPath) ) {
       throw new Error('Unable to load models, no map.js file exists: '+dir);
@@ -40,11 +45,25 @@ class EsSparqlModel {
         typeMap[model] = [typeMap[model]];
       }
 
-      typeMap[model].forEach(type => this.TYPES[type] = model);
+      if( Array.isArray(typeMap[model]) ) {
+        typeMap[model] = {
+          types : typeMap[model],
+          additionalProperties : {}
+        }
+      }
+
+      typeMap[model].types.forEach(type => this.TYPES[type] = model);
 
       try {
         this.TEMPLATES[model] = fs.readFileSync(path.join(dir, model+'.tpl.rq'), 'utf-8');
-        logger.info(`Load es model ${model} for types`, typeMap[model]);
+        logger.info(`Loaded es model ${model} for types`, typeMap[model]);
+
+        for( let key in this.MODELS[model].additionalProperties ) {
+          let fname = this.MODELS[model].additionalProperties[key];
+          this.TEMPLATES[fname] = fs.readFileSync(path.join(dir, fname+'.tpl.rq'), 'utf-8');
+          logger.info(`Loaded es model ${model} additional property: ${key}`);
+        }
+
       } catch(e) {
         logger.error(`Unable to load es model ${model} for types`, typeMap[model], e);
       }
@@ -72,21 +91,28 @@ class EsSparqlModel {
    * 
    * @param {String} type es model name or rdf uri
    * @param {String} uri subject uri
-   * @param {String} graph graph uri, defaults to sparql variable ?graph
    * 
    * @returns {String}
    */
-  getSparqlQuery(type, uri, graph='?graph') {
-    let model = this.hasModel(type);
-    if( !model ) throw new Error('Unknown model or type: '+type);
+  getSparqlQuery(type, uri) {
+    let model = type;
+    if( !this.TEMPLATES[model] ) {
+      model = this.hasModel(type);
+      if( !model ) throw new Error('Unknown model or type: '+type);
+    }
 
-    if( !graph.match(/^\?/) ) {
-      graph = '<'+graph+'>';
+    if( uri.startsWith(config.fuseki.rootPrefix.prefix+':') ) {
+      uri = uri.replace(config.fuseki.rootPrefix.prefix+':', config.fuseki.rootPrefix.uri);
+    } else if( uri.startsWith(config.fuseki.schemaPrefix.prefix+':') ) {
+      uri = uri.replace(config.fuseki.schemaPrefix.prefix+':', config.fuseki.schemaPrefix.uri);
+    }
+
+    if( uri.match('http(s)?:\/\/') ) {
+      uri = '<'+uri+'>';
     }
 
     return this.TEMPLATES[model]
-      .replace(/"{{uri}}"/, uri)
-      .replace(/"{{graph}}"/, graph);
+      .replace(/"{{uri}}"/g, uri);
   }
 
   /**
@@ -96,53 +122,81 @@ class EsSparqlModel {
    * 
    * @param {String} type es model name or rdf uri
    * @param {String} uri subject uri
+   * @param {Object} options additional options
+   * @param {Boolean} options.verbose include SPARQL queries
    * 
    * @returns {Object}
    */
-  async getModel(type, uri) {
+  async getModel(type, uri, opts={}) {
     let model = this.hasModel(type);
     if( !model ) {
       throw new Error('Unknown model type: '+model);
     }
 
     let result = {
-      model : type,
+      type,
+      modelType: model,
+      uri,
+      timestamp : Date.now(),
       database : config.fuseki.database,
-      graphs : {},
       model : {}
     }
 
-    for( let i = this.GRAPHS.length-1; i >= 0; i-- ) {
-      let graph = this.GRAPHS[i];
-      let model = await this._getModelForGraph(graph, type, uri);
-      result.graphs[graph] = model;
-      result.model = merge(result.model, model);
+    if( opts.verbose ) {
+      result.sparql = [this.getSparqlQuery(type, uri)];
     }
 
-    clean.run(result.model);
-    result.model.uri = uri;
-    result.model.indexerTimestamp = Date.now();
+    result.model = await this._requestModel(type, uri);
+
+    for( let prop in this.MODELS[model].additionalProperties ) {
+      type = this.MODELS[model].additionalProperties[prop];
+      if( opts.verbose ) {
+        result.sparql = [this.getSparqlQuery(type, uri)];
+      }
+      let propResult = await this._requestModel(type, uri);
+      result.model[prop] = propResult[prop];
+    }
+
+    await postProcess.run(result.model, {
+      type, 
+      modelType: result.modelType,
+      uri: result.uri,
+      timestamp: result.timestamp 
+    }, this);
 
     return result;
   }
 
   /**
-   * @method _getModelForGraph
-   * @description get a es model for a specific graph
+   * @method _requestModel
+   * @description make request for es model
    * 
-   * @param {String} graph graph uri
    * @param {String} type es model name or rdf uri
    * @param {String} uri subject uri
    * 
    * @returns {Object}
    */
-  async _getModelForGraph(graph, type, uri) {
-    let sparqlQuery = this.getSparqlQuery(type, uri, graph);
+  async _requestModel(type, uri) {
+    let sparqlQuery = this.getSparqlQuery(type, uri);
     let response = await fuseki.query(sparqlQuery, 'application/ld+json');
+
+    // let t = await response.text();
+    // console.log(t);
+    // response = JSON.parse(t);
     response = await response.json();
 
     // TODO: this is wrong
-    uri = uri.replace(config.fuseki.rootPrefix.uri, config.fuseki.rootPrefix.prefix+':');
+    // uri = uri.replace(config.fuseki.rootPrefix.uri, config.fuseki.rootPrefix.prefix+':');
+    if( response['@context'] ) {
+      for( let prefix in response['@context'] ) {
+        let prefixUri = response['@context'][prefix];
+        if( uri.startsWith(prefixUri) ) {
+          uri = uri.replace(prefixUri, prefix+':');
+          break;
+        }
+      }
+    }
+
     if( !response['@graph'] && response['@id'] ) {
       if( response['@context'] ) delete response['@context'];
       let tmp = {'@graph':[response]};

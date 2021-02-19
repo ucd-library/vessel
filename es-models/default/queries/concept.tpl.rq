@@ -1,0 +1,54 @@
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX bibo: <http://purl.org/ontology/bibo/>
+PREFIX vivo: <http://vivoweb.org/ontology/core#>
+PREFIX vitro: <http://vitro.mannlib.cornell.edu/ns/vitro/0.7#>
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+PREFIX vcard: <http://www.w3.org/2006/vcard/ns#>
+PREFIX cito: <http://purl.org/spar/cito/>
+PREFIX obo: <http://purl.obolibrary.org/obo/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX experts: <http://experts.ucdavis.edu/schema#>
+PREFIX ucdrp: <http://experts.ucdavis.edu/>
+PREFIX free: <http://experts.ucdavis.edu/subject/free#>
+PREFIX for: <http://experts.ucdavis.edu/subject/FoR#>
+
+CONSTRUCT {
+  ?subject rdf:type ?type .
+  ?subject rdf:type skos:Concept .
+
+  ?subject rdfs:label ?label .
+  ?subject skos:prefLabel ?prefLabel .
+
+  ?subject skos:inSchema ?inSchema .
+
+  ?subject skos:broader ?broader .
+  ?broader rdfs:label ?broaderLabel .
+  ?broader skos:prefLabel ?broaderPrefLabel .
+
+  ?subject skos:narrower ?narrower .
+  ?narrower rdfs:label ?narrowerLabel .
+  ?narrower skos:prefLabel ?narrowerPrefLabel .
+
+} WHERE {
+
+  ?subject rdf:type ?type .
+
+  OPTIONAL { ?subject rdfs:label ?label . }
+  OPTIONAL { ?subject skos:prefLabel ?prefLabel . }
+
+  OPTIONAL { ?subject skos:inSchema ?inSchema .  }
+  OPTIONAL {
+    ?subject skos:broader ?broader .
+    ?broader rdfs:label ?broaderLabel .
+    OPTIONAL { ?broader skos:prefLabel ?broaderPrefLabel . }
+  }
+  OPTIONAL {
+    ?subject skos:narrower ?narrower .
+    ?narrower rdfs:label ?narrowerLabel .
+    OPTIONAL { ?narrower skos:prefLabel ?narrowerPrefLabel . }
+  }
+
+  FILTER( ?subject = "{{uri}}" )
+
+}

@@ -7,12 +7,15 @@ PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 PREFIX vcard: <http://www.w3.org/2006/vcard/ns#>
 PREFIX cito: <http://purl.org/spar/cito/>
 PREFIX obo: <http://purl.obolibrary.org/obo/>
-PREFIX ucd: <http://ucdavis.edu/ns/>
-PREFIX ucdrp: <http://experts.library.ucdavis.edu/individual/>
+PREFIX experts: <http://experts.ucdavis.edu/schema#>
+PREFIX ucdrp: <http://experts.ucdavis.edu/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX free: <http://experts.ucdavis.edu/subject/free#>
+PREFIX for: <http://experts.ucdavis.edu/subject/FoR#>
 
 CONSTRUCT {
   ?subject rdf:type ?type .
-  ?subject rdf:type ucdrp:person .
+  ?subject rdf:type experts:person .
 
   ?subject rdfs:label ?label .
   ?subject vivo:scopusId ?scopusId .
@@ -20,13 +23,15 @@ CONSTRUCT {
   ?subject vivo:eRACommonsId ?eRACommonsId .
   ?subject vivo:overview ?overview .
 
-  ?subject ucd:casId ?casId .
+  ?subject experts:casId ?casId .
+  ?subject experts:identifier ?identifier .
 
   ?subject vivo:orcidId ?orcidId .
   ?orcidId vivo:confirmedOrcidId ?confirmedOrcidId .
 
   ?subject vivo:hasResearchArea ?hasResearchArea .
-  ?hasResearchArea rdfs:label ?researchAreaLabel .
+  ?hasResearchArea rdfs:label ?hasResearchAreaLabel .
+  ?hasResearchArea skos:prefLabel ?hasResearchAreaPrefLabel .
 
   ?subject obo:hasContactInfo ?contactInfoFor .
   ?contactInfoFor vcard:givenName ?givenName .
@@ -40,8 +45,11 @@ CONSTRUCT {
   ?vcardEmail rdf:type ?emailType .
 
   ?contactInfoFor vcard:title ?title .
+  ?contactInfoFor vcard:organization ?organization .
   ?contactInfoFor vcard:telephone ?telephone .
   ?contactInfoFor vcard:geo ?geo .
+  ?contactInfoFor vivo:rank ?vcardRank .
+  ?contactInfoFor experts:identifier ?contactInfoForIdentifier .
 
   ?contactInfoFor vcard:hasURL ?vcardURL .
   ?vcardURL vcard:url ?url .
@@ -59,7 +67,6 @@ CONSTRUCT {
   ?positionOrg rdfs:end ?positionEndTimeValue .
 
 } WHERE {
-  GRAPH "{{graph}}" { 
 
     ?subject rdf:type ?type .
     OPTIONAL { ?subject rdfs:label ?label . }
@@ -68,7 +75,8 @@ CONSTRUCT {
     OPTIONAL { ?subject vivo:eRACommonsId ?eRACommonsId . }
     OPTIONAL { ?subject vivo:overview ?overview . }
 
-    OPTIONAL { ?subject ucd:casId ?casId . }
+    OPTIONAL { ?subject experts:casId ?casId . }
+    OPTIONAL { ?subject experts:identifier ?identifier . }
 
     OPTIONAL {
       ?subject vivo:orcidId ?orcidId .
@@ -77,62 +85,70 @@ CONSTRUCT {
 
     OPTIONAL {
       ?subject vivo:hasResearchArea ?hasResearchArea .
-      ?hasResearchArea rdfs:label ?researchAreaLabel .
+      ?hasResearchArea rdfs:label ?hasResearchAreaLabel .
+      OPTIONAL { ?hasResearchArea skos:prefLabel ?hasResearchAreaPrefLabel . }
     }
 
     OPTIONAL {
       ?subject obo:ARG_2000028 ?contactInfoFor .
 
-      OPTIONAL { 
-        ?contactInfoFor vcard:hasName ?vcardName . 
+      OPTIONAL {
+        ?contactInfoFor vcard:hasName ?vcardName .
         OPTIONAL { ?vcardName vcard:givenName ?givenName . }
-        OPTIONAL { ?vcardName vcard:familyName ?familyName . }     
+        OPTIONAL { ?vcardName vcard:familyName ?familyName . }
         OPTIONAL { ?vcardName vcard:additionalName ?additionalName . }
         OPTIONAL { ?vcardName vcard:honorificPrefix ?honorificPrefix . }
         OPTIONAL { ?vcardName vcard:honorificSuffix ?honorificSuffix . }
       }
 
-      OPTIONAL { 
+      OPTIONAL { ?contactInfoFor vivo:rank ?vcardRank . }
+      OPTIONAL { ?contactInfoFor experts:identifier ?contactInfoForIdentifier . }
+
+      OPTIONAL {
         ?contactInfoFor vcard:hasEmail ?vcardEmail .
         OPTIONAL { ?vcardEmail vcard:email ?email . }
         OPTIONAL { ?vcardEmail rdf:type ?emailType . }
       }
 
-      OPTIONAL { 
-        ?contactInfoFor vcard:hasTitle ?vcardTitle . 
-        ?vcardTitle vcard:title ?title . 
+      OPTIONAL {
+        ?contactInfoFor vcard:hasTitle ?vcardTitle .
+        ?vcardTitle vcard:title ?title .
       }
 
-      OPTIONAL { 
-        ?contactInfoFor vcard:hasTelephone ?vcardTelephone . 
-        ?vcardTelephone vcard:telephone ?telephone . 
+      OPTIONAL {
+        ?contactInfoFor vcard:hasOrganizationalUnit/vcard:title ?organization .
       }
 
-      OPTIONAL { 
+      OPTIONAL {
+        ?contactInfoFor vcard:hasTelephone ?vcardTelephone .
+        ?vcardTelephone vcard:telephone ?telephone .
+      }
+
+      OPTIONAL {
         ?contactInfoFor vcard:hasGeo ?vcardGeo .
-        ?vcardGeo vcard:geo ?geo . 
+        ?vcardGeo vcard:geo ?geo .
       }
 
-      OPTIONAL { 
-        ?contactInfoFor vcard:hasURL ?vcardURL . 
+      OPTIONAL {
+        ?contactInfoFor vcard:hasURL ?vcardURL .
         OPTIONAL { ?vcardURL vcard:url ?url . }
         OPTIONAL { ?vcardURL vcard:rank ?urlRank . }
         OPTIONAL { ?vcardURL vcard:label ?urlLabel . }
       }
     }
 
-    OPTIONAL { 
+    OPTIONAL {
       ?subject vitro:mainImage ?mainImage .
       ?mainImage vitro:filename ?mainImagFilename .
     }
 
     OPTIONAL {
       ?subject vivo:relatedBy ?position .
-      ?position rdf:type vivo:Position . 
-      
+      ?position rdf:type vivo:Position .
+
       OPTIONAL { ?position rdfs:label ?positionLabel . }
 
-      OPTIONAL { 
+      OPTIONAL {
         ?position vivo:relates ?positionOrg .
         ?positionOrg rdfs:label ?positionOrgLabel .
       }
@@ -141,18 +157,16 @@ CONSTRUCT {
         ?position vivo:dateTimeInternal ?positionDateTime .
       }
 
-      OPTIONAL { 
+      OPTIONAL {
         ?positionDateTime vivo:start ?positionStartTime .
         ?positionStartTime rdfs:label ?positionStartTimeValue .
       }
 
-      OPTIONAL { 
+      OPTIONAL {
         ?positionDateTime vivo:end ?positionEndTime .
         ?positionEndTime rdfs:label ?positionEndTimeValue .
       }
-
     }
 
-    FILTER(?subject = <"{{uri}}">)
-  }
+    FILTER( ?subject = "{{uri}}" )
 }

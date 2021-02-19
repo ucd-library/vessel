@@ -1,5 +1,4 @@
-const {fuseki, kafka, logger, config} = require('@ucd-lib/rp-node-utils');
-const esSparqlModel = require('./es-sparql-model');
+const {fuseki, kafka, logger, config, esSparqlModel} = require('@ucd-lib/rp-node-utils');
 const elasticSearch = require('./elastic-search');
 
 
@@ -81,13 +80,15 @@ class Reindex {
       });
     }
 
+    let modelMeta = await esSparqlModel.info();
+
     if( !opts.type ) { // reindex all types
-      logger.info('Reindexing all types: ', Object.keys(esSparqlModel.TYPES));
-      for( let key in esSparqlModel.TYPES ) {
+      logger.info('Reindexing all types: ', Object.keys(modelMeta.types));
+      for( let key in modelMeta.types ) {
         await this._indexType(key);
       }
     } else { // reindex single type
-      for( let type of esSparqlModel.MODELS[opts.type] ) {
+      for( let type of modelMeta.models[opts.type] ) {
         await this._indexType(type);
       }
     }

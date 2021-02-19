@@ -13,11 +13,12 @@ router.get('/', (req, res) => {
 
 router.use('/search', require('./search'));
 router.use('/miv', require('./miv'));
+router.use('/concept', require('./concept'));
 
 /**
  * @swagger
  *
- * /api/{id}:
+ * /api/record/{id}:
  *   get:
  *     description: Get research profile record by id
  *     tags: [Get Record]
@@ -37,21 +38,61 @@ router.use('/miv', require('./miv'));
  *              type: object
  *              description: record or array of records
  */
-router.get('/:id', async (req, res) => {
+router.get(/\/record\/.*/, async (req, res) => {
   try {
-    let id = req.params.id;
+    let id = req.originalUrl.replace(/\/api\/record\//, '');
     if( id.includes(',') ) {
       let ids = id.split(',');
       let arr = [];
 
       for( id of ids ) {
-        arr.push((await model.get(id))._source);
+        arr.push((await model.get(decodeURIComponent(id)))._source);
       }
       res.json(arr);
     } else {
-      res.json((await model.get(id))._source);
+      res.json((await model.get(decodeURIComponent(id)))._source);
     }
   } catch(e) {
+    console.log(e);
+    errorHandler(req, res, e);
+  }
+});
+
+/**
+ * @swagger
+ *
+ * /api/resolve/{id}:
+ *   get:
+ *     description: Get research profile record id any unique id
+ *     tags: [Get Record]
+ *     parameters:
+ *       - name: id
+ *         description: id a unique associated with record
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: record id
+ *         content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              description: record or array of records
+ */
+router.get(/\/resolve\/.*/, async (req, res) => {
+  try {
+    let id = req.originalUrl.replace(/\/api\/resolve\//, '');
+    id = decodeURIComponent(id);
+    let result = await model.get(id);
+    if( result && result._source && result._source['@id'] ) {
+      res.json({success: true, '@id': result._source['@id'], originalId: id});
+    } else {
+      res.json({error: true, message: 'not found', id});
+    }
+  } catch(e) {
+    console.log(e);
     errorHandler(req, res, e);
   }
 });

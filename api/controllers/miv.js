@@ -3,6 +3,26 @@ const model = require('../models/miv');
 const onError = require('./utils/error-handler');
 const {auth} = require('@ucd-lib/rp-node-utils');
 
+/**
+ * @swagger
+ *
+ * /api/miv/{username}:
+ *   get:
+ *     description: Get researchers ris formatted publication list
+ *     tags: [MIV RIS Export]
+ *     parameters:
+ *       - name: username
+ *         description: id of researcher
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: ris formatted citations
+ *         content:
+ *          text/plain
+ */
 router.get('/:username', async (req, res) => {
 
   try {

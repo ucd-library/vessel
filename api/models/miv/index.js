@@ -2,7 +2,6 @@ const citation = require('../../lib/citation');
 const {fuseki} = require('@ucd-lib/rp-node-utils');
 const fs = require('fs');
 const path = require('path');
-const { pbkdf2Sync } = require('crypto');
 
 class Miv {
 
@@ -14,8 +13,8 @@ class Miv {
   }
 
   async export(user) {
-    if( !user.match(/^ucdrp:/) ) {
-      user = 'ucdrp:'+user;
+    if( !user.match(/^experts:/) ) {
+      user = 'experts:'+user;
     }
 
     let q = this.QUERIES.AUTHOR_PUBS.replace(/{{username}}/, user);
@@ -33,7 +32,7 @@ class Miv {
       pubs[i] = this.formatAuthors(this.getPub(graph), graph);
       // if( i === 5 ) break;
     }
-    
+
     return citation.convert(pubs);
   }
 
@@ -41,8 +40,8 @@ class Miv {
     if( !Array.isArray(graph) ) return graph;
 
     return graph.find(
-      item => Array.isArray(item['@type']) ? 
-        item['@type'].includes('bibo:AcademicArticle') : 
+      item => Array.isArray(item['@type']) ?
+        item['@type'].includes('bibo:AcademicArticle') :
         item['@type'] === 'bibo:AcademicArticle'
       );
   }

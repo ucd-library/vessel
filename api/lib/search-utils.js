@@ -1,3 +1,4 @@
+const {logger} = require('@ucd-lib/rp-node-utils');
 
 class SearchModelUtils {
 
@@ -38,6 +39,12 @@ class SearchModelUtils {
         response.results = esResult.hits.hits
           .map(item => {
             item._source._score = item._score;
+            if( item.highlight ) {
+              let fields = Object.keys(item.highlight);
+              let field = fields[0];
+              if (field === '@type' && fields.length > 1) field = fields[1];
+              item._source._snippet = {field, value : item.highlight[field][0]}
+            }            
             return item._source;
           });
       }
@@ -97,6 +104,12 @@ class SearchModelUtils {
    */
   searchDocumentToEsBody(query, noLimit=false) {
     let esBody = {
+      highlight : {
+        order: 'score',
+        fields: {
+          "*": {}
+        }
+      },
       from : query.offset !== undefined ? query.offset : 0,
       size : query.limit !== undefined ? query.limit : 10
     }
@@ -127,6 +140,7 @@ class SearchModelUtils {
       esBody.query.bool.must = [{
         multi_match : {
           query : query.text,
+          type : 'most_fields',
           fields : query.textFields
         }
       }];
@@ -135,6 +149,7 @@ class SearchModelUtils {
     if( !query.filters ) return esBody;
 
     let range = {};
+    let fieldExists = [];
     let rangeWithNull = [];
     let keywords = [];
     let prefix = {};
@@ -187,12 +202,23 @@ class SearchModelUtils {
 
         prefix[attr] = attrProps.value;
 
+      // the attribute is an exists filter
+      } else if( attrProps.type === 'exists') {
+        fieldExists.push(attr);
       }
     }
 
     // if we found keyword filters, append the 'filter' attribute
     if( keywords.length > 0 ) {
       esBody.query.bool.filter = keywords;
+    }
+
+    // if a property must exist, add to exists object using query.bool.should
+    if (fieldExists.length > 0)  {
+      if (!esBody.query.bool.must) esBody.query.bool.must = [];
+      for (const field of fieldExists) {
+        esBody.query.bool.must.push({exists: {field}})
+      }
     }
 
     // if we found range filters, append.  This uses query.bool.must

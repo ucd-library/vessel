@@ -10,7 +10,100 @@
     }
   ],
   "paths": {
-    "/api/{id}": {
+    "/api/concept/broader/{id}": {
+      "get": {
+        "description": "Get broader terms for provided subject id",
+        "tags": [
+          "Subject Term Broader"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "description": "id of subject term",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Terms array",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/concept/narrower/{id}": {
+      "get": {
+        "description": "Get narrower terms for provided subject id",
+        "tags": [
+          "Subject Term Narrower"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "description": "id of subject term",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Terms array",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/concept/random/{count}": {
+      "get": {
+        "description": "Get random list of terms",
+        "tags": [
+          "Subject Term Random"
+        ],
+        "parameters": [
+          {
+            "name": "count",
+            "description": "number of terms to return",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Terms array",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/record/{id}": {
       "get": {
         "description": "Get research profile record by id",
         "tags": [
@@ -30,6 +123,38 @@
         "responses": {
           "200": {
             "description": "Requested record(s)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "record or array of records"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/resolve/{id}": {
+      "get": {
+        "description": "Get research profile record id any unique id",
+        "tags": [
+          "Get Record"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "description": "id a unique associated with record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "record id",
             "content": {
               "application/json": {
                 "schema": {
@@ -75,6 +200,31 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/miv/{username}": {
+      "get": {
+        "description": "Get researchers ris formatted publication list",
+        "tags": [
+          "MIV RIS Export"
+        ],
+        "parameters": [
+          {
+            "name": "username",
+            "description": "id of researcher",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ris formatted citations",
+            "content": "text/plain"
           }
         }
       }
@@ -290,6 +440,9 @@
           },
           {
             "$ref": "#/components/schemas/ApiSearchDocument_filtersPrefix"
+          },
+          {
+            "$ref": "#/components/schemas/ApiSearchDocument_filtersExists"
           }
         ],
         "discriminator": {
@@ -375,6 +528,20 @@
         "required": [
           "type",
           "value"
+        ]
+      },
+      "ApiSearchDocument_filtersExists": {
+        "description": "Filters results so that parameter(s) must exist",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "exists"
+            ]
+          }
+        },
+        "required": [
+          "type"
         ]
       },
       "ApiSearchDocument_facetsFacet": {

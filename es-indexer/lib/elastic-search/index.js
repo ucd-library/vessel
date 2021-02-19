@@ -13,7 +13,7 @@ class ElasticSearch {
     await elasticSearch.connect();
     this.client = elasticSearch.client;
 
-    await this.ensureIndex('research-profiles', 'research-profile', require('./vivo.json'));
+    await this.ensureIndex('research-profiles', null, require('./vivo.json'));
   }
 
   /**
@@ -103,7 +103,7 @@ class ElasticSearch {
    * @returns {Promise} resolves to string, new index name
    */
   async createIndex(alias, newIndexName) {
-    newIndexName = newIndexName || `${alias}-${Date.now()}`;
+    newIndexName = newIndexName && alias !== newIndexName ? newIndexName : `${alias}-${Date.now()}`;
     let vivo = JSON.parse(fs.readFileSync(path.join(__dirname, 'vivo.json'), 'utf-8'));
 
 
@@ -134,6 +134,7 @@ class ElasticSearch {
                 first_letter_filter: {
                   type: "pattern_replace",
                   pattern: "(.).*",
+                  // pattern: ".*([a-zA-Z]).*", TODO
                   replacement: "$1"
                 }
               },

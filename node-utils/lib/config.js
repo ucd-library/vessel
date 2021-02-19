@@ -8,7 +8,8 @@ if( graphs ) {
 } else {
   graphs = [
     'http://iam.ucdavis.edu/',
-    'http://oapolicy.universityofcalifornia.edu/'
+    'http://oapolicy.universityofcalifornia.edu/',
+    'http://experts.ucdavis.edu/'
   ]
 }
 
@@ -63,8 +64,12 @@ module.exports = {
     port : env.FUSEKI_PORT || 3030,
     database : env.FUSEKI_DATABASE || 'vivo',
     graphs,
+    schemaPrefix : {
+      uri : 'http://experts.ucdavis.edu/schema#',
+      prefix: 'experts'
+    },
     rootPrefix : {
-      uri : 'http://experts.library.ucdavis.edu/individual/',
+      uri : 'http://experts.ucdavis.edu/',
       prefix: 'ucdrp'
     }
   },
@@ -77,7 +82,8 @@ module.exports = {
       indexer : 'indexer-',
       deleteIndex : 'indexercmd-delete-index-',
       session : 'session-',
-      roles : 'role-'
+      roles : 'role-',
+      authProperties : 'auth-props-'
     },
     keys : {
       serverSecret : 'server-secret',
@@ -93,7 +99,7 @@ module.exports = {
     requestTimeout : env.ELASTIC_SEARCH_REQUEST_TIME || 3*60*1000,
     indexAlias : 'research-profiles',
     fields : {
-      exclude : []
+      exclude : ['_', 'citation'],
     }
   },
 
@@ -113,6 +119,11 @@ module.exports = {
   indexer : {
     port : 3000,
     handleMessageDelay : 5 // seconds
+  },
+
+  models : {
+    serviceName : env.MODELS_SERVICE_NAME || 'models',
+    port : 3000,
   },
 
   gateway : {

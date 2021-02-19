@@ -1,0 +1,57 @@
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX bibo: <http://purl.org/ontology/bibo/>
+PREFIX vivo: <http://vivoweb.org/ontology/core#>
+PREFIX vitro: <http://vitro.mannlib.cornell.edu/ns/vitro/0.7#>
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+PREFIX vcard: <http://www.w3.org/2006/vcard/ns#>
+PREFIX cito: <http://purl.org/spar/cito/>
+PREFIX obo: <http://purl.obolibrary.org/obo/>
+PREFIX experts: <http://experts.ucdavis.edu/schema#>
+PREFIX ucdrp: <http://experts.ucdavis.edu/>
+
+CONSTRUCT {
+  ?subject rdf:type ?type .
+  ?subject rdf:type experts:person .
+
+  ?subject experts:citation ?citation .
+  ?citation rdfs:label ?citationLabel .
+  ?citation experts:publication ?citationPublicationVenueLabel .
+
+  ?citation experts:authors ?citationAuthors .
+  ?citationAuthors vivo:rank ?citationAuthorRank .
+  ?citationAuthors vivo:identifiers  ?authorPerson .
+} WHERE {
+
+  ?subject rdf:type ?type .
+
+  OPTIONAL {
+    ?citation rdf:type bibo:AcademicArticle .
+    ?citation rdfs:label ?citationLabel .
+    ?citation vivo:relatedBy ?citationAuthor .
+    ?citationAuthor vivo:relates ?subject .
+
+    OPTIONAL {
+      ?citation vivo:relatedBy ?citationAuthors .
+      ?citationAuthors rdf:type vivo:Authorship .
+
+      OPTIONAL {
+        ?citationAuthors vivo:rank ?citationAuthorRank .
+      }
+
+      OPTIONAL {
+        ?citationAuthors vivo:relates ?authorPerson .
+        ?authorPerson rdf:type ?authorPersonType .
+      }
+
+    }
+    OPTIONAL {
+      ?citation vivo:hasPublicationVenue ?citationPublicationVenue .
+      ?citationPublicationVenue rdfs:label ?citationPublicationVenueLabel .
+    }
+  }
+
+  FILTER(
+    ?subject = "{{uri}}" &&
+    ?authorPersonType IN (vcard:Individual, vivo:FacultyMember, vivo:NonAcademic, foaf:Person))
+}

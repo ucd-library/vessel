@@ -1,6 +1,5 @@
-const {kafka, redis, fuseki, logger, config} = require('@ucd-lib/rp-node-utils');
+const {kafka, redis, fuseki, logger, config, esSparqlModel} = require('@ucd-lib/rp-node-utils');
 const elasticSearch = require('./elastic-search');
-const esSparqlModel = require('./es-sparql-model');
 const reindex = require('./reindex');
 
 /**
@@ -125,9 +124,9 @@ class Indexer {
       payload.types = [...new Set(body.results.bindings.map(term => term.type.value))];
     }
 
-    let modelType = this.getKnownModelType(payload);
+    let modelType = await this.getKnownModelType(payload);
     if( !modelType ) {
-      logger.info(`Ignoring message ${payload.msgId} with subject ${payload.subject} sent by ${payload.sender || 'unknown'}: Type has no model ${payload.type} ${JSON.stringify(payload.types || [])}`);
+      logger.info(`Ignoring message ${payload.msgId} with subject ${payload.subject} sent by ${payload.sender || 'unknown'}: Type has no model ${modelType} ${JSON.stringify(payload.types || [])}`);
       return;
     }
 
@@ -150,13 +149,13 @@ class Indexer {
    * 
    * @returns {String|null}
    */
-  getKnownModelType(msg) {
-    if( msg.type && esSparqlModel.hasModel(msg.type) ) {
+  async getKnownModelType(msg) {
+    if( msg.type && (await esSparqlModel.hasModel(msg.type)) ) {
       return msg.type;
     }
     if( msg.types ) {
       for( let type of msg.types ) {
-        if( esSparqlModel.hasModel(type) ) return type;
+        if( (await esSparqlModel.hasModel(type)) ) return type;
       }
     }
 
@@ -226,7 +225,7 @@ class Indexer {
    * @param {String} type rdf type of model
    */
   async insert(key, uri, id, msg, type) {
-    logger.info(`From ${id} sent by ${msg.sender || 'unknown'} loading ${uri} with model ${esSparqlModel.hasModel(type)}. ${msg.force ? 'force=true' : ''}`);
+    logger.info(`From ${id} sent by ${msg.sender || 'unknown'} loading ${uri} with model ${(await esSparqlModel.hasModel(type))}. ${msg.force ? 'force=true' : ''}`);
     let result = await esSparqlModel.getModel(type, uri);
     await elasticSearch.insert(result.model, msg.index);
     logger.info(`Updated ${uri} into ${msg.index || 'default alias'}`);
@@ -246,7 +245,7 @@ class Indexer {
 
     // if type was included in message and a known type,
     // just insert
-    if( msg.type && esSparqlModel.hasModel(msg.type) ) {
+    if( msg.type && (await esSparqlModel.hasModel(msg.type)) ) {
       await this.insert(key, msg.subject, msg.msgId, msg, msg.type);
       return;
     }
@@ -265,7 +264,7 @@ class Indexer {
     let types = [...new Set(body.results.bindings.map(term => term.type.value))];
 
     for( let type of types ) {
-      if( !esSparqlModel.hasModel(type) ) continue;
+      if( !(await esSparqlModel.hasModel(type)) ) continue;
       await this.insert(key, msg.subject, msg.msgId, msg, type);
       break;
     }
