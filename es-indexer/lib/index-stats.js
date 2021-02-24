@@ -7,7 +7,8 @@ class IndexStats {
     this.kafkaConsumer = new kafka.Consumer({
       'group.id': 'index-stats',
       'metadata.broker.list': config.kafka.host+':'+config.kafka.port,
-      'enable.auto.commit': false
+    },{
+      'auto.offset.reset' : 'earliest'
     });
   }
 

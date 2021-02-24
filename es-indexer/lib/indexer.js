@@ -16,8 +16,9 @@ class Indexer {
     this.kafkaConsumer = new kafka.Consumer({
       'group.id': config.kafka.groups.index,
       'metadata.broker.list': config.kafka.host+':'+config.kafka.port,
-      'enable.auto.commit': true
-    })
+    },{
+      'auto.offset.reset' : 'earliest'
+    });
   }
 
   /**
@@ -44,8 +45,8 @@ class Indexer {
       let topics = await this.kafkaConsumer.committed(config.kafka.topics.index);
       logger.info(`Indexer (group.id=${config.kafka.groups.index}) kafak status=${JSON.stringify(topics)} watermarks=${JSON.stringify(watermarks)}`);
 
-      // assign to front of committed offset
-      await this.kafkaConsumer.assign(topics);
+      // subscribe to front of committed offset
+      await this.kafkaConsumer.subscribe([config.kafka.topics.index]);
     } catch(e) {
       console.error('kafka init error', e);
     }

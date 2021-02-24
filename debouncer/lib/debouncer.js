@@ -11,10 +11,12 @@ class Debouncer {
     this.kafkaProducer = new kafka.Producer({
       'metadata.broker.list': config.kafka.host+':'+config.kafka.port
     })
+
     this.kafkaConsumer = new kafka.Consumer({
       'group.id': config.kafka.groups.debouncer,
       'metadata.broker.list': config.kafka.host+':'+config.kafka.port,
-      'enable.auto.commit': true
+    },{
+      'auto.offset.reset' : 'earliest'
     })
   }
 
@@ -49,8 +51,9 @@ class Debouncer {
       let topics = await this.kafkaConsumer.committed(config.kafka.topics.rdfPatch);
       logger.info(`Debouncer (group.id=${config.kafka.groups.debouncer}) kafak status=${JSON.stringify(topics)} watermarks=${JSON.stringify(watermarks)}`);
 
-      // assign to front of committed offset
-      await this.kafkaConsumer.assign(topics);
+      // subscribe to front of committed offset
+      console.log([config.kafka.topics.rdfPatch]);
+      await this.kafkaConsumer.subscribe([config.kafka.topics.rdfPatch]);
     } catch(e) {
       logger.error('kafka init error', e);
     }
