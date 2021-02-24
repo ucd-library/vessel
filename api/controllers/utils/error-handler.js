@@ -23,7 +23,9 @@ module.exports = (req, res, error, description='') => {
     return defs[error.message](req, res, error);
   }
 
-  res.status(500).json({
+  console.log(error.message);
+  console.log(error.stack);
+  res.status(400).json({
     error: {
       message : error.message,
       stack : error.stack

@@ -1,9 +1,10 @@
 const Kafka = require('node-rdkafka');
+const logger = require('../logger');
 
 class Consumer {
 
-  constructor(config) {
-    this.client = new Kafka.KafkaConsumer(config);
+  constructor(globalConfig, topicConfig) {
+    this.client = new Kafka.KafkaConsumer(globalConfig, topicConfig);
     this.loopTimer = -1;
     this.loopInterval = 500;
     this.consuming = true;
@@ -20,12 +21,17 @@ class Consumer {
    */
   async consume(callback) {
     while( 1 ) {
-      if( !this.consuming ) break;
+      try {
+        if( !this.consuming ) break;
 
-      let result = await this.consumeOne();
+        let result = await this.consumeOne();
 
-      if( result ) await callback(result);
-      else await this._sleep();
+        if( result ) await callback(result);
+        else await this._sleep();
+      } catch(e) {
+        logger.error('kafka consume error', e);
+        await this._sleep();
+      }
     }
   }
 
@@ -89,9 +95,13 @@ class Consumer {
    * 
    * @param {String|Object|Array} topic 
    */
-  assign(topic) {
-    topic = this._topicHelper(topic);
-    this.client.assign(topic);
+  // assign(topic) {
+  //   topic = this._topicHelper(topic);
+  //   this.client.assign(topic);
+  // }
+
+  subscribe(topics) {
+    return this.client.subscribe(topics);
   }
 
   /**
@@ -100,11 +110,33 @@ class Consumer {
    * 
    * @param {String|Object|Array} topic 
    */
-  committed(topic) {
+  // committed(topic) {
+  //   topic = this._topicHelper(topic);
+
+  //   return new Promise((resolve, reject) => {
+  //     this.client.committed(topic, 10000, (err, result) => {
+  //       if( err ) reject(err);
+  //       else resolve(result);
+  //     });
+  //   });
+  // }
+  committed(topic, attempt=0) {
     topic = this._topicHelper(topic);
 
     return new Promise((resolve, reject) => {
       this.client.committed(topic, 10000, (err, result) => {
+        if( err && attempt < 10 ) {
+          logger.warn('Failed to get get committed offset, will try again.  attempt='+attempt, err, result);
+          setTimeout(async () => {
+            try {
+              attempt++;
+              resolve(await this.committed(topic, attempt))
+            } catch(e) { reject(e) }
+          }, 1000);
+          return;
+        }
+
+        // logger.info('committed offset result', topic, err, result);
         if( err ) reject(err);
         else resolve(result);
       });

@@ -2,6 +2,7 @@ PREFIX bibo: <http://purl.org/ontology/bibo/>
 PREFIX cite: <http://citationstyles.org/schema/>
 PREFIX cito: <http://purl.org/spar/cito/>
 PREFIX experts: <http://experts.ucdavis.edu/schema#>
+PREFIX ucdrp: <http://experts.ucdavis.edu/>
 PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 PREFIX meshv: <http://id.nlm.nih.gov/mesh/vocab#>
 PREFIX obo: <http://purl.obolibrary.org/obo/>
@@ -19,10 +20,8 @@ SELECT ?publication
 WHERE {
   bind ({{username}} as ?author)
 
-  GRAPH ?g {
-    ?subject rdf:type vivo:Authorship .
-    ?subject vivo:relates ?author .
-    ?subject vivo:relates ?publication .
-    ?publication rdf:type bibo:AcademicArticle .
-  }
+  ?subject rdf:type vivo:Authorship .
+  ?subject vivo:relates ?author .
+  ?subject vivo:relates ?publication .
+  ?publication rdf:type bibo:AcademicArticle .
 }

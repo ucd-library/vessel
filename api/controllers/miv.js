@@ -1,5 +1,6 @@
 const router = require('express').Router();
 const model = require('../models/miv');
+const elasticSearch = require('../models/elastic-search');
 const onError = require('./utils/error-handler');
 const {auth} = require('@ucd-lib/rp-node-utils');
 
@@ -23,28 +24,33 @@ const {auth} = require('@ucd-lib/rp-node-utils');
  *         content:
  *          text/plain
  */
-router.get('/:username', async (req, res) => {
+router.get(/^\/.*/, async (req, res) => {
+  
 
   try {
-    let username = req.params.username;
-    if( !username ) {
-      let user = null;
-      let token = auth.getTokenFromRequest(req);
-      if( token ) {
-        try {
-          user = await auth.verifyToken(token);
-          username = user.username.replace(/@.*/, '');
-        } catch(e) {}
-      }
-    }
+    let id = req.path.replace(/^\//, '');
+    console.log(id, req.path)
+    // TODO: we need to store a user experts id for this to work
+    // if( !username ) {
+    //   let user = null;
+    //   let token = auth.getTokenFromRequest(req);
+    //   if( token ) {
+    //     try {
+    //       user = await auth.verifyToken(token);
+    //       username = user.username.replace(/@.*/, '');
+    //     } catch(e) {}
+    //   }
+    // }
 
-    if( !username ) {
-      return onError(req, res, new Error('Invalid parameters'), 'You must be logged in or supply a username');
+    if( !id ) {
+      return onError(req, res, new Error('Invalid parameters'), 'You must supply a user id in path: /api/miv/[userid]');
     }
+    let userRecord = (await elasticSearch.get(id))._source;
+    let mivExport = await model.export(userRecord['@id']);
 
     res.set('content-type', 'text/plain');
-    res.set('Content-Disposition', `attachment; filename="${username}.ris"`);
-    res.send(await model.export(username));
+    res.set('Content-Disposition', `attachment; filename="${userRecord.label}.ris"`);
+    res.send(mivExport);
   } catch(e) {
     onError(req, res, e, 'Failed to generate MIV export');
   }

@@ -1,5 +1,5 @@
 const citation = require('../../lib/citation');
-const {fuseki} = require('@ucd-lib/rp-node-utils');
+const {fuseki, config} = require('@ucd-lib/rp-node-utils');
 const fs = require('fs');
 const path = require('path');
 
@@ -12,12 +12,15 @@ class Miv {
     }
   }
 
-  async export(user) {
-    if( !user.match(/^experts:/) ) {
-      user = 'experts:'+user;
+  async export(uri) {
+    if( uri.startsWith(config.fuseki.rootPrefix.prefix+':') ) {
+      uri = uri.replace(config.fuseki.rootPrefix.prefix+':', config.fuseki.rootPrefix.uri);
+    } else if( uri.startsWith(config.fuseki.schemaPrefix.prefix+':') ) {
+      uri = uri.replace(config.fuseki.schemaPrefix.prefix+':', config.fuseki.schemaPrefix.uri);
     }
 
-    let q = this.QUERIES.AUTHOR_PUBS.replace(/{{username}}/, user);
+    let q = this.QUERIES.AUTHOR_PUBS.replace(/{{username}}/, '<'+uri+'>');
+
     let resp = await fuseki.query(q);
     let pubs = await resp.json();
 
