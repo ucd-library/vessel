@@ -29,7 +29,7 @@ router.get(/^\/.*/, async (req, res) => {
 
   try {
     let id = req.path.replace(/^\//, '');
-    console.log(id, req.path)
+
     // TODO: we need to store a user experts id for this to work
     // if( !username ) {
     //   let user = null;
@@ -49,7 +49,7 @@ router.get(/^\/.*/, async (req, res) => {
     let mivExport = await model.export(userRecord['@id']);
 
     res.set('content-type', 'text/plain');
-    res.set('Content-Disposition', `attachment; filename="${userRecord.label}.ris"`);
+    res.set('Content-Disposition', `attachment; filename="${userRecord.label.toLowerCase().replace(/ /g, '_')}.ris"`);
     res.send(mivExport);
   } catch(e) {
     onError(req, res, e, 'Failed to generate MIV export');

@@ -34,6 +34,13 @@ class Miv {
       graph = graph['@graph'] ? graph['@graph'] : graph;
       pubs[i] = this.formatAuthors(this.getPub(graph), graph);
       // if( i === 5 ) break;
+
+      // TODO: test
+      if( typeof pubs[i].issued === 'string' ) {
+        pubs[i].issued = {'date-parts': [
+          pubs[i].issued.split('-').map(i => parseInt(i))
+        ]}
+      }
     }
 
     return citation.convert(pubs);
