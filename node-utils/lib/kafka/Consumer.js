@@ -8,6 +8,8 @@ class Consumer {
     this.loopTimer = -1;
     this.loopInterval = 500;
     this.consuming = true;
+
+    this.errorConsumeCount = 0;
   }
 
   /**
@@ -25,12 +27,14 @@ class Consumer {
         if( !this.consuming ) break;
 
         let result = await this.consumeOne();
+        this.errorConsumeCount = 0;
 
         if( result ) await callback(result);
         else await this._sleep();
       } catch(e) {
+        // TODO: look to use delay library!
         logger.error('kafka consume error', e);
-        await this._sleep();
+        await this._sleep(this.errorConsumeCount*this.loopInterval);
       }
     }
   }
@@ -52,10 +56,12 @@ class Consumer {
   /**
    * @method _sleep
    * @description simple setTimeout promise wrapper
+   * 
+   * @param {Number} time Optional.  Specify time to sleep
    */
-  _sleep() {
+  _sleep(time) {
     return new Promise((resolve, reject) => {
-      setTimeout(() => resolve(), this.loopInterval);
+      setTimeout(() => resolve(), time || this.loopInterval);
     });
   }
 
