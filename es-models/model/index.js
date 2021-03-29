@@ -220,7 +220,6 @@ class EsSparqlModel {
    */
   _constructModel(graph, id, crawled={}) {
     if( crawled[id] ) return graph;
-    crawled[id] = true;
   
     if( Array.isArray(graph) ) {
       let g = {};
@@ -229,6 +228,9 @@ class EsSparqlModel {
       }
       graph = g;
     }
+
+    // in case we need to access later
+    crawled[id] = graph[id];
   
     for( let key in graph[id] ) {
       if( key === '@id' ) continue;
@@ -236,7 +238,10 @@ class EsSparqlModel {
       if( Array.isArray(graph[id][key]) ) {
         for( let i = 0; i < graph[id][key].length; i++ ) {
           let subid = graph[id][key][i];
-          if( crawled[subid] ) continue;
+          if( crawled[subid] ) {
+            graph[id][key][i] = crawled[subid]
+            continue;
+          }
   
           if( graph[subid] ) {
             this._constructModel(graph, subid, crawled);
@@ -245,9 +250,13 @@ class EsSparqlModel {
             graph[id][key][i] = subid
           }
         }
-      } else if( graph[graph[id][key]] && !crawled[graph[id][key]] ) {
-        this._constructModel(graph, graph[id][key], crawled);
-        graph[id][key] = graph[graph[id][key]];
+      } else if( graph[graph[id][key]] ) {
+        if( !crawled[graph[id][key]] ) {
+          this._constructModel(graph, graph[id][key], crawled);
+          graph[id][key] = graph[graph[id][key]];
+        } else {
+          graph[id][key] = crawled[graph[id][key]];
+        }
       }
     }
   

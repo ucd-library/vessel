@@ -66,25 +66,21 @@ CONSTRUCT {
 
   OPTIONAL {
     ?subject vivo:relatedBy ?author .
-    ?author rdf:type vivo:Authorship .
+    # ?author rdf:type vivo:Authorship .
     OPTIONAL { ?author vivo:rank ?authorRank . }
     OPTIONAL {
-      ?author vivo:relates ?authorIndividual .
-      ?authorIndividual rdf:type vcard:Individual .
+      ?author vivo:relates ?authorPerson .
+      ?authorPerson rdf:type ?authorPersonType .
       
+      OPTIONAL { ?authorPerson vivo:orcidid ?authorOrcid . }
       OPTIONAL {
-        ?authorIndividual vcard:hasName ?authorVcardName .
-        ?authorVcardName rdf:type vcard:Name .
+        ?authorPerson obo:ARG_2000028 ?authorIndividualContactInfo .
+        ?authorIndividualContactInfo vcard:hasName ?authorVcardName .
+        # ?authorVcardName rdf:type vcard:Name .
         OPTIONAL { ?authorVcardName vcard:givenName ?authorGivenName . }
         OPTIONAL { ?authorVcardName vcard:middleName ?authorMiddleName . }
         OPTIONAL { ?authorVcardName vcard:familyName ?authorFamilyName . }
       }
-    }
-    OPTIONAL{
-      ?author vivo:relates ?authorPerson .
-      ?authorPerson rdf:type ?authorPersonType .
-      OPTIONAL { ?authorPerson vivo:orcidid ?authorOrcid . }
-      # OPTIONAL { ?authorPerson rdfs:label ?authorLabel . }
     }
   }
 
