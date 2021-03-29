@@ -1,6 +1,6 @@
 module.exports = {
   config : require('./lib/config'),
-  kafka : require('./lib/kafka'),
+  kafka : require('@ucd-lib/node-kafka'),
   fuseki : require('./lib/fuseki'),
   elasticSearch : require('./lib/elastic-search'),
   redis : require('./lib/redis'),
