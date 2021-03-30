@@ -140,7 +140,7 @@ class PostProcess {
       }
 
       // if one has an author rank, keep it
-      let rankAuthor = item.authors.find(author => author['vivo:rank'] !== undefined );
+      rankAuthor = item.authors.find(author => author['vivo:rank'] !== undefined );
       if( rankAuthor ) {
         arr.push(rankAuthor);
         continue;
