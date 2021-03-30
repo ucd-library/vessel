@@ -111,7 +111,7 @@ class PostProcess {
     let dups = [];
     arr.forEach((author, index) => {
       // create array of all ids for author
-      let ids = [author['@id'], ... (author.identifiers ? asArray(author.identifiers).map(i => i['@id']) : [])];
+      let ids = [author['@id'], ... (author.relatedBy ? asArray(author.relatedBy) : [])];
 
       //  see if any new author id is already in array of dups
       let exists = dups.findIndex(item => item.ids.some(id => ids.includes(id)));
@@ -132,8 +132,15 @@ class PostProcess {
         continue;
       }
 
-      // if vivo:rank exist, keep that one
-      let rankAuthor = item.authors.find(author => author['vivo:rank'] !== undefined);
+      // if of type 'person' keep that one
+      let rankAuthor = item.authors.find(author => author['@type'].includes('foaf:Person'));
+      if( rankAuthor ) {
+        arr.push(rankAuthor);
+        continue;
+      }
+
+      // if one has an author rank, keep it
+      let rankAuthor = item.authors.find(author => author['vivo:rank'] !== undefined );
       if( rankAuthor ) {
         arr.push(rankAuthor);
         continue;
