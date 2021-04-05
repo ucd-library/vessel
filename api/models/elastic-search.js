@@ -1,6 +1,6 @@
 const {elasticSearch, config} = require('@ucd-lib/rp-node-utils');
-const { esResultToApiResult } = require('../lib/search-utils');
 const utils = require('../lib/search-utils');
+const clone = require('clone');
 
 class ElasticSearch {
 
@@ -125,8 +125,8 @@ class ElasticSearch {
         }
       }
 
-      let tmpResult = await this.search(this.searchDocumentToEsBody(tmpSearchDoc));
-      tmpResult = this.esResultToApiResult(tmpResult, tmpSearchDoc);
+      let tmpResult = await this.search(utils.searchDocumentToEsBody(tmpSearchDoc));
+      tmpResult = utils.esResultToApiResult(tmpResult, tmpSearchDoc);
 
       // finally replace facets response
       result.aggregations.facets[filter] = tmpResult.aggregations.facets[filter];
