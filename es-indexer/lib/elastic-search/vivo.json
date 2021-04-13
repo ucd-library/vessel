@@ -38,7 +38,10 @@
       "type" : "keyword"
     },
 
-    "identifier" : {
+    "identifier.scheme" : {
+      "type" : "keyword"
+    },
+    "identifier.value" : {
       "type" : "keyword"
     },
 

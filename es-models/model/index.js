@@ -238,6 +238,10 @@ class EsSparqlModel {
       if( Array.isArray(graph[id][key]) ) {
         for( let i = 0; i < graph[id][key].length; i++ ) {
           let subid = graph[id][key][i];
+          if( typeof subid === 'object' ) {
+            subid = subid['@id'];
+          }
+
           if( crawled[subid] ) {
             graph[id][key][i] = crawled[subid]
             continue;

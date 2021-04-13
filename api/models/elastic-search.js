@@ -49,7 +49,7 @@ class ElasticSearch {
           should : [
             {term : {doi : id}},
             {term: {'hasContactInfo.hasEmail.email': id}},
-            {term: {identifier: id}},
+            {term: {'identifier.value': id}},
             {term: {casId: id}}
           ]
         }

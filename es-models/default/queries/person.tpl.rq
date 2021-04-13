@@ -25,6 +25,9 @@ CONSTRUCT {
 
   ?subject experts:casId ?casId .
   ?subject experts:identifier ?identifier .
+  ?identifier rdf:type experts:Identifier .
+  ?identifier ucdrp:scheme ?identifierScheme .
+  ?identifier ucdrp:value ?identifierValue .
 
   ?subject vivo:orcidId ?orcidId .
   ?orcidId vivo:confirmedOrcidId ?confirmedOrcidId .
@@ -76,7 +79,11 @@ CONSTRUCT {
     OPTIONAL { ?subject vivo:overview ?overview . }
 
     OPTIONAL { ?subject experts:casId ?casId . }
-    OPTIONAL { ?subject experts:identifier ?identifier . }
+    OPTIONAL { 
+      ?subject experts:identifier ?identifier . 
+      OPTIONAL { ?identifier experts:scheme ?identifierScheme . }
+      OPTIONAL { ?identifier experts:value ?identifierValue . }
+    }
 
     OPTIONAL {
       ?subject vivo:orcidId ?orcidId .
