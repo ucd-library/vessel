@@ -126,6 +126,20 @@
       }
     },
 
+    "relates.hasContactInfo.familyName" : {
+      "type" : "keyword",
+      "fields": {
+        "text" : { "type" : "text" }
+      }
+    },
+
+    "relates.hasContactInfo.givenName" : {
+      "type" : "keyword",
+      "fields": {
+        "text" : { "type" : "text" }
+      }
+    },
+
     "hasContactInfo.title" : {
       "type" : "keyword",
       "fields": {
@@ -285,6 +299,24 @@
           "search_analyzer": "autocomplete_search"
         }
       }
+    },
+
+    "assignedBy.label" : {
+      "type" : "keyword",
+      "fields" : {
+        "text" : {"type": "text"}
+      }
+    },
+
+    "sponsorAwardId" :{
+      "type" : "keyword",
+      "fields" : {
+        "text" :{"type": "text"}
+      }
+    },
+    
+    "totalAwardAmount" : {
+      "type" : "integer"
     }
 
   }

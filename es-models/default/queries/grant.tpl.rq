@@ -1,0 +1,98 @@
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX bibo: <http://purl.org/ontology/bibo/>
+PREFIX vivo: <http://vivoweb.org/ontology/core#>
+PREFIX vitro: <http://vitro.mannlib.cornell.edu/ns/vitro/0.7#>
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+PREFIX vcard: <http://www.w3.org/2006/vcard/ns#>
+PREFIX cito: <http://purl.org/spar/cito/>
+PREFIX obo: <http://purl.obolibrary.org/obo/>
+PREFIX experts: <http://experts.ucdavis.edu/schema#>
+PREFIX ucdrp: <http://experts.ucdavis.edu/>
+
+CONSTRUCT {
+
+  ?subject rdf:type ?type .
+  ?subject rdf:type experts:grant .
+  ?subject rdfs:label ?label .
+  ?subject vivo:sponsorAwardId ?sponsorAwardId .
+  ?subject vivo:totalAwardAmount ?totalAwardAmount .
+
+  ?subject vivo:assignedBy ?assignedBy . 
+  ?assignedBy rdf:type ?assignedByType .
+  ?assignedBy rdfs:label ?assignedByLabel .
+
+  ?subject vivo:relates ?relates . 
+  ?relates rdf:type ?relatesType .
+  ?relates obo:inheresIn ?inheresIn .
+
+  ?relates obo:hasContactInfo ?relatesContactInfoFor .
+  ?relatesContactInfoFor vcard:hasName ?relatesVcardName .
+  ?relatesVcardName vcard:givenName ?relatesGivenName .
+  ?relatesVcardName vcard:familyName ?relatesFamilyName .
+
+  ?inheresIn rdf:type ?inheresInType .
+  ?inheresIn obo:hasContactInfo ?inheresInContactInfoFor .
+  ?inheresInContactInfoFor vcard:hasName ?inheresInVcardName .
+  ?inheresInVcardName vcard:givenName ?inheresInGivenName .
+  ?inheresInVcardName vcard:familyName ?inheresInFamilyName .
+
+  ?subject vivo:dateTimeInterval ?dateTimeInterval . 
+  ?dateTimeInterval rdf:type ?dateTimeIntervalType .
+  ?dateTimeInterval rdfs:label ?dateLabel .
+  ?dateTimeInterval vivo:dateTime ?dateTimeIntervalTime . 
+  ?dateTimeInterval vivo:dateTimePrecision ?dateTimeIntervalPrecision . 
+
+} WHERE {
+  ?subject rdf:type ?type .
+
+  OPTIONAL { ?subject rdfs:label ?label . }
+  OPTIONAL { ?subject vivo:sponsorAwardId ?sponsorAwardId . }
+  OPTIONAL { ?subject vivo:totalAwardAmount ?totalAwardAmount . }
+
+  OPTIONAL { 
+    ?subject vivo:assignedBy ?assignedBy . 
+    ?assignedBy rdf:type ?assignedByType .
+    OPTIONAL { ?assignedBy rdfs:label ?assignedByLabel . }
+  }
+
+  OPTIONAL { 
+    ?subject vivo:relates ?relates . 
+    ?relates rdf:type ?relatesType .
+
+    OPTIONAL {
+      ?relates obo:ARG_2000028 ?relatesContactInfoFor .
+
+      OPTIONAL {
+        ?relatesContactInfoFor vcard:hasName ?relatesVcardName .
+        OPTIONAL { ?relatesVcardName vcard:givenName ?relatesGivenName . }
+        OPTIONAL { ?relatesVcardName vcard:familyName ?relatesFamilyName . }
+      }
+    }
+
+    OPTIONAL { 
+      ?relates obo:RO_000052 ?inheresIn .
+      ?inheresIn rdf:type ?inheresInType .
+
+      OPTIONAL {
+        ?inheresIn obo:ARG_2000028 ?inheresInContactInfoFor .
+
+        OPTIONAL {
+          ?inheresInContactInfoFor vcard:hasName ?inheresInVcardName .
+          OPTIONAL { ?inheresInVcardName vcard:givenName ?inheresInGivenName . }
+          OPTIONAL { ?inheresInVcardName vcard:familyName ?inheresInFamilyName . }
+        }
+      }
+    }
+  }
+
+  OPTIONAL {
+    ?subject vivo:dateTimeInterval ?dateTimeInterval . 
+    ?dateTimeInterval rdf:type ?dateTimeIntervalType .
+    OPTIONAL { ?dateTimeInterval rdfs:label ?dateLabel . }
+    OPTIONAL { ?dateTimeInterval vivo:dateTime ?dateTimeIntervalTime . }
+    OPTIONAL { ?dateTimeInterval vivo:dateTimePrecision ?dateTimeIntervalPrecision . }
+  }
+
+  FILTER(?subject = "{{uri}}")
+}
