@@ -317,6 +317,13 @@
     
     "totalAwardAmount" : {
       "type" : "integer"
+    },
+
+    "dateTimeInterval.start.dateTime" : {
+      "type" : "date"
+    },
+    "dateTimeInterval.end.dateTime" : {
+      "type" : "date"
     }
 
   }

@@ -39,9 +39,16 @@ CONSTRUCT {
 
   ?subject vivo:dateTimeInterval ?dateTimeInterval . 
   ?dateTimeInterval rdf:type ?dateTimeIntervalType .
-  ?dateTimeInterval rdfs:label ?dateLabel .
-  ?dateTimeInterval vivo:dateTime ?dateTimeIntervalTime . 
-  ?dateTimeInterval vivo:dateTimePrecision ?dateTimeIntervalPrecision . 
+    
+  ?dateTimeInterval vivo:start ?dateTimeStart .
+  ?dateTimeStart rdf:type ?dateTimeStartType .
+  ?dateTimeStart vivo:dateTime ?dateTimeStartTime .
+  ?dateTimeStart vivo:dateTimePrecision ?dateTimeStartPrecision .
+
+  ?dateTimeInterval vivo:end ?dateTimeEnd .
+  ?dateTimeEnd rdf:type ?dateTimeEndType .
+  ?dateTimeEnd vivo:dateTime ?dateTimeEndTime .
+  ?dateTimeEnd vivo:dateTimePrecision ?dateTimeEndPrecision .
 
 } WHERE {
   ?subject rdf:type ?type .
@@ -89,9 +96,20 @@ CONSTRUCT {
   OPTIONAL {
     ?subject vivo:dateTimeInterval ?dateTimeInterval . 
     ?dateTimeInterval rdf:type ?dateTimeIntervalType .
-    OPTIONAL { ?dateTimeInterval rdfs:label ?dateLabel . }
-    OPTIONAL { ?dateTimeInterval vivo:dateTime ?dateTimeIntervalTime . }
-    OPTIONAL { ?dateTimeInterval vivo:dateTimePrecision ?dateTimeIntervalPrecision . }
+
+    OPTIONAL {
+      ?dateTimeInterval vivo:start ?dateTimeStart .
+      ?dateTimeStart rdf:type ?dateTimeStartType .
+      OPTIONAL { ?dateTimeStart vivo:dateTime ?dateTimeStartTime . }
+      OPTIONAL { ?dateTimeStart vivo:dateTimePrecision ?dateTimeStartPrecision . }
+    }
+
+    OPTIONAL {
+      ?dateTimeInterval vivo:end ?dateTimeEnd .
+      ?dateTimeEnd rdf:type ?dateTimeEndType .
+      OPTIONAL { ?dateTimeEnd vivo:dateTime ?dateTimeEndTime . }
+      OPTIONAL { ?dateTimeEnd vivo:dateTimePrecision ?dateTimeEndPrecision . }
+    }
   }
 
   FILTER(?subject = "{{uri}}")
