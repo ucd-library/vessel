@@ -231,35 +231,53 @@ class EsSparqlModel {
 
     // in case we need to access later
     crawled[id] = graph[id];
+    let node = graph[id];
+    let value;
   
-    for( let key in graph[id] ) {
-      if( key === '@id' ) continue;
+    for( let property in node ) {
+      if( property === '@id' ) continue;
+      value = node[property];
   
-      if( Array.isArray(graph[id][key]) ) {
-        for( let i = 0; i < graph[id][key].length; i++ ) {
-          let subid = graph[id][key][i];
+      // check for array of valkues
+      if( Array.isArray(value) ) {
+
+        // loop values array
+        for( let i = 0; i < value.length; i++ ) {
+          // grab id if object
+          let subid = value[i];
           if( typeof subid === 'object' ) {
             subid = subid['@id'];
           }
 
+          // if crawled we can use crawled values
           if( crawled[subid] ) {
-            graph[id][key][i] = crawled[subid]
+            value[i] = crawled[subid]
             continue;
           }
   
+          //
           if( graph[subid] ) {
             this._constructModel(graph, subid, crawled);
-            graph[id][key][i] = graph[subid]
+            value[i] = graph[subid]
           } else {
-            graph[id][key][i] = subid
+            value[i] = subid
           }
         }
-      } else if( graph[graph[id][key]] ) {
-        if( !crawled[graph[id][key]] ) {
-          this._constructModel(graph, graph[id][key], crawled);
-          graph[id][key] = graph[graph[id][key]];
+      } else {
+        // graph id if object
+        if( typeof value === 'object' ) {
+          value = value['@id'];
+        }
+
+        if( graph[value] ) {
+          if( !crawled[value] ) {
+            this._constructModel(graph, value, crawled);
+            node[property] = graph[value];
+          } else {
+            node[property] = crawled[value];
+          }
         } else {
-          graph[id][key] = crawled[graph[id][key]];
+          node[property] = value;
         }
       }
     }
