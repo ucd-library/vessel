@@ -52,12 +52,10 @@ router.get(/^\/.*/, async (req, res) => {
     res.set('Content-Disposition', `attachment; filename="${userRecord.label.toLowerCase().replace(/ /g, '_')}.ris"`);
 
     
-    let mivExport = await model.export(userRecord['@id'], pub => {
-      console.log('write');
+    await model.export(userRecord['@id'], pub => {
       res.write(pub+'\n');
     });
-   
-    // res.send(mivExport);
+ 
     res.end();
   } catch(e) {
     onError(req, res, e, 'Failed to generate MIV export');

@@ -44,8 +44,6 @@ class Miv {
 
       callback(citation.convert([pubs[i]]));
     }
-
-    // return citation.convert(pubs);
   }
 
   getPub(graph) {
