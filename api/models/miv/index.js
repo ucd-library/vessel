@@ -12,7 +12,7 @@ class Miv {
     }
   }
 
-  async export(uri) {
+  async export(uri, callback) {
     if( uri.startsWith(config.fuseki.rootPrefix.prefix+':') ) {
       uri = uri.replace(config.fuseki.rootPrefix.prefix+':', config.fuseki.rootPrefix.uri);
     } else if( uri.startsWith(config.fuseki.schemaPrefix.prefix+':') ) {
@@ -41,9 +41,11 @@ class Miv {
           pubs[i].issued.split('-').map(i => parseInt(i))
         ]}
       }
+
+      callback(citation.convert([pubs[i]]));
     }
 
-    return citation.convert(pubs);
+    // return citation.convert(pubs);
   }
 
   getPub(graph) {

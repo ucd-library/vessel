@@ -45,12 +45,20 @@ router.get(/^\/.*/, async (req, res) => {
     if( !id ) {
       return onError(req, res, new Error('Invalid parameters'), 'You must supply a user id in path: /api/miv/[userid]');
     }
-    let userRecord = (await elasticSearch.get(id))._source;
-    let mivExport = await model.export(userRecord['@id']);
 
+    let userRecord = (await elasticSearch.get(id))._source;
     res.set('content-type', 'text/plain');
+    res.set('transfer-encoding', 'chunked');
     res.set('Content-Disposition', `attachment; filename="${userRecord.label.toLowerCase().replace(/ /g, '_')}.ris"`);
-    res.send(mivExport);
+
+    
+    let mivExport = await model.export(userRecord['@id'], pub => {
+      console.log('write');
+      res.write(pub+'\n');
+    });
+   
+    // res.send(mivExport);
+    res.end();
   } catch(e) {
     onError(req, res, e, 'Failed to generate MIV export');
   }
