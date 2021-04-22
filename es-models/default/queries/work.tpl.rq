@@ -57,6 +57,8 @@ CONSTRUCT {
   ?subject vivo:hasPublicationVenue ?publicationVenue .
   ?publicationVenue rdfs:label ?publicationVenueLabel .
   ?publicationVenue bibo:issn ?publicationVenueIssn .
+  ?publicationVenue bibo:eissn ?publicationVenueEissn .
+  ?publicationVenue rdfs:label ?publicationVenueLabel .
 
   ?subject vivo:informationResourceSupportedBy ?supportedBy .
   ?supportedBy rdfs:label ?supportedByLabel .
@@ -120,6 +122,8 @@ CONSTRUCT {
     ?subject vivo:hasPublicationVenue ?publicationVenue .
     ?publicationVenue rdf:type ?publicationVenueType .
     ?publicationVenue bibo:issn ?publicationVenueIssn .
+    ?publicationVenue bibo:eissn ?publicationVenueEissn .
+    ?publicationVenue rdfs:label ?publicationVenueLabel .
   }
 
   OPTIONAL {
