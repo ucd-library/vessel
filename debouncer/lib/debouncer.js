@@ -139,7 +139,7 @@ class Debouncer {
     logger.info('Sending subject to indexer: ', key.replace(config.redis.prefixes.debouncer, ''));
     let received = await redis.client.get(key);
 
-    this.kafkaProducer.produce({
+    await this.kafkaProducer.produce({
       topic : config.kafka.topics.index,
       value : {
         sender : 'debouncer',

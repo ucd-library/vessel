@@ -14,6 +14,7 @@ router.get('/', (req, res) => {
 router.use('/search', require('./search'));
 router.use('/miv', require('./miv'));
 router.use('/concept', require('./concept'));
+router.use('/graph', require('./graph'));
 
 /**
  * @swagger
