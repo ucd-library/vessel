@@ -31,7 +31,7 @@ class Graph {
    * 
    * @returns {Array}
    */
-     async load(filter) {
+     async get(filter) {
       let queryDoc = {
         index: config.elasticSearch.indexAlias,
         body : {
