@@ -49,7 +49,7 @@ router.get(/^\/.*/, async (req, res) => {
     let userRecord = (await elasticSearch.get(id))._source;
     res.set('content-type', 'text/plain');
     res.set('transfer-encoding', 'chunked');
-    res.set('Content-Disposition', `attachment; filename="${userRecord.label.toLowerCase().replace(/ /g, '_')}.ris"`);
+    res.set('Content-Disposition', `attachment; filename="${firstValue(userRecord.label).toLowerCase().replace(/ /g, '_')}.ris"`);
 
     
     await model.export(userRecord['@id'], pub => {
@@ -62,5 +62,12 @@ router.get(/^\/.*/, async (req, res) => {
   }
 
 });
+
+function firstValue(val) {
+  if( Array.isArray(val) ) {
+    return val[0];
+  }
+  return val;
+}
 
 module.exports = router;
