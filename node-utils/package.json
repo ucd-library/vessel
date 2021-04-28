@@ -13,13 +13,13 @@
   "license": "MIT",
   "dependencies": {
     "@google-cloud/logging-bunyan": "^3.0.0",
+    "@ucd-lib/node-kafka": "^0.0.3",
     "bunyan": "^1.8.14",
     "deepmerge": "^4.2.2",
     "elasticsearch": "^16.7.1",
     "jsonwebtoken": "^8.5.1",
     "n3": "^1.5.0",
     "node-fetch": "^2.6.0",
-    "node-rdkafka": "^2.9.0",
     "redis": "^3.0.2",
     "sparqljs": "^3.0.1"
   }

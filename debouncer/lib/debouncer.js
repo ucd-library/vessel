@@ -33,8 +33,9 @@ class Debouncer {
     await redis.connect();
 
     try {
-      await this.kafkaProducer.connect();
       await this.kafkaConsumer.connect();
+      await this.kafkaProducer.connect();
+      
 
       await kafka.utils.ensureTopic({
         topic : config.kafka.topics.rdfPatch,
@@ -52,7 +53,6 @@ class Debouncer {
       logger.info(`Debouncer (group.id=${config.kafka.groups.debouncer}) kafak status=${JSON.stringify(topics)} watermarks=${JSON.stringify(watermarks)}`);
 
       // subscribe to front of committed offset
-      console.log([config.kafka.topics.rdfPatch]);
       await this.kafkaConsumer.subscribe([config.kafka.topics.rdfPatch]);
     } catch(e) {
       logger.error('kafka init error', e);
