@@ -111,7 +111,7 @@ class Indexer {
     // unlike the debouncer, lookup subject types 
     // we will only debounce known types
     if( !payload.type || payload.types ) {
-      let response = await fuseki.query(`select * { GRAPH ?g {<${payload.subject}> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?type}}`)
+      let response = await fuseki.query(`select * { <${payload.subject}> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?type}`)
     
       let body;
       try {
@@ -257,7 +257,7 @@ class Indexer {
       return;
     }
 
-    let response = await fuseki.query(`select * { GRAPH ?g {<${msg.subject}> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?type}}`)
+    let response = await fuseki.query(`select * { <${msg.subject}> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?type}`)
     
     let body;
     try {
