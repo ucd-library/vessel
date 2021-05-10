@@ -140,6 +140,10 @@
       }
     },
 
+    "relates.@id" : {
+      "type" : "keyword"
+    },
+
     "hasContactInfo.title" : {
       "type" : "keyword",
       "fields": {
