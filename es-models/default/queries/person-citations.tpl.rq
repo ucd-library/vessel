@@ -14,44 +14,41 @@ CONSTRUCT {
   ?subject rdf:type ?type .
   ?subject rdf:type experts:person .
 
-  ?subject experts:citation ?citation .
-  ?citation rdfs:label ?citationLabel .
-  ?citation experts:publication ?citationPublicationVenueLabel .
+  ?subject experts:citation ?publication .
+  ?publication rdfs:label ?publicationLabel .
+  ?publication experts:publication ?publicationVenueLabel .
 
-  ?citation experts:authors ?citationAuthors .
-  ?citationAuthors vivo:rank ?citationAuthorRank .
-  ?citationAuthors vivo:identifiers  ?authorPerson .
+  ?publication experts:authors ?citationAuthors .
+  ?citationAuthors vivo:rank ?authorRank .
+  ?citationAuthors vivo:identifiers ?citationPerson .
 } WHERE {
 
   ?subject rdf:type ?type .
 
   OPTIONAL {
-    ?citation rdf:type bibo:AcademicArticle .
-    ?citation rdfs:label ?citationLabel .
-    ?citation vivo:relatedBy ?citationAuthor .
-    ?citationAuthor vivo:relates ?subject .
+    ?subject vivo:relatedBy ?authorship .
+    ?authorship rdf:type vivo:Authorship .
+
+    ?authorship vivo:relates ?publication .
+    ?publication rdf:type bibo:AcademicArticle .
+    ?publication rdfs:label ?publicationLabel .
 
     OPTIONAL {
-      ?citation vivo:relatedBy ?citationAuthors .
+      ?publication vivo:relatedBy ?citationAuthors .
       ?citationAuthors rdf:type vivo:Authorship .
+      ?citationAuthors vivo:relates ?citationPerson .
+      ?citationPerson rdf:type ?citationPersonType .
 
       OPTIONAL {
-        ?citationAuthors vivo:rank ?citationAuthorRank .
+        ?citationAuthors vivo:rank ?authorRank .
       }
-
-      OPTIONAL {
-        ?citationAuthors vivo:relates ?authorPerson .
-        ?authorPerson rdf:type ?authorPersonType .
-      }
-
     }
     OPTIONAL {
-      ?citation vivo:hasPublicationVenue ?citationPublicationVenue .
-      ?citationPublicationVenue rdfs:label ?citationPublicationVenueLabel .
+      ?publication vivo:hasPublicationVenue ?publicationVenue .
+      ?publicationVenue rdfs:label ?publicationVenueLabel .
     }
   }
-
   FILTER(
     ?subject = "{{uri}}" &&
-    ?authorPersonType IN (vcard:Individual, vivo:FacultyMember, vivo:NonAcademic, foaf:Person))
+    ?citationPersonType IN (vcard:Individual, vivo:FacultyMember, vivo:NonAcademic, foaf:Person))
 }

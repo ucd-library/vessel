@@ -27,7 +27,11 @@ class PostProcess {
       model.citation = model.citation.map(item => {
         item.authorsCount = asArray(item.authors).length;
 
-        let author = asArray(item.authors).find(author => asArray(author.identifiers).includes(model['@id']));
+        let author = asArray(item.authors).find(author => {
+          return asArray(author.identifiers)
+            .map(id => typeof id === 'string' ? id : id['@id'])
+            .includes(model['@id'])
+        });
         if( author ) item.rank = author['vivo:rank'];
 
         if( item.authorsCount && item.rank ) {
@@ -111,13 +115,19 @@ class PostProcess {
     let dups = [];
     arr.forEach((author, index) => {
       // create array of all ids for author
-      let ids = [author['@id'], ... (author.relatedBy ? asArray(author.relatedBy) : [])];
+      let ids = [author['@id'], ... asArray(author.relates).map(item => item['@id']) ];
 
       //  see if any new author id is already in array of dups
       let exists = dups.findIndex(item => item.ids.some(id => ids.includes(id)));
       if( exists > -1 ) {
         // if so, we have a dup we need to sort out
         dups[exists].authors.push(author);
+        ids.forEach(id => {
+          if( !dups[exists].ids.includes(id) ) {
+            dups[exists].ids.push(id);
+          }
+        });
+
         return;
       }
 
@@ -132,19 +142,20 @@ class PostProcess {
         continue;
       }
 
-      // if of type 'person' keep that one
-      let rankAuthor = item.authors.find(author => author['@type'].includes('foaf:Person'));
+      // if one has an author rank, keep it
+      let rankAuthor = item.authors.find(author => author['vivo:rank'] !== undefined );
       if( rankAuthor ) {
         arr.push(rankAuthor);
         continue;
       }
 
-      // if one has an author rank, keep it
-      rankAuthor = item.authors.find(author => author['vivo:rank'] !== undefined );
+      // use vcard
+      rankAuthor = item.authors.find(author => author['@type'].includes('vcard:Individual'));
       if( rankAuthor ) {
         arr.push(rankAuthor);
         continue;
       }
+
 
       // otherwise just keep first
       arr.push(item.authors[0]);
