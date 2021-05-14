@@ -60,6 +60,14 @@
       "search_analyzer": "autocomplete_search"
     },
 
+    "relates.@id" : {
+      "type" : "keyword"
+    },
+
+    "relates.inheresIn.@id" : {
+      "type" : "keyword"
+    },
+
     "Authorship.rank" : {
       "type" : "integer"
     },
