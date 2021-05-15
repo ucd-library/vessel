@@ -26,10 +26,12 @@ CONSTRUCT {
   ?subject bibo:pageEnd ?pageEnd .
   ?subject vivo:publicationDate ?dateTime .
 
-  ?subject vivo:Authorship ?authorPerson .
-  ?authorPerson vivo:rank ?authorRank .
+  ?subject vivo:Authorship ?author .
+  ?author rdf:type vivo:Authorship .
+  ?author vivo:rank ?authorRank .
+
+  ?author vivo:relates ?authorPerson .
   ?authorPerson vivo:orcid ?authorOrcid .
-  ?authorPerson vivo:relatedBy ?author .
   ?authorPerson rdf:type ?authorPersonType .
 
   ?authorPerson vcard:hasName ?authorPersonVcardName .

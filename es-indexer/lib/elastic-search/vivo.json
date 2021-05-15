@@ -60,11 +60,23 @@
       "search_analyzer": "autocomplete_search"
     },
 
+    "relates.@id" : {
+      "type" : "keyword"
+    },
+
+    "relates.inheresIn.@id" : {
+      "type" : "keyword"
+    },
+
     "Authorship.rank" : {
       "type" : "integer"
     },
 
     "Authorship.@id" : {
+      "type" : "keyword"
+    },
+
+    "Authorship.relates.@id" : {
       "type" : "keyword"
     },
 
@@ -90,10 +102,6 @@
 
     "_.top20Citation.label" : {
       "type" : "text"
-    },
-
-    "Authorship.identifiers.@id" : {
-      "type" : "keyword"
     },
 
     "doi" : {
