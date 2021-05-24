@@ -39,6 +39,7 @@ CONSTRUCT {
   ?subject obo:hasContactInfo ?contactInfoFor .
   ?contactInfoFor vcard:givenName ?givenName .
   ?contactInfoFor vcard:familyName ?familyName .
+  ?contactInfoFor vcard:pronoun ?pronoun .
   ?contactInfoFor vcard:additionalName ?additionalName .
   ?contactInfoFor vcard:honorificPrefix ?honorificPrefix .
   ?contactInfoFor vcard:honorificSuffix ?honorificSuffix .
@@ -103,6 +104,7 @@ CONSTRUCT {
         ?contactInfoFor vcard:hasName ?vcardName .
         OPTIONAL { ?vcardName vcard:givenName ?givenName . }
         OPTIONAL { ?vcardName vcard:familyName ?familyName . }
+        OPTIONAL { ?vcardName vcard:pronoun ?pronoun .}
         OPTIONAL { ?vcardName vcard:additionalName ?additionalName . }
         OPTIONAL { ?vcardName vcard:honorificPrefix ?honorificPrefix . }
         OPTIONAL { ?vcardName vcard:honorificSuffix ?honorificSuffix . }
