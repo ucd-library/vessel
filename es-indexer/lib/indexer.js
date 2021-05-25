@@ -227,7 +227,13 @@ class Indexer {
    */
   async insert(key, uri, id, msg, type) {
     logger.info(`From ${id} sent by ${msg.sender || 'unknown'} loading ${uri} with model ${(await esSparqlModel.hasModel(type))}. ${msg.force ? 'force=true' : ''}`);
-    let result = await esSparqlModel.getModel(type, uri);
+    let result;
+    try{ 
+      result = await esSparqlModel.getModel(type, uri);
+    } catch(e){
+      console.log(e)
+    }
+
     await elasticSearch.insert(result.model, msg.index);
     logger.info(`Updated ${uri} into ${msg.index || 'default alias'}`);
     await redis.client.del(key);
