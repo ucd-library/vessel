@@ -126,10 +126,6 @@
       }
     },
 
-    "hasContactInfo.pronoun" : {
-      "type" : "keyword"
-    },
-
     "relates.hasContactInfo.familyName" : {
       "type" : "keyword",
       "fields": {
@@ -142,10 +138,6 @@
       "fields": {
         "text" : { "type" : "text" }
       }
-    },
-
-    "relates.hasContactInfo.pronoun" : {
-      "type" : "keyword"
     },
 
     "relates.@id" : {
