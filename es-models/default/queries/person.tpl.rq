@@ -106,7 +106,10 @@ CONSTRUCT {
         OPTIONAL { ?vcardName vcard:givenName ?givenName . }
         OPTIONAL { ?vcardName vcard:familyName ?familyName . }
         OPTIONAL { ?vcardName vcard:middleName ?middleName . }
+<<<<<<< HEAD
         OPTIONAL { ?vcardName vcard:pronoun ?pronoun .}
+=======
+>>>>>>> dev
         OPTIONAL { ?vcardName vcard:additionalName ?additionalName . }
         OPTIONAL { ?vcardName vcard:honorificPrefix ?honorificPrefix . }
         OPTIONAL { ?vcardName vcard:honorificSuffix ?honorificSuffix . }
