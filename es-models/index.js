@@ -20,7 +20,8 @@ app.get(/\/.+/, async (req, res) => {
     uri = decodeURIComponent(uri);
     let verbose = req.query.verbose ? true : false;
 
-    res.json(await model.getModel(type, uri, {verbose}));
+    let data = await model.getModel(type, uri, {verbose});
+    res.json(data);
   } catch(e) {
     res.status(500).json({
       error : {
