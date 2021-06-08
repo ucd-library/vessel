@@ -19,7 +19,13 @@ class EsSqarqlModels {
     if( !modelType ) throw new Error('Unknown type: '+type);
 
     let response = await fetch(`${baseUrl}/${modelType}/${encodeURIComponent(uri)}`);
-    return response.json();
+    let data = response.json();
+
+    if( !data.model || !data.uri ) {
+      throw new Error(`Bad model response for ${uri}: ${JSON.stringify(data, '  ', '  ')}`);
+    }
+
+    return data;
   }
 
   /**

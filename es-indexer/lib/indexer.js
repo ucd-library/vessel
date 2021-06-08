@@ -231,7 +231,8 @@ class Indexer {
     try{ 
       result = await esSparqlModel.getModel(type, uri);
     } catch(e){
-      console.log(e)
+      console.log(e);
+      return;
     }
 
     await elasticSearch.insert(result.model, msg.index);
