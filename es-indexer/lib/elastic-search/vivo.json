@@ -68,6 +68,10 @@
       "type" : "keyword"
     },
 
+    "Authorship.relates.@id" : {
+      "type" : "keyword"
+    },
+
     "citation.publication" : {
       "type" : "text"
     },
@@ -90,10 +94,6 @@
 
     "_.top20Citation.label" : {
       "type" : "text"
-    },
-
-    "Authorship.identifiers.@id" : {
-      "type" : "keyword"
     },
 
     "doi" : {
