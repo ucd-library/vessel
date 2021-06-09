@@ -1,15 +1,18 @@
 const {logger, config, auth} = require('@ucd-lib/rp-node-utils');
 const express = require('express');
+const http = require('http');
 const app = express();
 const compression = require('compression');
 const httpProxy = require('http-proxy');
 const cookieParser = require('cookie-parser');
+const cookie = require('cookie');
 const cors = require('cors')({
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
   exposedHeaders : ['content-type', 'link', 'content-disposition', 'content-length', 'pragma', 'expires', 'cache-control'],
   allowedHeaders : ['authorization', 'range', 'cookie', 'content-type', 'prefer', 'slug', 'cache-control', 'accept'],
   credentials: true
 });
+const server = http.createServer(app);
 
 // cors wrapper control
 function enableCors(req, res, next) {
@@ -83,6 +86,33 @@ app.use((req, res, next) => {
 app.use(compression());
 app.use(cookieParser());
 
+// handle websocket upgrade requests
+server.on('upgrade', async (req, socket, head) => {
+  // Grab the user provided token
+  let cookies = cookie.parse(req.headers.cookie);
+  let token = cookies[config.jwt.cookieName];
+  if( !token ) {
+    console.log('no cookie, ignoring')
+    socket.write('HTTP/1.1 403 Forbidden\r\n');
+    socket.end();
+    return;
+  }
+
+  // Verify the token
+  try {
+    await auth.verifyToken(token);
+  } catch(e) {
+    socket.write('HTTP/1.1 403 Forbidden\r\n');
+    socket.end();
+    return;
+  }
+
+  proxy.ws(req, socket, head, {
+    target: 'ws://'+config.gateway.serviceHosts.client.replace(/^http:\/\//, '')+req.url,
+    ignorePath: true
+  });
+});
+
 /**
  * Ensure a server secret is set
  */
@@ -137,7 +167,7 @@ app.use(/.*/, (req, res) => {
 /**
  * Start Server
  */
-app.listen(config.gateway.port, () => {
+ server.listen(config.gateway.port, () => {
   logger.info('gateway listening on port: '+config.gateway.port);
   require('./lib/default-admins')();
 })

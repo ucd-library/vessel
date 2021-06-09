@@ -83,7 +83,8 @@ module.exports = {
       deleteIndex : 'indexercmd-delete-index-',
       session : 'session-',
       roles : 'role-',
-      authProperties : 'auth-props-'
+      authProperties : 'auth-props-',
+      harvest : 'harvest-state-'
     },
     keys : {
       serverSecret : 'server-secret',

@@ -6,6 +6,8 @@ const ALLOWED_PATHS = config.server.allowedPaths.map(path => {
 });
 ALLOWED_PATHS.push(/^\/auth\/.*/);
 
+const PROTECTED_PATHS = [/^\/socket.io/];
+
 if( config.server.private ) {
   logger.info(`Server is set to private with the following paths open to public: `, ALLOWED_PATHS);
 }
@@ -19,19 +21,33 @@ if( config.server.private ) {
  * @param {Function} next 
  */
 module.exports = async (req, res, next) => {
+  let protectedPath = false;
+
+  for( let pathRe of PROTECTED_PATHS ) {
+    if( req.originalUrl.match(pathRe) ) {
+      protectedPath = true;
+      break;
+    }
+  }
+
   // server is public, everyone can access
-  if( config.server.private === false ) return next();
+  if( config.server.private === false && protectedPath === false ) return next();
 
   // the request path is in the allowed path list, not a restricted resource
-  for( let pathRe of ALLOWED_PATHS ) {
-    if( req.originalUrl.match(pathRe) ) {
-      return next();
+  if( protectedPath === false ) {
+    for( let pathRe of ALLOWED_PATHS ) {
+      if( req.originalUrl.match(pathRe) ) {
+        return next();
+      }
     }
   }
 
   // Grab the user provided token (Cookie or Authorization header)
   let token = auth.getTokenFromRequest(req);
   if( !token ) {
+    if( protectedPath ) {
+      return res.status(403).json({error: true, message: 'Forbidden'});
+    }
     return handleAuthPortalRedirect(req, res);
   }
 
@@ -39,6 +55,9 @@ module.exports = async (req, res, next) => {
   try {
     req.jwt = await auth.verifyToken(token);
   } catch(e) {
+    if( protectedPath ) {
+      return res.status(403).json({error: true, message: 'Forbidden'});
+    }
     return handleAuthPortalRedirect(req, res);
   }
 
