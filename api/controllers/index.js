@@ -92,7 +92,6 @@ router.get(/\/resolve\/.*/, async (req, res) => {
       res.json({error: true, message: 'not found', id});
     }
   } catch(e) {
-    console.log(e);
     errorHandler(req, res, e);
   }
 });
