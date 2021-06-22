@@ -79,7 +79,8 @@ class PostProcess {
       let response = await esSparqlModel.getModel('concept', item['@id']);
 
       if( response && response.model && response.model.broader ) {
-        await this.getBroaderSubjectTerms(response.model.broader, esSparqlModel);
+        let additionalTerms = await this.getBroaderSubjectTerms(response.model.broader, esSparqlModel);
+        additionalTerms.forEach(term => term ? unique.add(term) : '');
       }
     }
     return Array.from(unique);
