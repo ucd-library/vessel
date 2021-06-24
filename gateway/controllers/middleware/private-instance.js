@@ -61,6 +61,9 @@ module.exports = async (req, res, next) => {
     return handleAuthPortalRedirect(req, res);
   }
 
+  // PROTECTED_PATHS just need authentication
+  if( protectedPath ) return next(); 
+
   // All authenticated users are allowed
   if( config.server.allowedRoles.includes('all') ) {
     return next();
