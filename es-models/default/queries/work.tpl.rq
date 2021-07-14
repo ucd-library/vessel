@@ -57,10 +57,14 @@ CONSTRUCT {
   ?subjectArea skos:prefLabel ?subjectAreaPrefLabel .
 
   ?subject vivo:hasPublicationVenue ?publicationVenue .
-  ?publicationVenue rdfs:label ?publicationVenueLabel .
-  ?publicationVenue bibo:issn ?publicationVenueIssn .
-  ?publicationVenue bibo:eissn ?publicationVenueEissn .
-  ?publicationVenue rdfs:label ?publicationVenueLabel .
+
+  ?publicationVenue
+    rdfs:label ?publicationVenueLabel ;
+    bibo:issn ?publicationVenueIssn ;
+    bibo:eissn ?publicationVenueEissn ;
+    bibo:isbn10 ?publicationIsbn10 ;
+    bibo:isbn13 ?publicationIsbn13 ;
+  .
 
   ?subject vivo:informationResourceSupportedBy ?supportedBy .
   ?supportedBy rdfs:label ?supportedByLabel .
@@ -82,9 +86,9 @@ CONSTRUCT {
     OPTIONAL {
       ?author vivo:relates ?authorPerson .
       ?authorPerson rdf:type ?authorPersonType .
-      
+
       OPTIONAL { ?authorPerson vivo:orcidid ?authorOrcid . }
-      
+
       # in case the author is aggie experts
       OPTIONAL {
         ?authorPerson obo:ARG_2000028 ?authorPersonVcard .
@@ -122,11 +126,23 @@ CONSTRUCT {
 
   OPTIONAL {
     ?subject vivo:hasPublicationVenue ?publicationVenue .
-    ?publicationVenue rdf:type ?publicationVenueType .
-    ?publicationVenue bibo:issn ?publicationVenueIssn .
-    ?publicationVenue bibo:eissn ?publicationVenueEissn .
-    ?publicationVenue rdfs:label ?publicationVenueLabel .
-  }
+    ?publicationVenue
+#       rdf:type ?publicationVenueType ;
+       rdfs:label ?publicationVenueLabel .
+
+    OPTIONAL {
+      ?publicationVenue bibo:issn ?publicationVenueIssn .
+    }
+    OPTIONAL {
+      ?publicationVenue bibo:eissn ?publicationVenueEissn .
+    }
+    OPTIONAL {
+      ?publicationVenue bibo:isbn10 ?publicationIsbn10 .
+    }
+    OPTIONAL {
+      ?publicationVenue bibo:isbn13 ?publicationIsbn13 .
+    }
+}
 
   OPTIONAL {
     ?subject vivo:informationResourceSupportedBy ?supportedBy .
