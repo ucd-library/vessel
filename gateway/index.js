@@ -5,6 +5,7 @@ const compression = require('compression');
 const httpProxy = require('http-proxy');
 const cookieParser = require('cookie-parser');
 const cors = require('cors')({
+  origin: true,
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
   exposedHeaders : ['content-type', 'link', 'content-disposition', 'content-length', 'pragma', 'expires', 'cache-control'],
   allowedHeaders : ['authorization', 'range', 'cookie', 'content-type', 'prefer', 'slug', 'cache-control', 'accept'],
