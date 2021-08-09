@@ -57,9 +57,13 @@ CONSTRUCT {
   ?contactInfoFor experts:identifier ?contactInfoForIdentifier .
 
   ?contactInfoFor vcard:hasURL ?vcardURL .
-  ?vcardURL vcard:url ?url .
-  ?vcardURL vcard:rank ?urlRank .
-  ?vcardURL vcard:label ?urlLabel .
+
+  ?vcardURL vcard:url ?url ;
+     ucdrp:rank ?urlRank ;
+  rdfs:label ?urlLabel ;
+  ucdrp:urlType ?urlType;
+  .
+
 
   ?subject vitro:mainImage ?mainImage .
   ?mainImage vitro:filename ?mainImagFilename .
@@ -81,8 +85,8 @@ CONSTRUCT {
     OPTIONAL { ?subject vivo:overview ?overview . }
 
     OPTIONAL { ?subject experts:casId ?casId . }
-    OPTIONAL { 
-      ?subject experts:identifier ?identifier . 
+    OPTIONAL {
+      ?subject experts:identifier ?identifier .
       OPTIONAL { ?identifier experts:scheme ?identifierScheme . }
       OPTIONAL { ?identifier experts:value ?identifierValue . }
     }
@@ -144,7 +148,8 @@ CONSTRUCT {
         ?contactInfoFor vcard:hasURL ?vcardURL .
         OPTIONAL { ?vcardURL vcard:url ?url . }
         OPTIONAL { ?vcardURL vcard:rank ?urlRank . }
-        OPTIONAL { ?vcardURL vcard:label ?urlLabel . }
+        OPTIONAL { ?vcardURL rdfs:label ?urlLabel . }
+        OPTIONAL { ?vcardURL ucdrp:urlType ?urlType . }
       }
     }
 
