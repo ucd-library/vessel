@@ -1,6 +1,8 @@
 const {kafka, redis, fuseki, logger, config, esSparqlModel} = require('@ucd-lib/rp-node-utils');
+const {fork} = require('child_process');
 const elasticSearch = require('./elastic-search');
 const reindex = require('./reindex');
+const path = require('path');
 
 /**
  * @class Indexer
@@ -13,6 +15,7 @@ class Indexer {
     this.lastMessageTimer = null;
     this.run = true;
 
+    this.childExecFile = path.resolve(__dirname, 'indexer-exec.js');
     this.kafkaConsumer = new kafka.Consumer({
       'group.id': config.kafka.groups.index,
       'metadata.broker.list': config.kafka.host+':'+config.kafka.port,
@@ -31,6 +34,17 @@ class Indexer {
   async connect() {
     await redis.connect();
     await elasticSearch.connect();
+
+    await elasticSearch.client.deleteByQuery({
+      index : 'research-profiles',
+      body : {
+      query : {
+        term : {
+          '_indexer.success' : false
+        }
+      }
+    }
+    })
 
     try {
       await this.kafkaConsumer.connect();
@@ -56,6 +70,35 @@ class Indexer {
     setTimeout(() => {
       this.handleMessages();
     }, 1000);
+  }
+
+  createChildExec() {
+    if( this.childProc ) return;
+    logger.info('Creating child exec process');
+
+    this.childProc = fork(this.childExecFile);
+    this.childProc.on('exit', (code) => {
+      this.childProc = null;
+      logger.info('Child exec process exited: '+code);
+      if( this.childProcIndexResolve ) {
+        this.childProcIndexResolve.reject({message: 'exit code: '+code, stack: 'not traceble, check process server logs'});
+        this.childProcIndexResolve = null;
+      }
+    });
+    this.childProc.on('error', e => {
+      this.childProc = null;
+      logger.info('Child exec process error', e);
+      if( this.childProcIndexResolve ) {
+        this.childProcIndexResolve.reject(e);
+        this.childProcIndexResolve = null;
+      }
+    });
+    this.childProc.on('message', e => {
+      if( this.childProcIndexResolve ) {
+        this.childProcIndexResolve.resolve();
+        this.childProcIndexResolve = null;
+      }
+    });
   }
 
   /**
@@ -215,67 +258,15 @@ class Indexer {
     }, config.indexer.handleMessageDelay * 1000);
   }
 
-  /**
-   * @method insert
-   * @description insert es model from uri/type
-   * 
-   * @param {String} key redis key
-   * @param {String} uri uri of model 
-   * @param {String} id unique kafka message id
-   * @param {Object} msg kafka message
-   * @param {String} type rdf type of model
-   */
-  async insert(key, uri, id, msg, type) {
-    logger.info(`From ${id} sent by ${msg.sender || 'unknown'} loading ${uri} with model ${(await esSparqlModel.hasModel(type))}. ${msg.force ? 'force=true' : ''}`);
-    let result;
-    try{ 
-      result = await esSparqlModel.getModel(type, uri);
-    } catch(e){
-      console.log(e);
-      return;
-    }
+  index(key, msg) {
+    this.createChildExec();
 
-    await elasticSearch.insert(result.model, msg.index);
-    logger.info(`Updated ${uri} into ${msg.index || 'default alias'}`);
-    await redis.client.del(key);
-  }
+    this.childProcIndexPromise = new Promise((resolve, reject) => {
+      this.childProcIndexResolve = {resolve, reject};
+      this.childProc.send({key, msg});
+    });
 
-  /**
-   * @method index
-   * @description given subject uri; check if the subject rdf:type is of a
-   * known es model type, if so query Fuseki using es model sparql query and
-   * insert into elastic search
-   */
-  async index(key, msg) {
-    if( typeof msg === 'string' ) {
-      msg = JSON.parse(msg);
-    }
-
-    // if type was included in message and a known type,
-    // just insert
-    if( msg.type && (await esSparqlModel.hasModel(msg.type)) ) {
-      await this.insert(key, msg.subject, msg.msgId, msg, msg.type);
-      return;
-    }
-
-    let response = await fuseki.query(`select * { <${msg.subject}> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?type}`)
-    
-    let body;
-    try {
-      body = await response.text();
-      body = JSON.parse(body);
-    } catch(e) {
-      logger.error(`From ${msg.msgId} sent by ${msg.sender || 'unknown'}: Fuseki request failed (${response.status}):`, body);
-      return;
-    }
-
-    let types = [...new Set(body.results.bindings.map(term => term.type.value))];
-
-    for( let type of types ) {
-      if( !(await esSparqlModel.hasModel(type)) ) continue;
-      await this.insert(key, msg.subject, msg.msgId, msg, type);
-      break;
-    }
+    return this.childProcIndexPromise;
   }
 
   /**
@@ -291,11 +282,32 @@ class Indexer {
       pattern : config.redis.prefixes.indexer+'*',
       count : '1'
     };
+
     while( 1 ) {
       let res = await redis.scan(options);
       for( let key of res.keys ) {
         let msg = await redis.client.get(key);
-        await this.index(key, msg);
+
+        try {
+          msg = JSON.parse(msg);
+          await this.index(key, msg);
+        } catch(e) {
+          // capture failures
+          await elasticSearch.insert({
+            '@id' : msg.subject,
+            _indexer : {
+              success : false,
+              error : {
+                message : e.message,
+                stack : e.stack
+              },
+              logs : ['index process died'],
+              kafkaMessage : msg,
+              timestamp: new Date()
+            }
+          }, msg.index);
+
+        }
       }
 
       if( !this.run || res.cursor == '0' ) break;

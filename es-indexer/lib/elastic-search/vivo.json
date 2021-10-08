@@ -252,14 +252,6 @@
       }
     },
 
-    "pageEnd" : {
-      "type" : "integer"
-    },
-
-    "pageStart" : {
-      "type" : "integer"
-    },
-
     "publicationDate" : {
       "type" : "date"
     },
@@ -339,6 +331,10 @@
     },
     "dateTimeInterval.end.dateTime" : {
       "type" : "date"
+    },
+
+    "_indexer.success" : {
+      "type" : "boolean"
     }
 
   }
