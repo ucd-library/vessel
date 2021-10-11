@@ -146,13 +146,4 @@ class IndexerInsert {
   
 }
 
-
-class IndexError extends Error {
-  constructor(original, ogs = []) {
-    super(original);
-    this.s
-    this.logs = logs;
-  }
-}
-
 module.exports = new IndexerInsert();

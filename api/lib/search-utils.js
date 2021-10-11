@@ -257,9 +257,9 @@ class SearchModelUtils {
       esBody.query.bool.must.push({prefix});
     }
 
-    if( !Object.keys(esBody.query.bool).length ) {
-      delete esBody.query.bool;
-    }
+    // if( !Object.keys(esBody.query.bool).length ) {
+    //   delete esBody.query.bool;
+    // }
 
     return esBody;
   }
