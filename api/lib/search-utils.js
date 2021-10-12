@@ -171,7 +171,9 @@ class SearchModelUtils {
           });
 
         // and query, add a new term for each keyword
-        } else if( attrProps.op === 'and' ) {
+        } else if( attrProps.op === 'and' ||  attrProps.op === undefined ||  attrProps.op === '' ) {
+          if( !Array.isArray(attrProps.value) ) attrProps.value = [attrProps.value];
+
           attrProps.value.forEach(val => {
             keywords.push({
               term : {
@@ -204,7 +206,14 @@ class SearchModelUtils {
 
       // the attribute is an exists filter
       } else if( attrProps.type === 'exists') {
+      
         fieldExists.push(attr);
+      
+      } else if ( attrProps.type === 'boolean' ) {
+        
+        if( !esBody.query.term ) esBody.query.term = {};
+        esBody.query.term[attr] = attrProps.value;
+
       }
     }
 
@@ -247,6 +256,10 @@ class SearchModelUtils {
       }
       esBody.query.bool.must.push({prefix});
     }
+
+    // if( !Object.keys(esBody.query.bool).length ) {
+    //   delete esBody.query.bool;
+    // }
 
     return esBody;
   }

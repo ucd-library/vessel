@@ -3,8 +3,9 @@ const fetch = require('node-fetch');
 class PostProcess {
 
   async run(model, args, esSparqlModel) {
-    if( model.pageStart ) model.pageStart = model.pageStart.replace(/\D*/g, '');
-    if( model.pageEnd ) model.pageEnd = model.pageEnd.replace(/\D*/g, '');
+    // JM - removing page cleanup
+    // if( model.pageStart ) model.pageStart = model.pageStart.replace(/\D*/g, '');
+    // if( model.pageEnd ) model.pageEnd = model.pageEnd.replace(/\D*/g, '');
     
     if( model.Authorship ) {
       this.cleanObject(model, 'Authorship');
@@ -79,7 +80,8 @@ class PostProcess {
       let response = await esSparqlModel.getModel('concept', item['@id']);
 
       if( response && response.model && response.model.broader ) {
-        await this.getBroaderSubjectTerms(response.model.broader, esSparqlModel);
+        let additionalTerms = await this.getBroaderSubjectTerms(response.model.broader, esSparqlModel);
+        additionalTerms.forEach(term => term ? unique.add(term) : '');
       }
     }
     return Array.from(unique);

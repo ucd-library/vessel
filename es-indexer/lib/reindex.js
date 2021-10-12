@@ -88,7 +88,10 @@ class Reindex {
         await this._indexType(key);
       }
     } else { // reindex single type
-      for( let type of modelMeta.models[opts.type] ) {
+      let def = modelMeta.models[opts.type];
+      if( def.types ) def = def.types;
+
+      for( let type of def ) {
         await this._indexType(type);
       }
     }
