@@ -22,13 +22,13 @@ class IndexerInsert {
         event.msg = JSON.parse(event.msg);
       }
 
+      let esEntry;
+
       try {
-        await this.index(event.msg);
+        esEntry = await this.index(event.msg);
       } catch(err) {
         logger.error(`Failed to update ${event.msg.subject}`);
-
-        // capture failures
-        await elasticSearch.insert({
+        esEntry = {
           '@id' : event.msg.subject,
           _indexer : {
             success : false,
@@ -40,13 +40,15 @@ class IndexerInsert {
             kafkaMessage : event.msg,
             timestamp: new Date()
           }
-        }, event.msg.index);
+        };
+
+        // capture failures
+        await elasticSearch.insert(esEntry, event.msg.index);
       }
 
       await this.clearKey(event.key);
 
-      event.finished = true;
-      process.send(event);
+      process.send(esEntry);
     });
   }
 
@@ -96,6 +98,8 @@ class IndexerInsert {
 
     await elasticSearch.insert(result.model, msg.index);
     logger.info(`Updated ${uri} into ${msg.index || 'default alias'}`);
+
+    return result.model;
   }
   
   /**

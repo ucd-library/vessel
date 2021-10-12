@@ -4,7 +4,7 @@ const config = require('./config');
 const logger = require('./logger');
 
 // commands we want to wrap in promises, feel free to add to this list
-const promisify = ['get', 'set', 'del', 'keys', 'expire', 'send_command', 'save'];
+const promisify = ['get', 'set', 'del', 'keys', 'expire', 'send_command', 'save', 'incr', 'decr'];
 
 class RedisClient {
 

@@ -61,6 +61,18 @@ class Indexer {
 
       // subscribe to front of committed offset
       await this.kafkaConsumer.subscribe([config.kafka.topics.index]);
+
+      await kafka.utils.ensureTopic({
+        topic : config.kafka.topics.indexerStatus,
+        num_partitions: 1,
+        replication_factor: 1
+      }, {'metadata.broker.list': config.kafka.host+':'+config.kafka.port});
+
+      this.kafkaProducer = new kafka.Producer({
+        'metadata.broker.list': config.kafka.host+':'+config.kafka.port
+      });
+      await this.kafkaProducer.connect();
+
     } catch(e) {
       console.error('kafka init error', e);
     }
@@ -95,7 +107,7 @@ class Indexer {
     });
     this.childProc.on('message', e => {
       if( this.childProcIndexResolve ) {
-        this.childProcIndexResolve.resolve();
+        this.childProcIndexResolve.resolve(e);
         this.childProcIndexResolve = null;
       }
     });
@@ -181,6 +193,7 @@ class Indexer {
     }
 
     await redis.client.set(config.redis.prefixes.indexer+payload.subject, JSON.stringify(payload));
+    await redis.client.incr(config.redis.prefixes.indexerCount);
 
     this.resetMessageDelayHandler();
   }
@@ -282,6 +295,7 @@ class Indexer {
       pattern : config.redis.prefixes.indexer+'*',
       count : '1'
     };
+    let msg;
 
     while( 1 ) {
       let res = await redis.scan(options);
@@ -290,10 +304,9 @@ class Indexer {
 
         try {
           msg = JSON.parse(msg);
-          await this.index(key, msg);
+          esEntry = await this.index(key, msg);
         } catch(e) {
-          // capture failures
-          await elasticSearch.insert({
+          esEntry = {
             '@id' : msg.subject,
             _indexer : {
               success : false,
@@ -305,10 +318,23 @@ class Indexer {
               kafkaMessage : msg,
               timestamp: new Date()
             }
-          }, msg.index);
+          }
 
+          // capture failures
+          await elasticSearch.insert(esEntry, msg.index);
         }
+
+        await redis.client.decr(config.redis.prefixes.indexerCount);
       }
+
+      this.kafkaProducer.produce({
+        topic : config.kafka.topics.indexerStatus,
+        value : {
+          entry : esEntry,
+          timestamp : Date.now(),
+          queueSize :  await redis.client.get(config.redis.prefixes.indexerCount)        },
+        key : 'indexer'
+      });
 
       if( !this.run || res.cursor == '0' ) break;
       options.cursor = res.cursor;

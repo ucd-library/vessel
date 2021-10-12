@@ -48,6 +48,7 @@ module.exports = {
     host : env.KAFKA_HOST || 'kafka',
     port : env.KAFKA_PORT || 9092,
     topics : {
+      indexerStatus : 'indexer-status',
       index : 'index-rdf-subject',
       rdfPatch : 'fuseki-rdf-patch'
     },
@@ -80,6 +81,7 @@ module.exports = {
     prefixes : {
       debouncer : 'debouncer-',
       indexer : 'indexer-',
+      indexerCount : 'indexercount',
       deleteIndex : 'indexercmd-delete-index-',
       session : 'session-',
       roles : 'role-',
