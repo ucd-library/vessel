@@ -22,6 +22,14 @@ module.exports = {
     env : env.SERVER_ENV || 'dev'
   },
 
+  // a
+  data : {
+    private: {
+      roles : env.PRIVATE_RECORD_ROLES ? env.PRIVATE_RECORD_ROLES.split(/\s+/).map(g => g.trim()) : [],
+      types :  env.PRIVATE_RECORD_TYPES ? env.PRIVATE_RECORD_TYPES.split(/\s+/).map(g => g.trim()) : []
+    }
+  },
+
   client : {
     env : env.CLIENT_ENV || 'dev'
   },
@@ -99,7 +107,7 @@ module.exports = {
     requestTimeout : env.ELASTIC_SEARCH_REQUEST_TIME || 3*60*1000,
     indexAlias : 'research-profiles',
     fields : {
-      exclude : ['_', 'citation'],
+      exclude : ['_', 'citation', '_acl', '_indexer'],
     }
   },
 
@@ -131,6 +139,7 @@ module.exports = {
     serviceHosts : {
       auth : env.AUTH_SERVICE_HOST || 'http://auth:3000',
       client : env.CLIENT_SERVICE_HOST || 'http://client:3000',
+      model : env.MODELS_SERVICE_NAME ? 'http://'+env.MODELS_SERVICE_NAME+':3000' : 'http://models:3000',
       api : env.API_SERVICE_HOST || 'http://api:3000',
       indexer : env.INDEXER_SERVICE_HOST || 'http://indexer:3000'
     }

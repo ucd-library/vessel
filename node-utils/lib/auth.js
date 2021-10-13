@@ -188,6 +188,10 @@ class Auth {
     let roles = ((await redis.client.keys(this.getUserRoleKey(username, '*'))) || [])
       .map(role => role.replace(this.getUserRoleKey(username, ''), ''));
 
+    if( properties.roles ) {
+      roles = [...roles, ...properties.roles];
+    }
+
     properties.username = username;
     redis.client.set(
       config.redis.prefixes.authProperties+username,

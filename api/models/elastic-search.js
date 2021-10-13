@@ -30,16 +30,20 @@ class ElasticSearch {
    * 
    * @returns {Promise} resolves to elasticsearch result
    */
-  async get(id) {
+  async get(id, opts={}) {
     // try by index id
     try {
-      let result = await this.client.get({
+      let query = {
         index: config.elasticSearch.indexAlias,
         type: '_all',
-        id: id,
-        _source_excludes : config.elasticSearch.fields.exclude.join(',')
-      });
-      return result;
+        id: id
+      };
+
+      if( opts.allFields !== true ) {
+        query._source_excludes = config.elasticSearch.fields.exclude.join(',');
+      }
+
+      return this.client.get(query);
     } catch(e) {}
 
     // try by known identifiers
@@ -54,7 +58,7 @@ class ElasticSearch {
           ]
         }
       }
-    });
+    }, null, opts);
 
     if( result.hits.hits.length ) {
       return result.hits.hits[0];
@@ -69,15 +73,32 @@ class ElasticSearch {
    * 
    * @param {Object} body elasticsearch search body
    * @param {Object} options elasticsearch main object for additional options
+   * @param {Object} opts additional options for controlling search params
+   * @param {Array} roles acl roles
    * 
    * @returns {Promise} resolves to elasticsearch result
    */
-  search(body = {}, options={}) {
+  search(body = {}, options={}, opts={}, roles=[]) {
     options.index = config.elasticSearch.indexAlias;
     options.body = body;
-    options._source_excludes = config.elasticSearch.fields.exclude.join(',');
 
-    return this.client.search(options);
+    if( config.data && config.data.private && config.data.private.roles && config.data.private.roles.length ) {
+      if( !body.query ) body.query = {};
+      if( !body.query.bool ) body.query.bool = {};
+      if( !body.query.bool.filter ) body.query.bool.filter = [];
+      
+      body.query.bool.filter.push({
+        terms : {
+          _acl : roles
+        }
+      });
+    }
+
+    if( opts.allFields !== true ) {
+      options._source_excludes = config.elasticSearch.fields.exclude.join(',');
+    }
+
+    return this.client.search(options, roles);
   }
 
   /**
@@ -91,13 +112,13 @@ class ElasticSearch {
    * 
    * @returns {Promise} resolves to search result
    */
-  async apiSearch(searchDocument = {}, options = {noLimit: false, debug: false}) {
+  async apiSearch(searchDocument = {}, options = {noLimit: false, debug: false}, roles=[]) {
     if( !searchDocument.filters ) {
       searchDocument.filters = {};
     }
 
     let esBody = utils.searchDocumentToEsBody(searchDocument, options.noLimit);
-    let esResult = await this.search(esBody);
+    let esResult = await this.search(esBody, undefined, undefined, roles);
     let result = utils.esResultToApiResult(esResult, searchDocument);
 
     // now we need to fill on 'or' filters facets options
@@ -125,7 +146,7 @@ class ElasticSearch {
         }
       }
 
-      let tmpResult = await this.search(utils.searchDocumentToEsBody(tmpSearchDoc));
+      let tmpResult = await this.search(utils.searchDocumentToEsBody(tmpSearchDoc), undefined, undefined, roles);
       tmpResult = utils.esResultToApiResult(tmpResult, tmpSearchDoc);
 
       // finally replace facets response

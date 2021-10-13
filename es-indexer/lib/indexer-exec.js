@@ -1,5 +1,5 @@
 const elasticSearch = require('./elastic-search');
-const {redis, logger, fuseki, esSparqlModel} = require('@ucd-lib/rp-node-utils');
+const {config, redis, logger, fuseki, esSparqlModel} = require('@ucd-lib/rp-node-utils');
 
 
 process.on('unhandledRejection', e => {
@@ -15,6 +15,20 @@ process.on('unhandledRejection', e => {
 class IndexerInsert {
 
   constructor() {
+    this.acl = {
+      types : [],
+      roles : []
+    }
+    
+    if( config.data && config.data.private 
+        && config.data.private.types
+        && config.data.private.types.length 
+        && config.data.private.roles
+        && config.data.private.roles.length ) {
+      this.acl.roles = [... config.data.private.roles];
+      this.acl.types = [... config.data.private.types];
+    }
+
     process.on('message', async event => {
       await this.connect();
 
@@ -76,7 +90,8 @@ class IndexerInsert {
    * @param {String} type rdf type of model
    */
   async insert(uri, id, msg, type) {
-    logger.info(`From ${id} sent by ${msg.sender || 'unknown'} loading ${uri} with model ${(await esSparqlModel.hasModel(type))}. ${msg.force ? 'force=true' : ''}`);
+    let modelType = await esSparqlModel.hasModel(type);
+    logger.info(`From ${id} sent by ${msg.sender || 'unknown'} loading ${uri} with model ${modelType}. ${msg.force ? 'force=true' : ''}`);
     
     let result;
     try{ 
@@ -86,6 +101,13 @@ class IndexerInsert {
         'Failed to get sparql model'
       ]
       throw e;
+    }
+
+    // apply acl
+    if( this.acl.types.includes(modelType) ) {
+      result.model._acl = this.acl.roles;
+    } else {
+      result.model._acl = ['public'];
     }
 
     result.model._indexer = {

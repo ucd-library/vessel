@@ -2,7 +2,7 @@ const router = require('express').Router();
 const model = require('../models/elastic-search');
 const swaggerSpec = require('./swagger/spec.json');
 const errorHandler = require('./utils/error-handler');
-const {middleware} = require('@ucd-lib/rp-node-utils');
+const {auth, middleware} = require('@ucd-lib/rp-node-utils');
 const path = require('path');
 const fs = require('fs');
 
@@ -39,19 +39,38 @@ router.use('/concept', require('./concept'));
  *              type: object
  *              description: record or array of records
  */
-router.get(/\/record\/.*/, async (req, res) => {
+router.get(/\/record\/.*/, middleware.user, async (req, res) => {
+  let isAdmin = false;
+  let roles = (req.jwt || {}).roles || [];
+  roles.push('public');
+
   try {
-    let id = req.originalUrl.replace(/\/api\/record\//, '');
+    isAdmin = auth.isAdmin(req.jwt);
+  } catch(e) {}
+
+  let opts = {
+    allFields : (req.query.allFields === 'true' && isAdmin)
+  };
+  try {
+    let id = req.originalUrl.replace(/\/api\/record\//, '').replace(/\?.*/, '');
     if( id.includes(',') ) {
       let ids = id.split(',');
       let arr = [];
 
       for( id of ids ) {
-        arr.push((await model.get(decodeURIComponent(id)))._source);
+        let record = (await model.get(decodeURIComponent(id), opts))._source;
+        if( record._acl && !record._acl.some(role => roles.includes(role)) ) {
+          continue;
+        }
+        arr.push(id);
       }
       res.json(arr);
     } else {
-      res.json((await model.get(decodeURIComponent(id)))._source);
+      let record = (await model.get(decodeURIComponent(id), opts))._source;
+      if( record._acl && !record._acl.some(role => roles.includes(role)) ) {
+        res.status(404).json({error: true, message: 'record not found: '+decodeURIComponent(id)});
+      }
+      res.json(record);
     }
   } catch(e) {
     console.log(e);
@@ -91,49 +110,6 @@ router.get(/\/resolve\/.*/, async (req, res) => {
       res.json({success: true, '@id': result._source['@id'], originalId: id});
     } else {
       res.json({error: true, message: 'not found', id});
-    }
-  } catch(e) {
-    console.log(e);
-    errorHandler(req, res, e);
-  }
-});
-
-/**
- * @swagger
- *
- * /api/indexer/errors:
- *   get:
- *     description: Get research profile record by id
- *     tags: [Get Record]
- *     parameters:
- *       - name: id
- *         description: id of record, comma separate for multiple id response
- *         in: path
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Requested record(s)
- *         content:
- *          application/json:
- *            schema:
- *              type: object
- *              description: record or array of records
- */
- router.get(/\/record\/.*/, async (req, res) => {
-  try {
-    let id = req.originalUrl.replace(/\/api\/record\//, '');
-    if( id.includes(',') ) {
-      let ids = id.split(',');
-      let arr = [];
-
-      for( id of ids ) {
-        arr.push((await model.get(decodeURIComponent(id)))._source);
-      }
-      res.json(arr);
-    } else {
-      res.json((await model.get(decodeURIComponent(id)))._source);
     }
   } catch(e) {
     console.log(e);

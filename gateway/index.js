@@ -1,4 +1,4 @@
-const {logger, config, auth} = require('@ucd-lib/rp-node-utils');
+const {logger, config, auth, middleware} = require('@ucd-lib/rp-node-utils');
 const express = require('express');
 const app = express();
 const compression = require('compression');
@@ -108,7 +108,7 @@ app.use(/^\/api(\/.*|$)/, (req, res) => {
 
 app.use(/^\/indexer\/model\/.*/, (req, res) => {
   proxy.web(req, res, {
-    target: config.gateway.serviceHosts.indexer+req.originalUrl.replace(/^\/indexer/, ''),
+    target: config.gateway.serviceHosts.model+req.originalUrl.replace(/^\/indexer\/model/, ''),
     ignorePath: true
   });
 });
@@ -120,7 +120,8 @@ app.use(/^\/auth(\/.*|$)/, (req, res) => {
   });
 });
 
-app.use(/^\/fuseki(\/.*|$)/, (req, res) => {
+// app.use(/^\/fuseki(\/.*|$)/, middleware.acl(), (req, res) => {
+app.use(/^\/fuseki(\/.*|$)/, middleware.acl(), (req, res) => {
   proxy.web(req, res, {
     target: 'http://'+config.fuseki.host+':'+config.fuseki.port+'/'+config.fuseki.database+'/query',
     ignorePath: true

@@ -1,4 +1,5 @@
 const router = require('express').Router();
+const {middleware} = require('@ucd-lib/rp-node-utils');
 const model = require('../models/elastic-search');
 const onError = require('./utils/error-handler');
 
@@ -211,14 +212,16 @@ const onError = require('./utils/error-handler');
  *                type: object
  *                $ref : '#/components/schemas/ApiSearchResult'
  */
-router.post('/', async (req, res) => {
+router.post('/',  middleware.user, async (req, res) => {
   if( !req.body ) {
     return res.json({error: true, message: 'no body sent'});
   }
 
+  let roles = getRoles(req);
+
   try {
     let opts = {debug: req.query.debug === 'true'};
-    res.json(await model.apiSearch(req.body, opts));
+    res.json(await model.apiSearch(req.body, opts, roles));
   } catch(e) {
     onError(req, res, e, 'Error with search query');
   }
@@ -253,11 +256,13 @@ router.post('/', async (req, res) => {
  *                type: object
  *                $ref : '#/components/schemas/ApiSearchResult'
  */
-router.get('/', async (req, res) => {
+router.get('/',  middleware.user, async (req, res) => {
+  let roles = getRoles(req);
+
   try {
     let opts = {debug: req.query.debug === 'true'};
     let q = JSON.parse(req.query.q || '{}');
-    res.json(await model.apiSearch(q, opts));
+    res.json(await model.apiSearch(q, opts, roles));
   } catch(e) {
     onError(req, res, e, 'Error with search query');
   }
@@ -286,13 +291,15 @@ router.get('/', async (req, res) => {
  *             schema:
  *               type: object
  */
-router.post('/es', async (req, res) => {
+router.post('/es', middleware.user, async (req, res) => {
   if( !req.body ) {
     return res.json({error: true, message: 'no body sent'});
   }
 
+  let roles = getRoles(req);
+
   try {
-    res.json(await model.search(req.body));
+    res.json(await model.search(req.body, roles));
   } catch(e) {
     onError(req, res, e, 'Error with search query');
   }
@@ -320,13 +327,21 @@ router.post('/es', async (req, res) => {
  *             schema:
  *               type: object
  */
-router.get('/es', async (req, res) => {
+router.get('/es', middleware.user, async (req, res) => {
+  let roles = getRoles(req);
+
   try {
     var q = JSON.parse(req.query.q || '{}');
-    res.json(await model.search(q));
+    res.json(await model.search(q, roles));
   } catch(e) {
     onError(req, res, e, 'Error with search query');
   }
 });
+
+function getRoles(req) {
+  let roles = (req.jwt || {}).roles || [];
+  roles.push('public');
+  return roles;
+}
 
 module.exports = router;
