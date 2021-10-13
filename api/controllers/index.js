@@ -68,7 +68,7 @@ router.get(/\/record\/.*/, middleware.user, async (req, res) => {
     } else {
       let record = (await model.get(decodeURIComponent(id), opts))._source;
       if( record._acl && !record._acl.some(role => roles.includes(role)) ) {
-        res.status(404).json({error: true, message: 'record not found: '+decodeURIComponent(id)});
+        return res.status(404).json({error: true, message: 'record not found: '+decodeURIComponent(id)});
       }
       res.json(record);
     }

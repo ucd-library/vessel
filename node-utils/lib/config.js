@@ -107,7 +107,7 @@ module.exports = {
     requestTimeout : env.ELASTIC_SEARCH_REQUEST_TIME || 3*60*1000,
     indexAlias : 'research-profiles',
     fields : {
-      exclude : ['_', 'citation', '_acl', '_indexer'],
+      exclude : ['_', 'citation', '_indexer'],
     }
   },
 

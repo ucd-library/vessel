@@ -40,7 +40,9 @@ class ElasticSearch {
       };
 
       if( opts.allFields !== true ) {
-        query._source_excludes = config.elasticSearch.fields.exclude.join(',');
+        query._source_excludes = config.elasticSearch.fields.exclude
+          .filter(item => item !== '_acl')
+          .join(',');
       }
 
       return this.client.get(query);
