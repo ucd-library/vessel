@@ -294,7 +294,7 @@ class Indexer {
         } catch(e) {
           // capture failures
           await elasticSearch.insert({
-            '@id' : msg.subject,
+            '@id' : msg.subject.replace(config.fuseki.rootPrefix.uri, config.fuseki.rootPrefix.prefix+':'),
             _indexer : {
               success : false,
               error : {

@@ -84,16 +84,18 @@ class ElasticSearch {
     options.index = config.elasticSearch.indexAlias;
     options.body = body;
 
-    if( config.data && config.data.private && config.data.private.roles && config.data.private.roles.length ) {
-      if( !body.query ) body.query = {};
-      if( !body.query.bool ) body.query.bool = {};
-      if( !body.query.bool.filter ) body.query.bool.filter = [];
-      
-      body.query.bool.filter.push({
-        terms : {
-          _acl : roles
-        }
-      });
+    if( opts.bypassRoles !== true ) {
+      if( config.data && config.data.private && config.data.private.roles && config.data.private.roles.length ) {
+        if( !body.query ) body.query = {};
+        if( !body.query.bool ) body.query.bool = {};
+        if( !body.query.bool.filter ) body.query.bool.filter = [];
+        
+        body.query.bool.filter.push({
+          terms : {
+            _acl : roles
+          }
+        });
+      }
     }
 
     if( opts.allFields !== true ) {
@@ -114,13 +116,13 @@ class ElasticSearch {
    * 
    * @returns {Promise} resolves to search result
    */
-  async apiSearch(searchDocument = {}, options = {noLimit: false, debug: false}, roles=[]) {
+  async apiSearch(searchDocument = {}, options = {noLimit: false, debug: false, searchOpts : null}, roles=[]) {
     if( !searchDocument.filters ) {
       searchDocument.filters = {};
     }
 
     let esBody = utils.searchDocumentToEsBody(searchDocument, options.noLimit);
-    let esResult = await this.search(esBody, undefined, undefined, roles);
+    let esResult = await this.search(esBody, undefined, options.searchOpts, roles);
     let result = utils.esResultToApiResult(esResult, searchDocument);
 
     // now we need to fill on 'or' filters facets options
@@ -148,7 +150,7 @@ class ElasticSearch {
         }
       }
 
-      let tmpResult = await this.search(utils.searchDocumentToEsBody(tmpSearchDoc), undefined, undefined, roles);
+      let tmpResult = await this.search(utils.searchDocumentToEsBody(tmpSearchDoc), undefined, options.searchOpts, roles);
       tmpResult = utils.esResultToApiResult(tmpResult, tmpSearchDoc);
 
       // finally replace facets response

@@ -33,7 +33,13 @@ router.get('/errors', async (req, res) => {
   }
 
   try {
-    res.json(await model.apiSearch(errorSearch, {debug: req.params.debug === 'true'}));
+    res.json(await model.apiSearch(
+      errorSearch, 
+      {
+        debug: req.query.debug === 'true',
+        searchOpts : {bypassRoles : true}
+      }
+    ));
   } catch(e) {
     console.log(e);
     errorHandler(req, res, e);
