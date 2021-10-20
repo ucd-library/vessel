@@ -122,39 +122,53 @@ class EsSparqlModel {
    * 
    * @param {String} type es model name or rdf uri
    * @param {String} uri subject uri
-   * @param {Object} options additional options
-   * @param {Boolean} options.verbose include SPARQL queries
+   * @param {Object} opts additional options
+   * @param {Boolean} opts.verbose include SPARQL queries
+   * @param {String} opts.query custom SPARQL query
    * 
    * @returns {Object}
    */
   async getModel(type, uri, opts={}) {
-    let model = this.hasModel(type);
-    if( !model ) {
-      throw new Error('Unknown model type: '+model);
+    let model;
+
+    if( opts.query ) {
+      model = type;
+    } else {
+      model = this.hasModel(type);
+      if( !model ) {
+        throw new Error('Unknown model type: '+model);
+      }
     }
 
     let result = {
       type,
       modelType: model,
       uri,
+      custom : opts.query ? true : false,
       timestamp : Date.now(),
       database : config.fuseki.database,
       model : {}
     }
 
     if( opts.verbose ) {
-      result.sparql = [this.getSparqlQuery(type, uri)];
-    }
-
-    result.model = await this._requestModel(type, uri);
-
-    for( let prop in this.MODELS[model].additionalProperties ) {
-      type = this.MODELS[model].additionalProperties[prop];
-      if( opts.verbose ) {
+      if( opts.query ) {
+        result.sparql = opts.query
+      } else {
         result.sparql = [this.getSparqlQuery(type, uri)];
       }
-      let propResult = await this._requestModel(type, uri);
-      result.model[prop] = propResult[prop];
+    }
+
+    result.model = await this._requestModel(type, uri, opts.query);
+
+    if( this.MODELS[model] ) {
+      for( let prop in this.MODELS[model].additionalProperties ) {
+        type = this.MODELS[model].additionalProperties[prop];
+        if( opts.verbose ) {
+          result.sparql = [this.getSparqlQuery(type, uri)];
+        }
+        let propResult = await this._requestModel(type, uri);
+        result.model[prop] = propResult[prop];
+      }
     }
 
     await postProcess.run(result.model, {
@@ -176,8 +190,10 @@ class EsSparqlModel {
    * 
    * @returns {Object}
    */
-  async _requestModel(type, uri) {
-    let sparqlQuery = this.getSparqlQuery(type, uri);
+  async _requestModel(type, uri, sparqlQuery) {
+    if( !sparqlQuery ) {
+      sparqlQuery = this.getSparqlQuery(type, uri);
+    }
     let response = await fuseki.query(sparqlQuery, 'application/ld+json');
 
     // let t = await response.text();

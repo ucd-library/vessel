@@ -100,7 +100,7 @@ class ElasticSearch {
       options._source_excludes = config.elasticSearch.fields.exclude.join(',');
     }
 
-    return this.client.search(options, roles);
+    return this.client.search(options);
   }
 
   /**

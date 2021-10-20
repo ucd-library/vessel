@@ -5,6 +5,7 @@ class SearchModelUtils {
   constructor() {
     this.DEFAULT_OFFSET = 0;
     this.DEFAULT_LIMIT = 10;
+    this.IGNORE_HIGHLIGHT_FIELDS = ['@type', '_acl', '_indexer'];
   }
 
   /**
@@ -41,8 +42,12 @@ class SearchModelUtils {
             item._source._score = item._score;
             if( item.highlight ) {
               let fields = Object.keys(item.highlight);
-              let field = fields[0];
-              if (field === '@type' && fields.length > 1) field = fields[1];
+              let field;
+
+              for( field of fields ) {
+                if( this.IGNORE_HIGHLIGHT_FIELDS.includes(field) ) continue;
+                break;
+              }
               item._source._snippet = {field, value : item.highlight[field][0]}
             }            
             return item._source;
