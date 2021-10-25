@@ -42,8 +42,9 @@ class IndexerInsert {
         logger.error(`Failed to update ${event.msg.subject}`);
 
         // capture failures
-        let resp = await elasticSearch.insert({
+        await elasticSearch.insert({
           '@id' : event.msg.subject.replace(config.fuseki.rootPrefix.uri, config.fuseki.rootPrefix.prefix+':'),
+          _acl : ['admin'],
           _indexer : {
             success : false,
             error : {
@@ -55,7 +56,6 @@ class IndexerInsert {
             timestamp: new Date()
           }
         }, event.msg.index);
-        console.log(resp);
       }
 
       await this.clearKey(event.key);

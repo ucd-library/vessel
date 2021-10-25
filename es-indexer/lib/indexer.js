@@ -295,6 +295,7 @@ class Indexer {
           // capture failures
           await elasticSearch.insert({
             '@id' : msg.subject.replace(config.fuseki.rootPrefix.uri, config.fuseki.rootPrefix.prefix+':'),
+            _acl : ['admin'],
             _indexer : {
               success : false,
               error : {
