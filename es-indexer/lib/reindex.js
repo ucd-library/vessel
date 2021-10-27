@@ -50,16 +50,12 @@ class Reindex {
     if( !this.kafkaProducer ) {
       this.kafkaProducer = new kafka.Producer({
         'metadata.broker.list': config.kafka.host+':'+config.kafka.port
-      })
+      });
     }
     
     // connect to kafka and ensure index topic
     await this.kafkaProducer.connect();
-    await kafka.utils.ensureTopic({
-      topic : config.kafka.topics.index,
-      num_partitions: 1,
-      replication_factor: 1
-    }, {'metadata.broker.list': config.kafka.host+':'+config.kafka.port});
+    this.kafkaProducer.client.setPollInterval(config.kafka.producerPollInterval);
 
     // if we are creating a new index (via update schema opt) find current indexes and sav
     // send command to create the new index that subjects will be inserted into

@@ -8,5 +8,6 @@ module.exports = {
   esSparqlModel : require('./lib/es-sparql-models'),
   logger : require('./lib/logger'),
   auth : require('./lib/auth'),
-  middleware : require('./lib/middleware')
+  middleware : require('./lib/middleware'),
+  Status : require('./lib/status')
 }

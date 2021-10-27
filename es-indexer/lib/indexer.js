@@ -20,6 +20,7 @@ class Indexer {
       'group.id': config.kafka.groups.index,
       'metadata.broker.list': config.kafka.host+':'+config.kafka.port,
     },{
+      // subscribe to front of committed offset
       'auto.offset.reset' : 'earliest'
     });
   }
@@ -35,31 +36,14 @@ class Indexer {
     await redis.connect();
     await elasticSearch.connect();
 
-    await elasticSearch.client.deleteByQuery({
-      index : 'research-profiles',
-      body : {
-      query : {
-        term : {
-          '_indexer.success' : false
-        }
-      }
-    }
-    })
-
     try {
       await this.kafkaConsumer.connect();
 
-      await kafka.utils.ensureTopic({
-        topic : config.kafka.topics.index,
-        num_partitions: 1,
-        replication_factor: 1
-      }, {'metadata.broker.list': config.kafka.host+':'+config.kafka.port});
+      let topics = [config.kafka.topics.index];
+      logger.info('waiting for topics: ', topics);
+      await this.kafkaConsumer.waitForTopics(topics);
+      logger.info('topics ready: ', topics);
 
-      let watermarks = await this.kafkaConsumer.queryWatermarkOffsets(config.kafka.topics.index);
-      let topics = await this.kafkaConsumer.committed(config.kafka.topics.index);
-      logger.info(`Indexer (group.id=${config.kafka.groups.index}) kafak status=${JSON.stringify(topics)} watermarks=${JSON.stringify(watermarks)}`);
-
-      // subscribe to front of committed offset
       await this.kafkaConsumer.subscribe([config.kafka.topics.index]);
     } catch(e) {
       console.error('kafka init error', e);

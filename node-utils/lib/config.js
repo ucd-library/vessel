@@ -55,9 +55,11 @@ module.exports = {
   kafka : {
     host : env.KAFKA_HOST || 'kafka',
     port : env.KAFKA_PORT || 9092,
+    producerPollInterval : 100,
     topics : {
       index : 'index-rdf-subject',
-      rdfPatch : 'fuseki-rdf-patch'
+      rdfPatch : 'fuseki-rdf-patch',
+      status : 'vessel-status-update'
     },
     groups : {
       debouncer : 'vessel-debouncer-group',

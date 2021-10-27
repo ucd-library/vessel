@@ -1,4 +1,4 @@
-const {kafka, redis, logger, config} = require('@ucd-lib/rp-node-utils');
+const {kafka, redis, logger, config, Status} = require('@ucd-lib/rp-node-utils');
 const patchParser = require('./patch-parser');
 const changes = require('./get-changes');
 
@@ -10,14 +10,17 @@ class Debouncer {
 
     this.kafkaProducer = new kafka.Producer({
       'metadata.broker.list': config.kafka.host+':'+config.kafka.port
-    })
+    });
 
     this.kafkaConsumer = new kafka.Consumer({
       'group.id': config.kafka.groups.debouncer,
       'metadata.broker.list': config.kafka.host+':'+config.kafka.port,
     },{
+      // subscribe to front of committed offset
       'auto.offset.reset' : 'earliest'
     })
+
+    this.status = new Status({producer: 'debouncer'});
   }
 
   /**
@@ -35,25 +38,20 @@ class Debouncer {
     try {
       await this.kafkaConsumer.connect();
       await this.kafkaProducer.connect();
+
+      let topics = [
+        config.kafka.topics.rdfPatch,
+        config.kafka.topics.index
+      ];
       
+      logger.info('waiting for topics: ', topics);
+      await this.kafkaConsumer.waitForTopics(topics);
+      logger.info('topics ready: ', topics);
 
-      await kafka.utils.ensureTopic({
-        topic : config.kafka.topics.rdfPatch,
-        num_partitions: 1,
-        replication_factor: 1
-      }, {'metadata.broker.list': config.kafka.host+':'+config.kafka.port});
-      await kafka.utils.ensureTopic({
-        topic : config.kafka.topics.index,
-        num_partitions: 1,
-        replication_factor: 1
-      }, {'metadata.broker.list': config.kafka.host+':'+config.kafka.port});
-
-      let watermarks = await this.kafkaConsumer.queryWatermarkOffsets(config.kafka.topics.rdfPatch);
-      let topics = await this.kafkaConsumer.committed(config.kafka.topics.rdfPatch);
-      logger.info(`Debouncer (group.id=${config.kafka.groups.debouncer}) kafak status=${JSON.stringify(topics)} watermarks=${JSON.stringify(watermarks)}`);
-
-      // subscribe to front of committed offset
       await this.kafkaConsumer.subscribe([config.kafka.topics.rdfPatch]);
+      this.kafkaProducer.client.setPollInterval(config.kafka.producerPollInterval);
+
+      await this.status.connect();
     } catch(e) {
       logger.error('kafka init error', e);
     }
