@@ -1,5 +1,5 @@
 const elasticSearch = require('./elastic-search');
-const {config, redis, logger, fuseki, esSparqlModel} = require('@ucd-lib/rp-node-utils');
+const {config, redis, logger, fuseki, esSparqlModel, Status} = require('@ucd-lib/rp-node-utils');
 
 
 process.on('unhandledRejection', e => {
@@ -29,6 +29,8 @@ class IndexerInsert {
       this.acl.types = [... config.data.private.types];
     }
 
+    this.status = new Status({producer: 'indexer-exec'});
+
     process.on('message', async event => {
       await this.connect();
 
@@ -41,21 +43,19 @@ class IndexerInsert {
       } catch(err) {
         logger.error(`Failed to update ${event.msg.subject}`);
 
-        // capture failures
-        await elasticSearch.insert({
-          '@id' : event.msg.subject.replace(config.fuseki.rootPrefix.uri, config.fuseki.rootPrefix.prefix+':'),
-          _acl : ['admin'],
-          _indexer : {
-            success : false,
-            error : {
-              message : err.message,
-              stack : err.stack
-            },
+        this.status.send({
+          status : this.status.STATES.ERROR, 
+          subject : event.msg.subject,
+          action: 'index',
+          index : event.msg.index,
+          error : {
+            id : event.msg.subject.replace(config.fuseki.rootPrefix.uri, config.fuseki.rootPrefix.prefix+':'),
+            message : err.message,
+            stack : err.stack,
             logs : err.logs || null,
             kafkaMessage : event.msg,
-            timestamp: new Date()
           }
-        }, event.msg.index);
+        });
       }
 
       await this.clearKey(event.key);
@@ -73,6 +73,7 @@ class IndexerInsert {
     if( this.connected ) return;
     await redis.connect();
     await elasticSearch.connect();
+    await this.status.connect();
     this.connected = true;
   }
 

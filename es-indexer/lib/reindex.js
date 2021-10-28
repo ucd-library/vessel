@@ -92,6 +92,8 @@ class Reindex {
       }
     }
 
+    // TODO: need to check for deletes (query es)
+
     if( this.state.newIndex ) {
 
       // if we are rebuilding the entire schema, set the alias to our new index

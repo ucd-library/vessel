@@ -107,6 +107,7 @@ module.exports = {
     username : env.ELASTIC_SEARCH_USERNAME || 'elastic',
     password : env.ELASTIC_SEARCH_PASSWORD || 'changeme',
     requestTimeout : env.ELASTIC_SEARCH_REQUEST_TIME || 3*60*1000,
+    statusIndex : 'status',
     indexAlias : 'research-profiles',
     fields : {
       exclude : ['_', 'citation', '_indexer'],

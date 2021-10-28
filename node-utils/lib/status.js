@@ -25,6 +25,13 @@ class Status {
         'auto.offset.reset' : 'earliest'
       });
     }
+
+    this.STATES = {
+      START : 'start',
+      RUNNING : 'running',
+      ERROR : 'error',
+      COMPLETE : 'complete'
+    }
   }
 
   async connect() {
@@ -50,7 +57,11 @@ class Status {
   }
 
   send(msg={}) {
-    msg.sender = this.options.producer;
+    if( Array.isArray(msg) ) {
+      msg.forEach(item => this._messageAdditions(item));
+    } else {
+      this._messageAdditions(msg)
+    }
 
     return this.kafkaProducer.produce({
       topic : config.kafka.topics.status,
@@ -58,9 +69,14 @@ class Status {
     });
   }
 
+  _messageAdditions(msg) {
+    msg.service = this.options.producer;
+    msg.timestamp = Date.now();
+  }
+
   _onMessage(msg) {
     msg = JSON.parse(msg.value.toString('utf-8'));
-    this.options.onMessage(msg);
+    return this.options.onMessage(msg);
   }
 
 }

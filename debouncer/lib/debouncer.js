@@ -1,4 +1,4 @@
-const {kafka, redis, logger, config, Status} = require('@ucd-lib/rp-node-utils');
+const {kafka, redis, logger, config, Status, fuseki, esSparqlModel} = require('@ucd-lib/rp-node-utils');
 const patchParser = require('./patch-parser');
 const changes = require('./get-changes');
 
@@ -35,27 +35,22 @@ class Debouncer {
   async connect() {
     await redis.connect();
 
-    try {
-      await this.kafkaConsumer.connect();
-      await this.kafkaProducer.connect();
+    await this.kafkaConsumer.connect();
+    await this.kafkaProducer.connect();
 
-      let topics = [
-        config.kafka.topics.rdfPatch,
-        config.kafka.topics.index
-      ];
-      
-      logger.info('waiting for topics: ', topics);
-      await this.kafkaConsumer.waitForTopics(topics);
-      logger.info('topics ready: ', topics);
+    let topics = [
+      config.kafka.topics.rdfPatch,
+      config.kafka.topics.index
+    ];
+    
+    logger.info('waiting for topics: ', topics);
+    await this.kafkaConsumer.waitForTopics(topics);
+    logger.info('topics ready: ', topics);
 
-      await this.kafkaConsumer.subscribe([config.kafka.topics.rdfPatch]);
-      this.kafkaProducer.client.setPollInterval(config.kafka.producerPollInterval);
+    await this.kafkaConsumer.subscribe([config.kafka.topics.rdfPatch]);
+    this.kafkaProducer.client.setPollInterval(config.kafka.producerPollInterval);
 
-      await this.status.connect();
-    } catch(e) {
-      logger.error('kafka init error', e);
-    }
-
+    await this.status.connect();
     this.listen();
 
     setTimeout(() => {
@@ -97,9 +92,24 @@ class Debouncer {
       return;
     }
 
-    let now = Date.now();
-    for( let subject of subjects ) {
-      await redis.client.set(config.redis.prefixes.debouncer+subject, now);
+    let reduced = Object.keys(
+      subjects.reduce((p, c) => {p[c] = true; return p}, {})
+    );
+
+    let subjectTypes = await this.getTypes(reduced);
+    let validType;
+
+    for( let subject in subjectTypes ) {
+      validType = await this.validModel(subjectTypes[subject]);
+
+
+      // sending status messages for ignored is too noisy to handle :(
+      if( !validType ) {
+        continue;
+      }
+      
+      this.status.send({status: this.status.STATES.START, subject});
+      await redis.client.set(config.redis.prefixes.debouncer+subject,  Date.now());
     }
 
     this.resetMessageDelayHandler();
@@ -136,13 +146,16 @@ class Debouncer {
   async sendKey(key) {
     logger.info('Sending subject to indexer: ', key.replace(config.redis.prefixes.debouncer, ''));
     let received = await redis.client.get(key);
+    
+    let subject = key.replace(config.redis.prefixes.debouncer, '');
+    this.status.send({status: this.status.STATES.COMPLETE, subject});
 
     this.kafkaProducer.produce({
       topic : config.kafka.topics.index,
       value : {
         sender : 'debouncer',
         debouncerRecievedTimestamp : received,
-        subject : key.replace(config.redis.prefixes.debouncer, '')
+        subject
       },
       key : 'debouncer'
     });
@@ -176,6 +189,42 @@ class Debouncer {
       if( !this.run || res.cursor == '0' ) break;
       options.cursor = res.cursor;
     }
+  }
+
+  async getTypes(subjects) {
+    let response = await fuseki.query(`select * where { 
+      values ?subject { <${subjects.join('> <')}> }
+      ?subject <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?type
+    }`)
+    
+    let bodyText, body;
+    bodyText = await response.text();
+    body = JSON.parse(bodyText);
+
+    let result = {};
+    body.results.bindings.map(term => {
+      return {subject: term.subject.value, type: term.type.value}
+    })
+    .forEach(item => {
+      if( !result[item.subject] ) {
+        result[item.subject] = [];
+      }
+      result[item.subject].push(item.type);
+    });
+
+    return result;
+  }
+
+  async validModel(types) {
+    if( !Array.isArray(types) ) types = [types];
+
+    for( let type of types ) {
+      if( (await esSparqlModel.hasModel(type)) ) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
 

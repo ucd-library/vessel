@@ -1,4 +1,4 @@
-const {kafka, redis, fuseki, logger, config, esSparqlModel} = require('@ucd-lib/rp-node-utils');
+const {kafka, redis, fuseki, logger, config, esSparqlModel, Status} = require('@ucd-lib/rp-node-utils');
 const {fork} = require('child_process');
 const elasticSearch = require('./elastic-search');
 const reindex = require('./reindex');
@@ -23,6 +23,8 @@ class Indexer {
       // subscribe to front of committed offset
       'auto.offset.reset' : 'earliest'
     });
+
+    this.status = new Status({producer: 'indexer'});
   }
 
   /**
@@ -36,18 +38,16 @@ class Indexer {
     await redis.connect();
     await elasticSearch.connect();
 
-    try {
-      await this.kafkaConsumer.connect();
+    await this.kafkaConsumer.connect();
 
-      let topics = [config.kafka.topics.index];
-      logger.info('waiting for topics: ', topics);
-      await this.kafkaConsumer.waitForTopics(topics);
-      logger.info('topics ready: ', topics);
+    let topics = [config.kafka.topics.index];
+    logger.info('waiting for topics: ', topics);
+    await this.kafkaConsumer.waitForTopics(topics);
+    logger.info('topics ready: ', topics);
 
-      await this.kafkaConsumer.subscribe([config.kafka.topics.index]);
-    } catch(e) {
-      console.error('kafka init error', e);
-    }
+    await this.kafkaConsumer.subscribe([config.kafka.topics.index]);
+
+    await this.status.connect();
 
     this.listen();
 
@@ -154,6 +154,7 @@ class Indexer {
 
     let modelType = await this.getKnownModelType(payload);
     if( !modelType ) {
+      this.status.send({status: 'ignored', action: 'index', subject: payload.subject});
       logger.info(`Ignoring message ${payload.msgId} with subject ${payload.subject} sent by ${payload.sender || 'unknown'}: Type has no model ${modelType} ${JSON.stringify(payload.types || [])}`);
       return;
     }
@@ -274,24 +275,23 @@ class Indexer {
 
         try {
           msg = JSON.parse(msg);
+          this.status.send({status: this.status.STATES.START, action: 'index', subject: msg.subject});
           await this.index(key, msg);
+          this.status.send({status: this.status.STATES.COMPLETE, action: 'index', subject: msg.subject});
         } catch(e) {
-          // capture failures
-          await elasticSearch.insert({
-            '@id' : msg.subject.replace(config.fuseki.rootPrefix.uri, config.fuseki.rootPrefix.prefix+':'),
-            _acl : ['admin'],
-            _indexer : {
-              success : false,
-              error : {
-                message : e.message,
-                stack : e.stack
-              },
+          this.status.send({
+            status : this.status.STATES.ERROR, 
+            subject : msg.subject,
+            action: 'index',
+            index : msg.index,
+            error : {
+              id : msg.subject.replace(config.fuseki.rootPrefix.uri, config.fuseki.rootPrefix.prefix+':'),
+              message : e.message,
+              stack : e.stack,
               logs : ['index process died'],
-              kafkaMessage : msg,
-              timestamp: new Date()
+              kafkaMessage : msg
             }
-          }, msg.index);
-
+          });
         }
       }
 
@@ -317,10 +317,27 @@ class Indexer {
       if( !payload ) return;
       payload = JSON.parse(payload);
       logger.info(`Setting alias ${config.elasticSearch.indexAlias} to ${payload.index}`);
+
+      this.status.send({
+        status: this.status.STATES.START, 
+        action: 'set-alias', 
+        payload: {index: payload.index, name: config.elasticSearch.indexAlias}
+      });
       await elasticSearch.client.indices.putAlias({index: payload.index, name: config.elasticSearch.indexAlias});
       await redis.client.del(config.redis.keys.setAlias);
+      this.status.send({
+        status: this.status.STATES.COMPLETE, 
+        action: 'set-alias', 
+        payload: {index: payload.index, name: config.elasticSearch.indexAlias}
+      });
+
     } catch(e) {
       logger.error('Failed to run set-index', e);
+      this.status.send({
+        status: this.status.STATES.ERROR, 
+        action: 'set-alias', 
+        error: {stack: e.stack, message: e.message}
+      });
     }
   }
 
@@ -338,12 +355,31 @@ class Indexer {
       for( let key of payload ) {
         let index = key.replace(config.redis.prefixes.deleteIndex, '');
         logger.info(`Removing index ${index}`);
+
+        this.status.send({
+          status: this.status.STATES.START, 
+          action: 'delete-index', 
+          payload: {index}
+        });
+
         await elasticSearch.client.indices.delete({index});
         await redis.client.del(key);
+        
+        this.status.send({
+          status: this.status.STATES.COMPLETE, 
+          action: 'delete-index', 
+          payload: {index}
+        });
       }
 
     } catch(e) {
       logger.error('Failed to run delete-index', payload, e);
+      this.status.send({
+        status: this.status.STATES.ERROR, 
+        action: 'delete-index', 
+        payload,
+        error : {message: e.message, stack: e.stack}
+      });
     }
   }
 
