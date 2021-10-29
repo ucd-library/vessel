@@ -1,4 +1,4 @@
-const {elasticSearch, config} = require('@ucd-lib/rp-node-utils');
+const {elasticSearch, redis, config} = require('@ucd-lib/rp-node-utils');
 const utils = require('../lib/search-utils');
 const clone = require('clone');
 
@@ -18,6 +18,7 @@ class ElasticSearch {
    * @returns {Promise}
    */
   async connect() {
+    await redis.connect();
     await elasticSearch.connect();
     this.client = elasticSearch.client;
   }
@@ -163,6 +164,97 @@ class ElasticSearch {
     }
 
     return result;
+  }
+
+  async indexerStats() {
+    let resp = await this.client.search({
+      index : config.elasticSearch.statusIndex,
+      body : {
+        aggs : {
+          index : {
+            terms: {field : 'index'}
+          }
+        },
+        from : 0,
+        size : 0
+      }
+    });
+
+    let indexes = resp.aggregations.index.buckets.map(item => item.key);
+    let pendingDelete = await redis.client.get(config.redis.keys.indexedPendingDelete);
+
+    let result = {
+      // TODO get active index
+      searchIndex :  Object.keys(await this.client.indices.getAlias({name: config.elasticSearch.indexAlias}))[0],
+      writeIndex : await redis.client.get(config.redis.keys.indexWrite),
+      pendingDeleteIndexes : pendingDelete ? JSON.parse(pendingDelete) : [],
+      indexes : {}
+    }
+    for( let index of indexes ) {
+      result.indexes[index] = await this.indexerIndexStats(index);
+      if( index === result.searchIndex ) {
+        result.indexes[index].active = true;
+      }
+    }
+
+  
+    return result;
+  }
+
+  async indexerIndexStats(index) {
+    let resp = await this.client.search({
+      index : config.elasticSearch.statusIndex,
+      body : {
+        query : {
+          bool : {
+            filter : {
+              term : {index}
+            }
+          }
+        },
+        aggs : {
+          debouncer : {
+            terms: {field : 'debouncer.status'}
+          },
+          indexer : {
+            terms: {field : 'indexer.status'}
+          }
+        },
+        from : 0,
+        size : 0
+      }
+    });
+
+    let debouncer = {};
+    let indexer = {};
+    resp.aggregations.debouncer.buckets.forEach(item => debouncer[item.key] = item.doc_count);
+    resp.aggregations.indexer.buckets.forEach(item => indexer[item.key] = item.doc_count);
+
+    return {
+      total : typeof resp.hits.total === 'object' ? resp.hits.total.value : resp.hits.total,
+      debouncer, indexer
+    };
+  }
+
+  async indexerItem(subject) {
+    let resp = await this.client.search({
+      index : config.elasticSearch.statusIndex,
+      body : {
+        query : {
+          bool : {
+            should : [
+              {term : {subject : subject}},
+              {term : {shortId : subject}}
+            ]
+          }
+        }
+      }
+    });
+
+    if( !resp.hits.hits ) return {error: true, message: 'unknown subject: '+subject};
+    if( !resp.hits.hits.length ) return {error: true, message: 'unknown subject: '+subject};
+
+    return resp.hits.hits.map(item => item._source);
   }
 
 }

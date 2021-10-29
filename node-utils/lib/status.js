@@ -28,6 +28,7 @@ class Status {
 
     this.STATES = {
       START : 'start',
+      PENDING : 'pending',
       RUNNING : 'running',
       ERROR : 'error',
       COMPLETE : 'complete'

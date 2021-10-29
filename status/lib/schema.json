@@ -15,7 +15,7 @@
 
   "properties" : {
     
-    "id" : {
+    "subject" : {
       "type" : "keyword"
     },
 
@@ -28,6 +28,18 @@
           "search_analyzer": "autocomplete_search"
         }
       }
+    },
+
+    "index" : {
+      "type" : "keyword"
+    },
+
+    "debouncer.status" : {
+      "type" : "keyword"
+    },
+
+    "indexer.status" : {
+      "type" : "keyword"
     }
 
   }

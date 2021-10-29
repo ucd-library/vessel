@@ -9,7 +9,8 @@ wait-for-it $k_host -t 0
 patch_topic=fuseki-rdf-patch
 status_topic=vessel-status-update
 index_topic=index-rdf-subject
-topics=( $patch_topic $status_topic $index_topic )
+reindex_topic=reindex-rdf-subject
+topics=( $patch_topic $status_topic $index_topic $reindex_topic )
 
 partitions=10
 replication_factor=1

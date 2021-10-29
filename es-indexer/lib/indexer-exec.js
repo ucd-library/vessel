@@ -41,7 +41,7 @@ class IndexerInsert {
       try {
         await this.index(event.msg);
       } catch(err) {
-        logger.error(`Failed to update ${event.msg.subject}`);
+        logger.error(`Failed to update`, event);
 
         this.status.send({
           status : this.status.STATES.ERROR, 
@@ -58,7 +58,7 @@ class IndexerInsert {
         });
       }
 
-      await this.clearKey(event.key);
+      // await this.clearKey(event.key);
 
       event.finished = true;
       process.send(event);
@@ -77,15 +77,14 @@ class IndexerInsert {
     this.connected = true;
   }
 
-  clearKey(key) {
-    return redis.client.del(key);
-  }
+  // clearKey(key) {
+  //   return redis.client.del(key);
+  // }
 
   /**
    * @method insert
    * @description insert es model from uri/type
    * 
-   * @param {String} key redis key
    * @param {String} uri uri of model 
    * @param {String} id unique kafka message id
    * @param {Object} msg kafka message
@@ -111,12 +110,6 @@ class IndexerInsert {
     } else {
       result.model._acl = ['public'];
     }
-
-    result.model._indexer = {
-      success : true,
-      kafkaMessage : msg,
-      timestamp : new Date()
-    };
 
     await elasticSearch.insert(result.model, msg.index);
     logger.info(`Updated ${uri} into ${msg.index || 'default alias'}`);

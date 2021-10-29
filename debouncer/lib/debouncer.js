@@ -18,6 +18,14 @@ class Debouncer {
     },{
       // subscribe to front of committed offset
       'auto.offset.reset' : 'earliest'
+    });
+
+    this.kafkaReindexConsumer = new kafka.Consumer({
+      'group.id': config.kafka.groups.debouncer,
+      'metadata.broker.list': config.kafka.host+':'+config.kafka.port,
+    },{
+      // subscribe to front of committed offset
+      'auto.offset.reset' : 'earliest'
     })
 
     this.status = new Status({producer: 'debouncer'});
@@ -36,26 +44,28 @@ class Debouncer {
     await redis.connect();
 
     await this.kafkaConsumer.connect();
+    await this.kafkaReindexConsumer.connect();
     await this.kafkaProducer.connect();
 
     let topics = [
       config.kafka.topics.rdfPatch,
-      config.kafka.topics.index
+      config.kafka.topics.index,
+      config.kafka.topics.reindex
     ];
     
     logger.info('waiting for topics: ', topics);
-    await this.kafkaConsumer.waitForTopics(topics);
+    await this.kafkaReindexConsumer.waitForTopics(topics);
     logger.info('topics ready: ', topics);
 
     await this.kafkaConsumer.subscribe([config.kafka.topics.rdfPatch]);
+    await this.kafkaReindexConsumer.subscribe([config.kafka.topics.reindex]);
     this.kafkaProducer.client.setPollInterval(config.kafka.producerPollInterval);
 
     await this.status.connect();
     this.listen();
+    this.listenReindex();
 
-    setTimeout(() => {
-      this.handleMessages();
-    }, 1000);
+    this.resetMessageDelayHandler();
   }
 
   /**
@@ -65,6 +75,14 @@ class Debouncer {
   async listen() {
     try {
       await this.kafkaConsumer.consume(msg => this.onMessage(msg));
+    } catch(e) {
+      logger.error('kafka consume error', e);
+    }
+  }
+
+  async listenReindex() {
+    try {
+      await this.kafkaReindexConsumer.consume(msg => this.onReindexMessage(msg));
     } catch(e) {
       logger.error('kafka consume error', e);
     }
@@ -86,33 +104,53 @@ class Debouncer {
 
     let subjects;
     try {
+      // subjects is a key/value pair.  key is subject, value is array of types from patch, if found
       subjects = changes(patchParser(msg.value.toString('utf-8')));
     } catch(e) {
       logger.error(`failed to parse rdf patch. message: ${kafka.utils.getMsgId(msg)}`, e.message, msg.value.toString('utf-8'));
       return;
     }
 
-    let reduced = Object.keys(
-      subjects.reduce((p, c) => {p[c] = true; return p}, {})
-    );
-
-    let subjectTypes = await this.getTypes(reduced);
+    // now query fuseki for additional types not sent in patch
+    await this.getTypes(subjects);
     let validType;
 
-    for( let subject in subjectTypes ) {
-      validType = await this.validModel(subjectTypes[subject]);
-
+    for( let subject in subjects ) {
+      validType = await this.validModel(subjects[subject]);
 
       // sending status messages for ignored is too noisy to handle :(
       if( !validType ) {
         continue;
       }
       
-      this.status.send({status: this.status.STATES.START, subject});
-      await redis.client.set(config.redis.prefixes.debouncer+subject,  Date.now());
+      await this.sendStartMessage(subject);
     }
 
     this.resetMessageDelayHandler();
+  }
+
+  async onReindexMessage(msg) {
+    let subject;
+
+    try {
+      // subjects is a key/value pair.  key is subject, value is array of types from patch, if found
+      subject = JSON.parse(msg.value.toString('utf-8')).subject;
+    } catch(e) {
+      logger.error(`failed to parse reindex. message: ${kafka.utils.getMsgId(msg)}`, e.message, msg.value.toString('utf-8'));
+      return;
+    }
+
+    await this.sendStartMessage(subject);
+    this.resetMessageDelayHandler();
+  }
+
+  async sendStartMessage(subject) {
+    this.status.send({
+      status: this.status.STATES.START,
+      index: await redis.client.get(config.redis.keys.indexWrite),
+      subject
+    });
+    await redis.client.set(config.redis.prefixes.debouncer+subject,  Date.now());
   }
 
   /**
@@ -145,16 +183,18 @@ class Debouncer {
    */
   async sendKey(key) {
     logger.info('Sending subject to indexer: ', key.replace(config.redis.prefixes.debouncer, ''));
-    let received = await redis.client.get(key);
-    
+
     let subject = key.replace(config.redis.prefixes.debouncer, '');
-    this.status.send({status: this.status.STATES.COMPLETE, subject});
+    this.status.send({
+      status: this.status.STATES.COMPLETE, 
+      index: await redis.client.get(config.redis.keys.indexWrite),
+      subject
+    });
 
     this.kafkaProducer.produce({
       topic : config.kafka.topics.index,
       value : {
         sender : 'debouncer',
-        debouncerRecievedTimestamp : received,
         subject
       },
       key : 'debouncer'
@@ -193,7 +233,7 @@ class Debouncer {
 
   async getTypes(subjects) {
     let response = await fuseki.query(`select * where { 
-      values ?subject { <${subjects.join('> <')}> }
+      values ?subject { <${Object.keys(subjects).join('> <')}> }
       ?subject <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?type
     }`)
     
@@ -201,18 +241,14 @@ class Debouncer {
     bodyText = await response.text();
     body = JSON.parse(bodyText);
 
-    let result = {};
     body.results.bindings.map(term => {
       return {subject: term.subject.value, type: term.type.value}
     })
     .forEach(item => {
-      if( !result[item.subject] ) {
-        result[item.subject] = [];
+      if( !subjects[item.subject].includes(item.type) ) {
+        subjects[item.subject].push(item.type);
       }
-      result[item.subject].push(item.type);
     });
-
-    return result;
   }
 
   async validModel(types) {

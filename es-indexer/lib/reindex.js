@@ -1,25 +1,91 @@
-const {fuseki, kafka, logger, config, esSparqlModel} = require('@ucd-lib/rp-node-utils');
+const {fuseki, kafka, logger, config, esSparqlModel, redis} = require('@ucd-lib/rp-node-utils');
 const elasticSearch = require('./elastic-search');
-
-
 
 class Reindex {
 
-  constructor() {
+  constructor(indexer) {
     this.COMMANDS = {
       CREATE_INDEX : 'create-index',
       SET_ALIAS : 'set-alias',
       DELETE_INDEX : 'delete-index'
     }
 
-    this.STATES = {
-      STOPPED : 'stopped',
-      RUNNING : 'running'
+    this.kafkaConsumer = new kafka.Consumer({
+      'group.id': config.kafka.groups.index,
+      'metadata.broker.list': config.kafka.host+':'+config.kafka.port,
+    },{
+      // subscribe to front of committed offset
+      'auto.offset.reset' : 'earliest'
+    });
+
+    this.indexer = indexer;
+  }
+
+  async connect() {
+    await redis.connect();
+    await elasticSearch.connect();
+    await this.kafkaConsumer.connect();
+    await this.kafkaConsumer.waitForTopics([config.kafka.topics.indexerStatusUpdate]);
+    await this.kafkaConsumer.subscribe([config.kafka.topics.indexerStatusUpdate]);
+    this.listen();
+  }
+
+  /**
+   * @method listen
+   * @description Start consuming messages from kafka, register onMessage as the handler.
+   */
+  async listen() {
+    try {
+      await this.kafkaConsumer.consume(msg => this.onMessage(msg));
+    } catch(e) {
+      console.error('kafka consume error', e);
+    }
+  }
+
+  /**
+   * @method onMessage
+   * @description listens to the indexer-status-update topic.  Checks for completed index, then swaps  
+   * if complete
+   * 
+   * @param {*} msg 
+   * @returns 
+   */
+  onMessage(msg) {
+    let p = JSON.parse(msg.value.toString('utf-8'));
+
+
+    if( p.searchIndex === p.writeIndex && pendingDeleteIndexes.length === 0 ) {
+      return;
     }
 
-    this.state = {
-      state : this.STATES.STOPPED
+    if( p.searchIndex !== p.writeIndex ) {
+      let index = p.indexes[p.writeIndex];
+      if( index.complete !== index.total ) return;
+
+      // set the search alias to the current write index
+      await elasticSearch.client.indices.putAlias({
+        index: p.writeIndex, 
+        name: config.elasticSearch.indexAlias
+      });
     }
+
+    // delete any pending indexes, cleanup stats
+    for( let index of p.pendingDeleteIndexes ) {
+      await elasticSearch.client.indices.delete({index});
+      await elasticSearch.client.deleteByQuery({
+        index : config.elasticSearch.statusIndex,
+        body : {
+          query : {
+            bool : {
+              filter : {
+                term : {index}
+              }
+            }
+          }
+        }
+      });
+    }
+
   }
 
   getState() {
@@ -37,15 +103,6 @@ class Reindex {
    * @param {Boolean} opts.updateSchema rebuild entire schema, replacing current when complete
    */
   async run(opts={}) {
-    if( this.state.state !== this.STATES.STOPPED ) return;
-
-    // keep track of our current state
-    this.state = {
-      type : opts.type || 'all',
-      state : this.STATES.RUNNING,
-      newIndex : opts.updateSchema ? `${config.elasticSearch.indexAlias}-${Date.now()}` : null
-    }
-
     // make sure we have created the producer
     if( !this.kafkaProducer ) {
       this.kafkaProducer = new kafka.Producer({
@@ -59,21 +116,13 @@ class Reindex {
 
     // if we are creating a new index (via update schema opt) find current indexes and sav
     // send command to create the new index that subjects will be inserted into
-    let currentIndexes = [];
-    if( this.state.newIndex ) {
+    if( opts.updateSchema ) {
       // store for removal message below
-      currentIndexes = await elasticSearch.getCurrentIndexes();
+      let currentIndexes = (await elasticSearch.getCurrentIndexes()).map(item => item.index);
+      await redis.client.set(config.redis.keys.indexedPendingDelete, JSON.stringify(currentIndexes));
 
-      logger.info(`Sending ${this.COMMANDS.CREATE_INDEX} ${this.state.newIndex} command to index topic`);
-      this.kafkaProducer.produce({
-        topic : config.kafka.topics.index,
-        value : {
-          sender : 'reindexer',
-          cmd : this.COMMANDS.CREATE_INDEX,
-          index : this.state.newIndex
-        },
-        key : 'reindexer'
-      });
+      // create new index for write, we will swap when complete
+      await elasticSearch.createIndex(config.elasticSearch.indexAlias);
     }
 
     let modelMeta = await esSparqlModel.info();
@@ -93,41 +142,37 @@ class Reindex {
     }
 
     // TODO: need to check for deletes (query es)
-
-    if( this.state.newIndex ) {
+    // TODO: need to listen to status queue and swap when complete!
+    // if(  opts.updateSchema  ) {
 
       // if we are rebuilding the entire schema, set the alias to our new index
-      logger.info(`Sending ${this.COMMANDS.SET_ALIAS} ${this.state.newIndex} command to index topic`);
-      this.kafkaProducer.produce({
-        topic : config.kafka.topics.index,
-        value : {
-          sender : 'reindexer',
-          cmd : this.COMMANDS.SET_ALIAS,
-          index : this.state.newIndex
-        },
-        key : 'reindexer'
-      });
+      // logger.info(`Sending ${this.COMMANDS.SET_ALIAS} ${this.state.newIndex} command to index topic`);
+      // this.kafkaProducer.produce({
+      //   topic : config.kafka.topics.index,
+      //   value : {
+      //     sender : 'reindexer',
+      //     cmd : this.COMMANDS.SET_ALIAS,
+      //     index : this.state.newIndex
+      //   },
+      //   key : 'reindexer'
+      // });
 
-      // delete the prior indexes, this is just cleanup
-      for( let index of currentIndexes ) {
-        logger.info(`Sending ${this.COMMANDS.DELETE_INDEX} ${index.index} command to index topic`);
-        this.kafkaProducer.produce({
-          topic : config.kafka.topics.index,
-          value : {
-            sender : 'reindexer',
-            cmd : this.COMMANDS.DELETE_INDEX,
-            index : index.index
-          },
-          key : 'reindexer'
-        });
-      }
-    }
+      // // delete the prior indexes, this is just cleanup
+      // for( let index of currentIndexes ) {
+      //   logger.info(`Sending ${this.COMMANDS.DELETE_INDEX} ${index.index} command to index topic`);
+      //   this.kafkaProducer.produce({
+      //     topic : config.kafka.topics.index,
+      //     value : {
+      //       sender : 'reindexer',
+      //       cmd : this.COMMANDS.DELETE_INDEX,
+      //       index : index.index
+      //     },
+      //     key : 'reindexer'
+      //   });
+      // }
+    // }
 
     await this.kafkaProducer.disconnect();
-
-    this.state = {
-      state : this.STATES.STOPPED
-    }
   }
 
   /**
@@ -144,19 +189,15 @@ class Reindex {
     while( page != -1 ) {
       let subjects = await this.getSubjectsForType(type, page);
       for( let subject of subjects ) {
-        logger.info('Sending to index topic: '+subject+' / '+type);
+        logger.info('Sending to reindex topic: '+subject+' / '+type);
 
         let msg = {
-          topic : config.kafka.topics.index,
+          topic : config.kafka.topics.reindex,
           value : {
             sender : 'reindexer',
             subject, type
           },
           key : 'reindexer'
-        }
-
-        if( this.state.newIndex ) {
-          msg.value.index = this.state.newIndex;
         }
 
         this.kafkaProducer.produce(msg);
@@ -199,4 +240,4 @@ class Reindex {
 
 }
 
-module.exports = new Reindex();
+module.exports = Reindex;

@@ -58,8 +58,10 @@ module.exports = {
     producerPollInterval : 100,
     topics : {
       index : 'index-rdf-subject',
+      reindex : 'reindex-rdf-subject',
       rdfPatch : 'fuseki-rdf-patch',
-      status : 'vessel-status-update'
+      status : 'vessel-status-update',
+      indexerStatusUpdate : 'indexer-status-update'
     },
     groups : {
       debouncer : 'vessel-debouncer-group',
@@ -97,7 +99,9 @@ module.exports = {
     },
     keys : {
       serverSecret : 'server-secret',
-      setAlias : 'indexercmd-set-alias'
+      setAlias : 'indexercmd-set-alias',
+      indexWrite : 'index-write',
+      indexedPendingDelete : 'indexes-pending-delete'
     }
   },
 
@@ -124,12 +128,12 @@ module.exports = {
   },
 
   debouncer : {
-    handleMessageDelay : 5 // seconds
+    handleMessageDelay : 10 // seconds
   },
 
   indexer : {
     port : 3000,
-    handleMessageDelay : 5 // seconds
+    // handleMessageDelay : 5 // seconds
   },
 
   models : {

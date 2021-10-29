@@ -333,10 +333,6 @@
       "type" : "date"
     },
 
-    "_indexer.success" : {
-      "type" : "boolean"
-    },
-
     "_acl" : {
       "type" : "keyword"
     }

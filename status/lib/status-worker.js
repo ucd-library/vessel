@@ -1,4 +1,4 @@
-const {config, elasticSearch, logger, Status} = require('@ucd-lib/rp-node-utils');
+const {config, elasticSearch, logger, Status, kafka, fetch} = require('@ucd-lib/rp-node-utils');
 const fs = require('fs');
 const path = require('path');
 
@@ -17,6 +17,12 @@ class StatusWorker {
         }
       }
     });
+
+    this.kafkaProducer = new kafka.Producer({
+      'metadata.broker.list': config.kafka.host+':'+config.kafka.port
+    });
+
+    this.UPDATE_INTERVAL = 5000;
   }
 
 
@@ -24,6 +30,10 @@ class StatusWorker {
     await elasticSearch.connect();
     await this.ensureIndex('research-profiles', null, require('./schema.json'));
     await this.status.connect();
+
+    await this.kafkaProducer.connect();
+    await this.kafkaProducer.waitForTopics([config.kafka.topics.indexerStatusUpdate]);
+    this.kafkaProducer.client.setPollInterval(config.kafka.producerPollInterval);
   }
 
   async _onMessage(msg) {
@@ -32,18 +42,50 @@ class StatusWorker {
       return;
     }
 
-    msg.shortId = msg.subject.replace(config.fuseki.rootPrefix.uri, config.fuseki.rootPrefix.prefix+':');
+    let shortId = msg.subject.replace(config.fuseki.rootPrefix.uri, config.fuseki.rootPrefix.prefix+':');
+    let subject = msg.subject;
+    delete msg.subject;
+    let index = msg.index;
+    delete msg.index;
+
+    let doc = {
+      subject, shortId, index,
+      timestamp : Date.now(),
+      [msg.service] : msg
+    };
+
+    if( msg.service === 'debouncer' && msg.status === this.status.STATES.START ) {
+      doc.indexer = {
+        timestamp : Date.now(),
+        status : this.status.STATES.PENDING
+      };
+    }
 
     await elasticSearch.client.update({
       index : config.elasticSearch.statusIndex,
-      id : msg.subject,
+      id : index+'-'+subject,
       body : {
-        doc: msg,
+        doc,
         doc_as_upsert: true
       }
-    })
+    });
+
+    if( !this.indexerIntervalTimer ) {
+      this.indexerIntervalTimer = setInterval(() => this.sendIndexerStatus(), this.UPDATE_INTERVAL);
+    }
+    if( this.killIntervalTimer ) clearTimeout(this.killIntervalTimer);
+    this.killIntervalTimer = setTimeout(() => {
+      clearInterval(this.indexerIntervalTimer);
+    }, this.UPDATE_INTERVAL * 2);
   }
 
+  sendIndexerStatus() {
+    let resp = await fetch(config.gateway.serviceHosts.api+'/api/indexer/stats');
+    this.kafkaProducer.produce({
+      topic : config.kafka.topics.indexerStatusUpdate,
+      value : await resp.json()
+    });
+  }
 
   /**
    * @method ensureIndex
