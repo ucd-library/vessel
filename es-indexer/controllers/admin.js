@@ -19,10 +19,6 @@ router.get('/reindex', async (req, res) => {
  */
 router.get('/reindex/run/:type?', async (req, res) => {
   try {
-    if( reindex.getState().state === reindex.STATES.RUNNING ) {
-      return res.json({state: 'Already running'});
-    }
-
     reindex.run({
       type: req.params.type,
       updateSchema : req.query['rebuild-schema'] === 'true' ? true : false

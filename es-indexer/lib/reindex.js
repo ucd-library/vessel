@@ -50,9 +50,8 @@ class Reindex {
    * @param {*} msg 
    * @returns 
    */
-  onMessage(msg) {
+  async onMessage(msg) {
     let p = JSON.parse(msg.value.toString('utf-8'));
-
 
     if( p.searchIndex === p.writeIndex && pendingDeleteIndexes.length === 0 ) {
       return;
@@ -60,9 +59,10 @@ class Reindex {
 
     if( p.searchIndex !== p.writeIndex ) {
       let index = p.indexes[p.writeIndex];
-      if( index.complete !== index.total ) return;
+      if( index.indexer.complete !== index.total ) return;
 
       // set the search alias to the current write index
+      logger.info(`swapping aliases: ${config.elasticSearch.indexAlias} -> ${p.writeIndex}`);
       await elasticSearch.client.indices.putAlias({
         index: p.writeIndex, 
         name: config.elasticSearch.indexAlias
@@ -71,6 +71,7 @@ class Reindex {
 
     // delete any pending indexes, cleanup stats
     for( let index of p.pendingDeleteIndexes ) {
+      logger.info(`deleting index: ${index}`);
       await elasticSearch.client.indices.delete({index});
       await elasticSearch.client.deleteByQuery({
         index : config.elasticSearch.statusIndex,
@@ -119,7 +120,7 @@ class Reindex {
     if( opts.updateSchema ) {
       // store for removal message below
       let currentIndexes = (await elasticSearch.getCurrentIndexes()).map(item => item.index);
-      await redis.client.set(config.redis.keys.indexedPendingDelete, JSON.stringify(currentIndexes));
+      await redis.client.set(config.redis.keys.pendingDeleteIndexes, JSON.stringify(currentIndexes));
 
       // create new index for write, we will swap when complete
       await elasticSearch.createIndex(config.elasticSearch.indexAlias);

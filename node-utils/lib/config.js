@@ -101,7 +101,7 @@ module.exports = {
       serverSecret : 'server-secret',
       setAlias : 'indexercmd-set-alias',
       indexWrite : 'index-write',
-      indexedPendingDelete : 'indexes-pending-delete'
+      indexesPendingDelete : 'indexes-pending-delete'
     }
   },
 

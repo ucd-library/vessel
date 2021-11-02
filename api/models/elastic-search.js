@@ -181,7 +181,7 @@ class ElasticSearch {
     });
 
     let indexes = resp.aggregations.index.buckets.map(item => item.key);
-    let pendingDelete = await redis.client.get(config.redis.keys.indexedPendingDelete);
+    let pendingDelete = await redis.client.get(config.redis.keys.indexesPendingDelete);
 
     let result = {
       // TODO get active index
@@ -230,10 +230,52 @@ class ElasticSearch {
     resp.aggregations.debouncer.buckets.forEach(item => debouncer[item.key] = item.doc_count);
     resp.aggregations.indexer.buckets.forEach(item => indexer[item.key] = item.doc_count);
 
+    // get know types and count from main index
+    let mainResp = await this.client.search({
+      index,
+      body : {
+        aggs : {
+          type : {
+            terms: {field : '@type'}
+          }
+        },
+        from : 0,
+        size : 0
+      }
+    });
+    let types = {};
+    mainResp.aggregations.type.buckets.forEach(item => types[item.key] = item.doc_count);
+
     return {
       total : typeof resp.hits.total === 'object' ? resp.hits.total.value : resp.hits.total,
-      debouncer, indexer
+      debouncer, indexer,
+      searchIndexStats : {
+        types, 
+        total : typeof mainResp.hits.total === 'object' ? mainResp.hits.total.value : mainResp.hits.total
+      }
     };
+  }
+
+  async indexerItemsByState(index, service, state, body) {
+    service = service+'.status';
+    body.query = {
+      bool : {
+        filter : [
+          {term : {index}},
+          {term : {[service] : state}}
+        ]
+      }
+    };
+
+    let resp = await this.client.search({
+      index : config.elasticSearch.statusIndex,
+      body
+    });
+
+    return {
+      total : typeof resp.hits.total === 'object' ? resp.hits.total.value : resp.hits.total,
+      results : resp.hits.hits.map(item => item._source)
+    }
   }
 
   async indexerItem(subject) {

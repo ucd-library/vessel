@@ -29,11 +29,12 @@ class StatusWorker {
   async connect() {
     await elasticSearch.connect();
     await this.ensureIndex('research-profiles', null, require('./schema.json'));
-    await this.status.connect();
 
     await this.kafkaProducer.connect();
     await this.kafkaProducer.waitForTopics([config.kafka.topics.indexerStatusUpdate]);
     this.kafkaProducer.client.setPollInterval(config.kafka.producerPollInterval);
+
+    await this.status.connect();
   }
 
   async _onMessage(msg) {
@@ -48,16 +49,43 @@ class StatusWorker {
     let index = msg.index;
     delete msg.index;
 
-    let doc = {
-      subject, shortId, index,
-      timestamp : Date.now(),
-      [msg.service] : msg
-    };
+    let doc;
 
-    if( msg.service === 'debouncer' && msg.status === this.status.STATES.START ) {
+    let t = Date.now();
+    try {
+      let resp = await elasticSearch.client.get({
+        index : config.elasticSearch.statusIndex,
+        id : index+'-'+subject
+      });
+      doc = resp._source;
+    } catch(e) {
+      console.log('error', e);
+    }
+
+    if( !doc ) {
+      doc = {
+        subject, shortId, index
+      };
+    }
+
+    doc.timestamp = msg.timestamp;
+    doc[msg.service] = msg;
+
+    // we never know message order in kafka.  we might have already written
+    // and new message, at which point ignore current message
+    // es doesn't have a way to do this by query :(
+    if( doc.timestamp > msg.timestamp ) {
+      console.log('hERE!', doc, msg);
+      return; 
+    }
+
+
+    if( msg.service === 'debouncer'  ) {
+      // hummmm && msg.status === this.status.STATES.START
       doc.indexer = {
-        timestamp : Date.now(),
-        status : this.status.STATES.PENDING
+        timestamp : msg.timestamp,
+        status : this.status.STATES.PENDING,
+        action : null
       };
     }
 
@@ -79,7 +107,7 @@ class StatusWorker {
     }, this.UPDATE_INTERVAL * 2);
   }
 
-  sendIndexerStatus() {
+  async sendIndexerStatus() {
     let resp = await fetch(config.gateway.serviceHosts.api+'/api/indexer/stats');
     this.kafkaProducer.produce({
       topic : config.kafka.topics.indexerStatusUpdate,
