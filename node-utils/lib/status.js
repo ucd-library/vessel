@@ -19,7 +19,7 @@ class Status {
     if( opts.consumer ) {
       this.kafkaConsumer = new kafka.Consumer({
         'group.id': opts.consumer,
-        'metadata.broker.list': config.kafka.host+':'+config.kafka.port,
+        'metadata.broker.list': config.kafka.host+':'+config.kafka.port
       },{
         // subscribe to front of committed offset
         'auto.offset.reset' : 'earliest'
@@ -72,7 +72,9 @@ class Status {
 
   _messageAdditions(msg) {
     msg.service = this.options.producer;
-    msg.timestamp = Date.now();
+    // having CRAZY timestamp generation issues around index
+    // msg.timestamp = Date.now();
+    msg.timestamp = Number(process.hrtime.bigint() / 1000n);
   }
 
   _onMessage(msg) {

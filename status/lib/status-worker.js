@@ -51,34 +51,29 @@ class StatusWorker {
 
     let doc;
 
-    let t = Date.now();
     try {
       let resp = await elasticSearch.client.get({
         index : config.elasticSearch.statusIndex,
         id : index+'-'+subject
       });
       doc = resp._source;
-    } catch(e) {
-      console.log('error', e);
-    }
+    } catch(e) {}
 
     if( !doc ) {
       doc = {
-        subject, shortId, index
+        subject, shortId, index,
+        timestamp : msg.timestamp
       };
     }
-
-    doc.timestamp = msg.timestamp;
-    doc[msg.service] = msg;
 
     // we never know message order in kafka.  we might have already written
     // and new message, at which point ignore current message
     // es doesn't have a way to do this by query :(
-    if( doc.timestamp > msg.timestamp ) {
-      console.log('hERE!', doc, msg);
-      return; 
-    }
+    if( !doc.timestamp || !msg.timestamp ) return;
+    if( doc.timestamp > msg.timestamp ) return; 
 
+    doc.timestamp = msg.timestamp;
+    doc[msg.service] = msg;
 
     if( msg.service === 'debouncer'  ) {
       // hummmm && msg.status === this.status.STATES.START
@@ -100,10 +95,17 @@ class StatusWorker {
 
     if( !this.indexerIntervalTimer ) {
       this.indexerIntervalTimer = setInterval(() => this.sendIndexerStatus(), this.UPDATE_INTERVAL);
+      this.sendIndexerStatus();
     }
-    if( this.killIntervalTimer ) clearTimeout(this.killIntervalTimer);
+
+    if( this.killIntervalTimer ) {
+      clearTimeout(this.killIntervalTimer);
+    }
+    
     this.killIntervalTimer = setTimeout(() => {
       clearInterval(this.indexerIntervalTimer);
+      this.indexerIntervalTimer = null;
+      this.sendIndexerStatus();
     }, this.UPDATE_INTERVAL * 2);
   }
 

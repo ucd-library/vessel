@@ -13,7 +13,7 @@
   "license": "MIT",
   "dependencies": {
     "@google-cloud/logging-bunyan": "^3.0.0",
-    "@ucd-lib/node-kafka": "^0.0.5",
+    "@ucd-lib/node-kafka": "^0.0.8",
     "bunyan": "^1.8.14",
     "deepmerge": "^4.2.2",
     "elasticsearch": "^16.7.1",

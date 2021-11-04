@@ -111,6 +111,9 @@ class IndexerInsert {
       result.model._acl = ['public'];
     }
 
+    if( !result.model._ ) result.model._ = {};
+    result.model._.updated = Date.now();
+
     await elasticSearch.insert(result.model, msg.index);
     logger.info(`Updated ${uri} into ${msg.index || 'default alias'}`);
   }

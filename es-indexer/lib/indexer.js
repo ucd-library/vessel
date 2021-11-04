@@ -3,7 +3,7 @@ const {fork} = require('child_process');
 const elasticSearch = require('./elastic-search');
 const Reindex = require('./reindex');
 const path = require('path');
-
+let count = 0;
 /**
  * @class Indexer
  * @description main indexer that reads kafka stream, debounces uris, queries fuseki and
@@ -157,7 +157,6 @@ class Indexer {
     }
 
     try {
-      payload
       payload.index = await redis.client.get(config.redis.keys.indexWrite);
 
       this.status.send({
@@ -167,6 +166,7 @@ class Indexer {
         subject: payload.subject
       });
       await this.index(payload.subject, payload);
+
       this.status.send({
         status: this.status.STATES.COMPLETE, 
         action: 'index', 

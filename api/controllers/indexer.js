@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const {middleware} = require('@ucd-lib/rp-node-utils');
+const {middleware, config, fetch} = require('@ucd-lib/rp-node-utils');
 const model = require('../models/elastic-search');
 const errorHandler = require('./utils/error-handler');
 
@@ -49,8 +49,8 @@ router.get('/state/:index/:service/:state', async (req, res) => {
   }
 });
 
-router.get(/\/.*/, async (req, res) => {
-  let subject = req.url.replace(/^\/stats\//, '');
+router.get(/\/status\/.*/, async (req, res) => {
+  let subject = req.url.replace(/^\/status\//, '');
   try {
     res.json(await model.indexerItem(decodeURIComponent(subject)));
   } catch(e) {
@@ -59,5 +59,24 @@ router.get(/\/.*/, async (req, res) => {
   }
 });
 
+router.get('/reindex', middleware.admin, async (req, res) => {
+  let rebuildSchema = req.query['rebuild-schema'] || '';
+  let type = req.query.type || '';
+
+  let url = config.gateway.serviceHosts.indexer+'/admin/reindex';
+  if( rebuildSchema.trim().toLowerCase() === 'true' ) {
+    url += '/rebuild-schema';
+  } else {
+    url += '/run' + (type ? '/'+type : '');
+  }
+
+  try {
+    let indexResp = await fetch(url);
+    res.json(await indexResp.text());
+  } catch(e) {
+    console.log(e);
+    errorHandler(req, res, e);
+  }
+});
 
 module.exports = router;

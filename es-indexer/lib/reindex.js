@@ -53,7 +53,8 @@ class Reindex {
   async onMessage(msg) {
     let p = JSON.parse(msg.value.toString('utf-8'));
 
-    if( p.searchIndex === p.writeIndex && pendingDeleteIndexes.length === 0 ) {
+    let pendingDeleteIndexes = await redis.client.get(config.redis.keys.indexesPendingDelete);
+    if( p.searchIndex === p.writeIndex && p.pendingDeleteIndexes.length === 0 ) {
       return;
     }
 
@@ -87,6 +88,8 @@ class Reindex {
       });
     }
 
+    pendingDeleteIndexes = await redis.client.get(config.redis.keys.indexesPendingDelete);
+    await redis.client.del(config.redis.keys.indexesPendingDelete);
   }
 
   getState() {
@@ -120,7 +123,7 @@ class Reindex {
     if( opts.updateSchema ) {
       // store for removal message below
       let currentIndexes = (await elasticSearch.getCurrentIndexes()).map(item => item.index);
-      await redis.client.set(config.redis.keys.pendingDeleteIndexes, JSON.stringify(currentIndexes));
+      await redis.client.set(config.redis.keys.indexesPendingDelete, JSON.stringify(currentIndexes));
 
       // create new index for write, we will swap when complete
       await elasticSearch.createIndex(config.elasticSearch.indexAlias);
