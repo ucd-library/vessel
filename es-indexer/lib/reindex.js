@@ -55,6 +55,8 @@ class Reindex {
     
     // connect to kafka and ensure index topic
     await this.kafkaProducer.connect();
+    await this.kafkaProducer.client.setPollInterval(config.kafka.producerPollInterval);
+
     await kafka.utils.ensureTopic({
       topic : config.kafka.topics.index,
       num_partitions: 1,
