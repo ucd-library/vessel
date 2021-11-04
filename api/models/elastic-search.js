@@ -102,6 +102,12 @@ class ElasticSearch {
     if( opts.allFields !== true ) {
       options._source_excludes = config.elasticSearch.fields.exclude.join(',');
     }
+    if( opts.explain ) {
+      options.explain = true;
+      options.body.explain = true;
+    }
+
+    console.log(options);
 
     return this.client.search(options);
   }
@@ -121,6 +127,8 @@ class ElasticSearch {
     if( !searchDocument.filters ) {
       searchDocument.filters = {};
     }
+
+    console.log(options.searchOpts);
 
     let esBody = utils.searchDocumentToEsBody(searchDocument, options.noLimit);
     let esResult = await this.search(esBody, undefined, options.searchOpts, roles);
