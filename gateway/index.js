@@ -14,7 +14,7 @@ const cors = require('cors')({
 
 // cors wrapper control
 function enableCors(req, res, next) {
-  
+
   // set cors for /api requests
   let enable = false;
   if( req.originalUrl.match(/^\/api(\/.*|$)/) && !req.originalUrl.match(/^\/api\/admin.*/) ) {
@@ -67,7 +67,7 @@ function readBody(res) {
     res.on('data', chunk => body += chunk);
     res.on('end', () => {
       resolve(body.toString())
-    }); 
+    });
   });
 }
 
@@ -120,8 +120,14 @@ app.use(/^\/auth(\/.*|$)/, (req, res) => {
   });
 });
 
-// app.use(/^\/fuseki(\/.*|$)/, middleware.acl(), (req, res) => {
-app.use(/^\/fuseki(\/.*|$)/, middleware.acl(), (req, res) => {
+app.use(/^\/private\/query(\/.*|$)/, middleware.acl(), (req, res) => {
+  proxy.web(req, res, {
+    target: `http://${config.fuseki.host}:${config.fuseki.port}/${config.fuseki.private_database}/query`,
+    ignorePath: true
+  });
+});
+
+app.use(/^\/fuseki(\/.*|$)/, middleware.acl({access:'miv'}), (req, res) => {
   proxy.web(req, res, {
     target: 'http://'+config.fuseki.host+':'+config.fuseki.port+'/'+config.fuseki.database+'/query',
     ignorePath: true
@@ -141,5 +147,5 @@ app.use(/.*/, (req, res) => {
  */
 app.listen(config.gateway.port, () => {
   logger.info('gateway listening on port: '+config.gateway.port);
-  require('./lib/default-admins')();
+  require('./lib/default-roles')();
 })

@@ -27,6 +27,10 @@ module.exports = {
     private: {
       roles : env.PRIVATE_RECORD_ROLES ? env.PRIVATE_RECORD_ROLES.split(/\s+/).map(g => g.trim()) : [],
       types :  env.PRIVATE_RECORD_TYPES ? env.PRIVATE_RECORD_TYPES.split(/\s+/).map(g => g.trim()) : []
+    },
+    miv: {
+      roles : env.MIV_RECORD_ROLES ? env.MIV_RECORD_ROLES.split(/\s+/).map(g => g.trim()) : ['miv'],
+      types :  env.MIV_RECORD_TYPES ? env.MIV_RECORD_TYPES.split(/\s+/).map(g => g.trim()) : []
     }
   },
 
@@ -74,7 +78,8 @@ module.exports = {
     password : env.FUSEKI_PASSWORD || 'testing123',
     host : env.FUSEKI_HOST || 'fuseki',
     port : env.FUSEKI_PORT || 3030,
-    database : env.FUSEKI_DATABASE || 'vivo',
+    database : env.FUSEKI_DATABASE || 'experts',
+    private_database : env.FUSEKI_PRIVATE_DATABASE || 'private',
     graphs,
     schemaPrefix : {
       uri : 'http://experts.ucdavis.edu/schema#',

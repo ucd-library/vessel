@@ -4,18 +4,20 @@ const config = require('../config');
 /**
  * @function admin
  * @description express middleware for only allowing admin access to endpoint
- * 
- * @param {Object} req 
- * @param {Object} res 
- * @param {Function} next 
+ *
+ * @param {Object} req
+ * @param {Object} res
+ * @param {Function} next
  */
-module.exports = (opts={}) => 
+module.exports = (opts={}) =>
   async (req, res, next) => {
-    let roles, types, token, user;
+    let roles, types, token, user,access;
 
-    if( config.data && config.data.private ) {
-      roles = config.data.private.roles || [];
-      types = config.data.private.types;
+    access = opts.access || 'private';
+
+    if( config.data && config.data[access] ) {
+      roles = config.data.[access].roles || [];
+      types = config.data.[access].types;
     }
 
     // no private roles defined
