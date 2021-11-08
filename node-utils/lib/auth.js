@@ -42,8 +42,8 @@ class Auth {
    * 
    * @returns {Promise} resolves to string
    */
-  getSecret() {
-    this._connect();
+  async getSecret() {
+    await this._connect();
     return redis.client.get(config.redis.keys.serverSecret);
   }
 
