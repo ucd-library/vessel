@@ -10,7 +10,7 @@ module.exports = async function initDefaultAdmins() {
   if( !admins ) return;
   admins = admins.split(' ').map(admin => admin.trim());
 
-  auth._connect();
+  await auth._connect();
   for( let admin of admins ) {
     let result = await auth.redis.client.get(auth.getUserRoleKey(admin, 'admin'));
     if( !result ) {
