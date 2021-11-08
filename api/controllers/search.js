@@ -226,7 +226,6 @@ router.post('/',  middleware.user, async (req, res) => {
         explain: req.query.explain === 'true'
       }
     };
-    console.log(opts);
     res.json(await model.apiSearch(req.body, opts, roles));
   } catch(e) {
     onError(req, res, e, 'Error with search query');

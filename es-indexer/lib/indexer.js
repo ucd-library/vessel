@@ -161,8 +161,6 @@ class Indexer {
 
     try {
       payload.index = await redis.client.get(config.redis.keys.indexWrite);
-      let t1 = Date.now();
-      
 
       this.status.send({
         status: this.status.STATES.START, 
@@ -170,21 +168,14 @@ class Indexer {
         index: payload.index,
         subject: payload.subject
       });
-      let t2 = Date.now();
-      if( t2 - t1 < 0 ) console.log('1. Negative timestamp!', t2 - t1, 'before: '+t1, 'after: '+t2,  payload);
 
-      let idxRsp = await this.index(payload.subject, payload);
-      
-      let t3 = Date.now();
-      if( t3 - t2 < 0 ) console.log('2. Negative timestamp!', t3 - t2, 'before: '+t2, 'after: '+t3, payload);
-      if( t3 - t1 < 0 ) console.log('3. Negative timestamp!', t3 - t1, 'before: '+t1, 'after: '+t3,  payload);
+      await this.index(payload.subject, payload);
       
       this.status.send({
         status: this.status.STATES.COMPLETE, 
         action: 'index', 
         index : payload.index,
-        subject: payload.subject,
-        idxRsp : {key: idxRsp.key, subject: idxRsp.subject, timestamp: idxRsp.timestamp}
+        subject: payload.subject
       });
     } catch(e) {
       if( !e ) e = {};
