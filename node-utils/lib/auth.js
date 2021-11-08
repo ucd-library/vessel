@@ -15,10 +15,10 @@ class Auth {
    * @method _connect
    * @description ensure admin redis client is connected
    */
-  _connect() {
+  async _connect() {
     if( this.isRedisConnected ) return;
+    await redis.connect();
     this.isRedisConnected = true;
-    return redis.connect();
   }
 
   /**
