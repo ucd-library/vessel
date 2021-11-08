@@ -70,4 +70,6 @@ class RedisClient {
 
 }
 
-module.exports = new RedisClient();
+let client = new RedisClient();
+client.RedisClient = RedisClient;
+module.exports = client;

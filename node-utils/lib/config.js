@@ -143,9 +143,12 @@ module.exports = {
 
   gateway : {
     port : 3000,
+    wsHosts : {
+      client : env.CLIENT_SERVICE_NAME ? 'ws://'+CLIENT_SERVICE_NAME+':3000' : 'ws://client:3000',
+    },
     serviceHosts : {
       auth : env.AUTH_SERVICE_HOST || 'http://auth:3000',
-      client : env.CLIENT_SERVICE_HOST || 'http://client:3000',
+      client : env.CLIENT_SERVICE_NAME ? 'ws://'+CLIENT_SERVICE_NAME+':3000' : 'ws://client:3000',
       model : env.MODELS_SERVICE_NAME ? 'http://'+env.MODELS_SERVICE_NAME+':3000' : 'http://models:3000',
       api : env.API_SERVICE_HOST || 'http://api:3000',
       indexer : env.INDEXER_SERVICE_HOST || 'http://indexer:3000'

@@ -1,4 +1,4 @@
-const kafka = require('@ucd-lib/node-kafka');
+const {kafka} = require('@ucd-lib/rp-node-utils');
 
 let topic = process.argv[3] || 'vessel-status-update';
 let file = process.argv[2];

@@ -106,7 +106,7 @@ class StatusWorker {
       clearInterval(this.indexerIntervalTimer);
       this.indexerIntervalTimer = null;
       this.sendIndexerStatus();
-    }, this.UPDATE_INTERVAL * 2);
+    }, this.UPDATE_INTERVAL * 4);
   }
 
   async sendIndexerStatus() {
