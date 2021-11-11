@@ -60,9 +60,10 @@ router.get(/\/record\/.*/, middleware.user, async (req, res) => {
       for( id of ids ) {
         let record = (await model.get(decodeURIComponent(id), opts))._source;
         if( record._acl && !record._acl.some(role => roles.includes(role)) ) {
-          continue;
+          //          continue;
+          record={"@id":decodeURIComponent(id),error: true, message: 'record not found'};
         }
-        arr.push(id);
+        arr.push(record);
       }
       res.json(arr);
     } else {
