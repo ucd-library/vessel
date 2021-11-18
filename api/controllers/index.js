@@ -15,6 +15,7 @@ router.use('/search', require('./search'));
 router.use('/indexer', require('./indexer'));
 router.use('/miv', require('./miv'));
 router.use('/concept', require('./concept'));
+router.use('/token', require('./token'));
 
 /**
  * @swagger

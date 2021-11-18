@@ -35,8 +35,9 @@ module.exports = {
   },
 
   jwt : {
-    expiresIn : env.JWT_EXPIRES_IN || 1000 * 60 * 60 * 24 * 30,
+    expiresIn : env.JWT_EXPIRES_IN || 60 * 60 * 24 * 30,
     cookieName : env.JWT_COOKIE_NAME || 'rp-ucd-jwt',
+    secretStorage : env.SECRET_STORAGE || 'local'
   },
 
   authService : {
@@ -119,7 +120,8 @@ module.exports = {
   },
 
   google : {
-    serviceAccountFile : ''
+    // Note, the google node libraries will automagically use this as well.
+    serviceAccountFile : env.GOOGLE_APPLICATION_CREDENTIALS
   },
 
   logging : {

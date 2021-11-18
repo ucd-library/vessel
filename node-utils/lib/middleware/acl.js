@@ -32,7 +32,7 @@ module.exports = (opts={}) =>
     if( !token ) return res.status(401).json({error: true, message: 'Unauthorized'});
 
     try {
-      user = await auth.verifyToken(token);
+      user = await auth.verifyToken(token, auth.getRequestIp(req));
     } catch(e) {
       return res.status(401).json({error: true, message: 'Unauthorized'});
     }
