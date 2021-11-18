@@ -54,6 +54,8 @@ class Debouncer {
 
       // subscribe to front of committed offset
       await this.kafkaConsumer.subscribe([config.kafka.topics.rdfPatch]);
+
+      await this.kafkaProducer.client.setPollInterval(config.kafka.producerPollInterval);
     } catch(e) {
       logger.error('kafka init error', e);
     }

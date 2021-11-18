@@ -2,7 +2,7 @@ const router = require('express').Router();
 const model = require('../models/elastic-search');
 const swaggerSpec = require('./swagger/spec.json');
 const errorHandler = require('./utils/error-handler');
-const {middleware} = require('@ucd-lib/rp-node-utils');
+const {auth, middleware} = require('@ucd-lib/rp-node-utils');
 const path = require('path');
 const fs = require('fs');
 
@@ -12,6 +12,7 @@ router.get('/', (req, res) => {
 });
 
 router.use('/search', require('./search'));
+router.use('/indexer', require('./indexer'));
 router.use('/miv', require('./miv'));
 router.use('/concept', require('./concept'));
 
@@ -38,19 +39,39 @@ router.use('/concept', require('./concept'));
  *              type: object
  *              description: record or array of records
  */
-router.get(/\/record\/.*/, async (req, res) => {
+router.get(/\/record\/.*/, middleware.user, async (req, res) => {
+  let isAdmin = false;
+  let roles = (req.jwt || {}).roles || [];
+  roles.push('public');
+
   try {
-    let id = req.originalUrl.replace(/\/api\/record\//, '');
+    isAdmin = auth.isAdmin(req.jwt);
+  } catch(e) {}
+
+  let opts = {
+    allFields : (req.query.allFields === 'true' && isAdmin)
+  };
+  try {
+    let id = req.originalUrl.replace(/\/api\/record\//, '').replace(/\?.*/, '');
     if( id.includes(',') ) {
       let ids = id.split(',');
       let arr = [];
 
       for( id of ids ) {
-        arr.push((await model.get(decodeURIComponent(id)))._source);
+        let record = (await model.get(decodeURIComponent(id), opts))._source;
+        if( record._acl && !record._acl.some(role => roles.includes(role)) ) {
+          //          continue;
+          record={"@id":decodeURIComponent(id),error: true, message: 'record not found'};
+        }
+        arr.push(record);
       }
       res.json(arr);
     } else {
-      res.json((await model.get(decodeURIComponent(id)))._source);
+      let record = (await model.get(decodeURIComponent(id), opts))._source;
+      if( record._acl && !record._acl.some(role => roles.includes(role)) ) {
+        return res.status(404).json({error: true, message: 'record not found: '+decodeURIComponent(id)});
+      }
+      res.json(record);
     }
   } catch(e) {
     console.log(e);

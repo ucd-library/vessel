@@ -25,6 +25,10 @@ function init(app) {
         username = req.session[cas.session_name];
       }
 
+      let properties = req.session[cas.session_info];
+      if( !properties.roles ) properties.roles = [];
+      properties.roles.push('cas');
+
       if( username ) {
         logger.info('CAS Service: CAS login success: '+username);
         res.set('X-VESSEL-AUTHORIZED-AGENT', username+'@'+AGENT_DOMAIN)

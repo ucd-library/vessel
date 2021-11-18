@@ -14,17 +14,17 @@ PREFIX free: <http://experts.ucdavis.edu/subject/free#>
 PREFIX for: <http://experts.ucdavis.edu/subject/FoR#>
 
 CONSTRUCT {
-  ?subject rdf:type ?type .
-  ?subject rdf:type experts:work .
-
-  ?subject rdfs:label ?label .
-  ?subject bibo:abstract ?abstract .
-  ?subject bibo:doi ?doi .
-  ?subject bibo:volume ?volume .
-  ?subject bibo:issue ?issue .
-  ?subject bibo:pageStart ?pageStart .
-  ?subject bibo:pageEnd ?pageEnd .
-  ?subject vivo:publicationDate ?dateTime .
+  ?subject rdf:type ?type, experts:work ;
+    rdfs:label ?label ;
+    bibo:abstract ?abstract ;
+    bibo:doi ?doi ;
+    bibo:volume ?volume ;
+    bibo:issue ?issue ;
+    bibo:pageStart ?pageStart ;
+    bibo:pageEnd ?pageEnd ;
+    bibo:uri ?uri ;
+    vivo:publicationDate ?dateTime ;
+    .
 
   ?subject vivo:Authorship ?author .
   ?author rdf:type vivo:Authorship .
@@ -78,6 +78,7 @@ CONSTRUCT {
   OPTIONAL { ?subject bibo:volume ?volume . }
   OPTIONAL { ?subject bibo:pageStart ?pageStart . }
   OPTIONAL { ?subject bibo:pageEnd ?pageEnd . }
+  OPTIONAL { ?subject bibo:uri ?uri . }
 
   OPTIONAL {
     ?subject vivo:relatedBy ?author .

@@ -3,8 +3,9 @@ const fetch = require('node-fetch');
 class PostProcess {
 
   async run(model, args, esSparqlModel) {
-    if( model.pageStart ) model.pageStart = model.pageStart.replace(/\D*/g, '');
-    if( model.pageEnd ) model.pageEnd = model.pageEnd.replace(/\D*/g, '');
+    // JM - removing page cleanup
+    // if( model.pageStart ) model.pageStart = model.pageStart.replace(/\D*/g, '');
+    // if( model.pageEnd ) model.pageEnd = model.pageEnd.replace(/\D*/g, '');
     
     if( model.Authorship ) {
       this.cleanObject(model, 'Authorship');
@@ -27,12 +28,14 @@ class PostProcess {
       model.citation = model.citation.map(item => {
         item.authorsCount = asArray(item.authors).length;
 
-        let author = asArray(item.authors).find(author => {
+        let citations = dedupCitation(item.authors);
+
+        let author = citations.find(author => {
           return asArray(author.identifiers)
             .map(id => typeof id === 'string' ? id : id['@id'])
             .includes(model['@id'])
         });
-        if( author ) item.rank = author['vivo:rank'];
+        if( author ) item.rank = author.rank;
 
         if( item.authorsCount && item.rank ) {
           // is person last author
@@ -40,8 +43,8 @@ class PostProcess {
             model._.lastCitation.push(item);
           }
 
-          // is person top 20% rank in citation
-          if( item.rank / item.authorsCount <= .2 ) {
+          // is person top 20% rank in citation, top 2 authors up to 10
+          if( item.rank / item.authorsCount <= .2 || (item.rank <= 2 && item.authorsCount <= 10) ) {
             model._.top20Citation.push(item);
           }
         }
@@ -175,6 +178,34 @@ function asArray(val) {
   if( !val ) return [];
   if( !Array.isArray(val) ) return [val];
   return val;
+}
+
+function getIdentifier(item) {
+  if( typeof item === 'string' ) return item;
+  if( typeof item === 'object' && item['@id'] ) return item['@id'];
+  return '';
+}
+
+function simpleCitationObject(item) {
+  return {
+    '@id' : getIdentifier(item),
+    rank : item['vivo:rank'] || item.rank,
+    identifiers : asArray(item.identifiers).map(getIdentifier)
+  }
+}
+
+function dedupCitation(citations) {
+  citations = asArray(citations).map(simpleCitationObject)
+  citations = citations.filter(item => {
+    let entries = citations.filter(citation => {
+      return citation.identifiers.some(id => item.identifiers.includes(id))
+    });
+    if( entries.length === 1 ) return true;
+
+    // pick best
+    return (item.rank !== undefined) ? true : false;
+  });
+  return citations;
 }
 
 module.exports = new PostProcess();

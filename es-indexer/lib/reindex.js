@@ -55,6 +55,8 @@ class Reindex {
     
     // connect to kafka and ensure index topic
     await this.kafkaProducer.connect();
+    await this.kafkaProducer.client.setPollInterval(config.kafka.producerPollInterval);
+
     await kafka.utils.ensureTopic({
       topic : config.kafka.topics.index,
       num_partitions: 1,
@@ -88,7 +90,10 @@ class Reindex {
         await this._indexType(key);
       }
     } else { // reindex single type
-      for( let type of modelMeta.models[opts.type] ) {
+      let def = modelMeta.models[opts.type];
+      if( def.types ) def = def.types;
+
+      for( let type of def ) {
         await this._indexType(type);
       }
     }

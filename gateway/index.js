@@ -1,10 +1,11 @@
-const {logger, config, auth} = require('@ucd-lib/rp-node-utils');
+const {logger, config, auth, middleware} = require('@ucd-lib/rp-node-utils');
 const express = require('express');
 const app = express();
 const compression = require('compression');
 const httpProxy = require('http-proxy');
 const cookieParser = require('cookie-parser');
 const cors = require('cors')({
+  origin: true,
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
   exposedHeaders : ['content-type', 'link', 'content-disposition', 'content-length', 'pragma', 'expires', 'cache-control'],
   allowedHeaders : ['authorization', 'range', 'cookie', 'content-type', 'prefer', 'slug', 'cache-control', 'accept'],
@@ -107,7 +108,7 @@ app.use(/^\/api(\/.*|$)/, (req, res) => {
 
 app.use(/^\/indexer\/model\/.*/, (req, res) => {
   proxy.web(req, res, {
-    target: config.gateway.serviceHosts.indexer+req.originalUrl.replace(/^\/indexer/, ''),
+    target: config.gateway.serviceHosts.model+req.originalUrl.replace(/^\/indexer\/model/, ''),
     ignorePath: true
   });
 });
@@ -119,7 +120,8 @@ app.use(/^\/auth(\/.*|$)/, (req, res) => {
   });
 });
 
-app.use(/^\/fuseki(\/.*|$)/, (req, res) => {
+// app.use(/^\/fuseki(\/.*|$)/, middleware.acl(), (req, res) => {
+app.use(/^\/fuseki(\/.*|$)/, middleware.acl(), (req, res) => {
   proxy.web(req, res, {
     target: 'http://'+config.fuseki.host+':'+config.fuseki.port+'/'+config.fuseki.database+'/query',
     ignorePath: true
