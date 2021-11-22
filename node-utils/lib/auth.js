@@ -127,17 +127,21 @@ class Auth {
    * 
    * @returns {Boolean} 
    */
-  verifyCidr(cidrAddresses, reqIpAddresses) {
+   verifyCidr(cidrAddresses, reqIpAddresses) {
     if( typeof cidrAddresses === 'string' ) {
-      cidrAddresses = cidrAddresses.split(',').map(ip => ip.trim());
+      cidrAddresses = cidrAddresses.split(',')
+		    .map(ip => ip.trim())
+	      .map(ip => {
+          if( !ip.match(/\//) ) return ip+'/32';
+          return ip;
+        });
     }
-    if( typeof ipAddress === 'string' ) {
-      ipAddress = ipAddress.split(',').map(ip => ip.trim());
+    if( typeof reqIpAddresses === 'string' ) {
+      reqIpAddresses = reqIpAddresses.split(',').map(ip => ip.trim());
     }
 
-
-    let address, cidr, match = false;
-    for( address of token.ips ) {
+    let address, reqIp, cidr;
+    for( address of cidrAddresses ) {
       cidr = new IPCIDR(address);
       for( reqIp of reqIpAddresses ) {
         if( cidr.contains(reqIp) ) {
@@ -183,8 +187,8 @@ class Auth {
     let token = req.cookies[config.jwt.cookieName];
     if( token ) return token;
     
-    token = req.get('Authorization');
-    if( token ) return token.replace(/^Bearer /, '');
+    token = req.get('authorization');
+    if( token ) return token.replace(/^Bearer /i, '');
 
     return null;
   }

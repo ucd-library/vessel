@@ -32,9 +32,11 @@ class ElasticSearch {
    * @returns {Promise} resolves to elasticsearch result
    */
   async get(id, opts={}) {
+    let query;
+
     // try by index id
     try {
-      let query = {
+      query = {
         index: config.elasticSearch.indexAlias,
         type: '_all',
         id: id
@@ -49,19 +51,25 @@ class ElasticSearch {
       return this.client.get(query);
     } catch(e) {}
 
-    // try by known identifiers
-    let result = await this.search({
-      query : {
-        bool : {
-          should : [
-            {term : {doi : id}},
-            {term: {'hasContactInfo.hasEmail.email': id}},
-            {term: {'identifier.value': id}},
-            {term: {casId: id}}
-          ]
-        }
+    query = {
+      bool : {
+        should : [
+          {term : {doi : id}},
+          {term: {'hasContactInfo.hasEmail.email': id}},
+          {term: {'identifier.value': id}},
+          {term: {casId: id}}
+        ]
       }
-    }, null, opts);
+    }
+
+    if( opts.allFields !== true ) {
+      query._source_excludes = config.elasticSearch.fields.exclude
+        .filter(item => item !== '_acl')
+        .join(',');
+    }
+
+    // try by known identifiers
+    let result = await this.search({query}, null, opts);
 
     if( result.hits.hits.length ) {
       return result.hits.hits[0];
