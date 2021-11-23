@@ -128,10 +128,19 @@ app.use(/^\/auth(\/.*|$)/, (req, res) => {
   });
 });
 
-// app.use(/^\/fuseki(\/.*|$)/, middleware.acl(), (req, res) => {
-app.use(/^\/fuseki(\/.*|$)/, middleware.acl(), (req, res) => {
+
+let fusekiPublicRegex = new RegExp('/fuseki/'+config.fuseki.database+'(/.*|$)');
+app.use(fusekiPublicRegex, middleware.acl(), (req, res) => {
   proxy.web(req, res, {
     target: 'http://'+config.fuseki.host+':'+config.fuseki.port+'/'+config.fuseki.database+'/query',
+    ignorePath: true
+  });
+});
+
+let fusekiPrivateRegex = new RegExp('/fuseki/'+config.fuseki.privateDatabase+'(/.*|$)');
+app.use(fusekiPrivateRegex, middleware.roles([config.fuseki.privateDatabaseRole]), (req, res) => {
+  proxy.web(req, res, {
+    target: 'http://'+config.fuseki.host+':'+config.fuseki.port+'/'+config.fuseki.privateDatabase+'/query',
     ignorePath: true
   });
 });

@@ -75,7 +75,9 @@ module.exports = {
     password : env.FUSEKI_PASSWORD || 'testing123',
     host : env.FUSEKI_HOST || 'fuseki',
     port : env.FUSEKI_PORT || 3030,
-    database : env.FUSEKI_DATABASE || 'vivo',
+    database : env.FUSEKI_DATABASE || 'experts',
+    privateDatabase : env.FUSEKI_PRIVATE_DATABASE || 'private',
+    privateDatabaseRole : env.FUSEKI_PRIVATE_DATABASE_ROLE || 'private-db',
     graphs,
     schemaPrefix : {
       uri : 'http://experts.ucdavis.edu/schema#',
