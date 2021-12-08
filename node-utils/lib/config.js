@@ -27,10 +27,6 @@ module.exports = {
     private: {
       roles : env.PRIVATE_RECORD_ROLES ? env.PRIVATE_RECORD_ROLES.split(/\s+/).map(g => g.trim()) : [],
       types :  env.PRIVATE_RECORD_TYPES ? env.PRIVATE_RECORD_TYPES.split(/\s+/).map(g => g.trim()) : []
-    },
-    miv: {
-      roles : env.MIV_RECORD_ROLES ? env.MIV_RECORD_ROLES.split(/\s+/).map(g => g.trim()) : ['miv'],
-      types :  env.MIV_RECORD_TYPES ? env.MIV_RECORD_TYPES.split(/\s+/).map(g => g.trim()) : []
     }
   },
 
