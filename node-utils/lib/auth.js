@@ -15,10 +15,10 @@ class Auth {
    * @method _connect
    * @description ensure admin redis client is connected
    */
-  _connect() {
+  async _connect() {
     if( this.isRedisConnected ) return;
+    await redis.connect();
     this.isRedisConnected = true;
-    return redis.connect();
   }
 
   /**
@@ -42,8 +42,8 @@ class Auth {
    * 
    * @returns {Promise} resolves to string
    */
-  getSecret() {
-    this._connect();
+  async getSecret() {
+    await this._connect();
     return redis.client.get(config.redis.keys.serverSecret);
   }
 

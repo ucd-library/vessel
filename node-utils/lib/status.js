@@ -73,8 +73,9 @@ class Status {
   _messageAdditions(msg) {
     msg.service = this.options.producer;
     // having CRAZY timestamp generation issues around index
-    // msg.timestamp = Date.now();
-    msg.timestamp = Number(process.hrtime.bigint() / 1000n);
+    msg.timestamp = new Date().getTime();
+    msg.datetime = new Date().toISOString();
+    // msg.timestamp = Number(process.hrtime.bigint() / 1000n);
   }
 
   _onMessage(msg) {

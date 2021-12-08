@@ -2,11 +2,15 @@ const {kafka, redis, logger, config, Status, fuseki, esSparqlModel} = require('@
 const patchParser = require('./patch-parser');
 const changes = require('./get-changes');
 
+const redisEvents = new redis.RedisClient();
+
 class Debouncer {
 
   constructor() {
     this.lastMessageTimer = null;
     this.run = true;
+
+    this.EXPIRE_PREFIX = 'expire-';
 
     this.kafkaProducer = new kafka.Producer({
       'metadata.broker.list': config.kafka.host+':'+config.kafka.port
@@ -29,6 +33,9 @@ class Debouncer {
     })
 
     this.status = new Status({producer: 'debouncer'});
+
+    // check for any expired messages
+    setInterval(() => this.cleanup(), 30*1000);
   }
 
   /**
@@ -42,6 +49,16 @@ class Debouncer {
    */
   async connect() {
     await redis.connect();
+    await redisEvents.connect();
+
+    logger.info('Listening to redis key events')
+    redisEvents.client.config('set','notify-keyspace-events','Ex');
+    redisEvents.client.subscribe('__keyevent@0__:expired');
+    redisEvents.client.on('message', (channel, key) => {
+      if( channel !== '__keyevent@0__:expired' ) return;
+      key = key.replace(this.EXPIRE_PREFIX+config.redis.prefixes.debouncer, '');
+      this.sendKey(key);
+    });
 
     await this.kafkaConsumer.connect();
     await this.kafkaReindexConsumer.connect();
@@ -64,8 +81,6 @@ class Debouncer {
     await this.status.connect();
     this.listen();
     this.listenReindex();
-
-    this.resetMessageDelayHandler();
   }
 
   /**
@@ -76,7 +91,7 @@ class Debouncer {
     try {
       await this.kafkaConsumer.consume(msg => this.onMessage(msg));
     } catch(e) {
-      logger.error('kafka consume error', e);
+      logger.error('kafka consume patch error', e);
     }
   }
 
@@ -84,7 +99,7 @@ class Debouncer {
     try {
       await this.kafkaReindexConsumer.consume(msg => this.onReindexMessage(msg));
     } catch(e) {
-      logger.error('kafka consume error', e);
+      logger.error('kafka consume reindex error', e);
     }
   }
 
@@ -123,10 +138,8 @@ class Debouncer {
         continue;
       }
       
-      await this.sendStartMessage(subject);
+      await this.startDebounceDelay(subject);
     }
-
-    this.resetMessageDelayHandler();
   }
 
   async onReindexMessage(msg) {
@@ -140,35 +153,27 @@ class Debouncer {
       return;
     }
 
-    await this.sendStartMessage(subject);
-    this.resetMessageDelayHandler();
+    await this.startDebounceDelay(subject);
   }
 
-  async sendStartMessage(subject) {
+  /**
+   * @method startDebounceDelay
+   * @description set that the key is about to be debounced
+   * 
+   * @param {*} subject 
+   */
+  async startDebounceDelay(subject) {
     this.status.send({
       status: this.status.STATES.START,
       index: await redis.client.get(config.redis.keys.indexWrite),
       subject
     });
     await redis.client.set(config.redis.prefixes.debouncer+subject,  Date.now());
-  }
-
-  /**
-   * @method resetMessageDelayHandler
-   * @description reset the timer for the main handleMessages loop. Defaults to 5s.
-   * So there must be no messages for 5s before messages are handled.  A new message
-   * in the handleMessage loop will break the loop and reset the timer.
-   */
-  resetMessageDelayHandler() {
-    if( this.lastMessageTimer ) {
-      clearTimeout(this.lastMessageTimer);
-    }
-
-    this.lastMessageTimer = setTimeout(() => {
-      this.lastMessageTimer = null;
-      this.run = true;
-      this.handleMessages();
-    }, config.debouncer.handleMessageDelay * 1000);
+    await redis.client.set(this.EXPIRE_PREFIX+config.redis.prefixes.debouncer+subject,  Date.now());
+    await redis.client.expire(
+      this.EXPIRE_PREFIX+config.redis.prefixes.debouncer+subject,  
+      config.debouncer.handleMessageDelay + Math.round(Math.random() * 5)
+    );
   }
 
   /**
@@ -177,14 +182,13 @@ class Debouncer {
    * message by parsing out the subject, sending the subject to the kafka indexer topic
    * and finally deleting the redis key.
    * 
-   * @param {String} key redis key 
+   * @param {String} subject redis key 
    * 
    * @return {Promise}
    */
-  async sendKey(key) {
-    logger.info('Sending subject to indexer: ', key.replace(config.redis.prefixes.debouncer, ''));
+  async sendKey(subject) {
+    logger.info('Sending subject to indexer: ', subject);
 
-    let subject = key.replace(config.redis.prefixes.debouncer, '');
     this.status.send({
       status: this.status.STATES.COMPLETE, 
       index: await redis.client.get(config.redis.keys.indexWrite),
@@ -200,35 +204,7 @@ class Debouncer {
       key : 'debouncer'
     });
 
-    await redis.client.del(key);
-  }
-
-  /**
-   * @method handleMessages
-   * @description Called when no message has come in for 5s. Scans redis for
-   * the debouncer prefix keys, keys are handled in sendKey() method.  Main loop
-   * breaks if the this.run flag is set to false (see onMessage)
-   * 
-   * @returns {Promise}.
-   */
-  async handleMessages() {
-    if( !this.run ) return;
-
-    let options = {
-      cursor: 0,
-      pattern : config.redis.prefixes.debouncer+'*',
-      count : '1'
-    };
-
-    while( 1 ) { // Yes!
-      let res = await redis.scan(options);
-      for( let key of res.keys ) {
-        await this.sendKey(key);
-      }
-
-      if( !this.run || res.cursor == '0' ) break;
-      options.cursor = res.cursor;
-    }
+    await redis.client.del(config.redis.prefixes.debouncer+subject);
   }
 
   async getTypes(subjects) {
@@ -261,6 +237,34 @@ class Debouncer {
     }
 
     return false;
+  }
+
+  /**
+   * @method cleanup
+   * @description every 30s scan all keys and check for any expired debounce keys
+   * 
+   * @returns {Promise}.
+   */
+  async cleanup() {
+    let options = {
+      cursor: 0,
+      pattern : config.redis.prefixes.debouncer+'*',
+      count : '1'
+    };
+
+    while( 1 ) { // Yes!
+      let res = await redis.scan(options);
+      for( let key of res.keys ) {
+        let value = parseInt(await redis.client.get(key));
+        if( Date.now() - value < (config.debouncer.handleMessageDelay * 4) ) continue;
+        key = key.replace(config.redis.prefixes.debouncer, '');
+        logger.info('Sending unhandled key; ',  key, Math.floor((Date.now() - value) / 1000) +' seconds old');
+        await this.sendKey(key.replace(config.redis.prefixes.debouncer, ''));
+      }
+
+      if( res.cursor === '0' ) break;
+      options.cursor = res.cursor;
+    }
   }
 
 

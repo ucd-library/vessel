@@ -1,6 +1,7 @@
 const {logger, config, auth, middleware} = require('@ucd-lib/rp-node-utils');
 const express = require('express');
 const app = express();
+const server = require('http').createServer(app);
 const compression = require('compression');
 const httpProxy = require('http-proxy');
 const cookieParser = require('cookie-parser');
@@ -70,6 +71,13 @@ function readBody(res) {
     });
   });
 }
+
+// handle websocket upgrade requests
+server.on('upgrade', (req, socket, head) => {
+  proxy.ws(req, socket, head, {
+    target: config.gateway.wsHosts.client
+  });
+});
 
 /**
  * HTTP Logging
@@ -145,7 +153,7 @@ app.use(/.*/, (req, res) => {
 /**
  * Start Server
  */
-app.listen(config.gateway.port, () => {
+server.listen(config.gateway.port, () => {
   logger.info('gateway listening on port: '+config.gateway.port);
   require('./lib/default-roles')();
 })

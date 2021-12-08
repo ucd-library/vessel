@@ -61,6 +61,7 @@ class IndexerInsert {
       // await this.clearKey(event.key);
 
       event.finished = true;
+      event.timestamp = Date.now();
       process.send(event);
     });
   }
@@ -92,7 +93,7 @@ class IndexerInsert {
    */
   async insert(uri, id, msg, type) {
     let modelType = await esSparqlModel.hasModel(type);
-    logger.info(`From ${id} sent by ${msg.sender || 'unknown'} loading ${uri} with model ${modelType}. ${msg.force ? 'force=true' : ''}`);
+    logger.debug(`From ${id} sent by ${msg.sender || 'unknown'} loading ${uri} with model ${modelType}. ${msg.force ? 'force=true' : ''}`);
     
     let result;
     try{ 
@@ -115,7 +116,7 @@ class IndexerInsert {
     result.model._.updated = Date.now();
 
     await elasticSearch.insert(result.model, msg.index);
-    logger.info(`Updated ${uri} into ${msg.index || 'default alias'}`);
+    // logger.info(`Updated ${uri} using ${modelType} into ${msg.index || 'default alias'}`);
   }
   
   /**

@@ -60,28 +60,31 @@ class Indexer {
     logger.info('Creating child exec process');
 
     this.childProc = fork(this.childExecFile);
-    this.childProc.on('exit', (code) => {
+    this.childProc.on('exit', (code) => this._handleChildProcEvent(code));
+    this.childProc.on('error', e => this._handleChildProcEvent(e));
+    this.childProc.on('message', e => this._handleChildProcEvent(null, e));
+  }
+
+  _handleChildProcEvent(err, msg) {
+    if( err !== null && err !== undefined ) {
+      try { this.childProc.kill() }
+      catch(e) {};
+
       this.childProc = null;
-      logger.info('Child exec process exited: '+code);
+      logger.info('Child exec process exited', err);
       if( this.childProcIndexResolve ) {
-        this.childProcIndexResolve.reject({message: 'exit code: '+code, stack: 'not traceble, check process server logs'});
+        let reject = this.childProcIndexResolve.reject;
         this.childProcIndexResolve = null;
+        reject(err);
       }
-    });
-    this.childProc.on('error', e => {
-      this.childProc = null;
-      logger.info('Child exec process error', e);
-      if( this.childProcIndexResolve ) {
-        this.childProcIndexResolve.reject(e);
-        this.childProcIndexResolve = null;
-      }
-    });
-    this.childProc.on('message', e => {
-      if( this.childProcIndexResolve ) {
-        this.childProcIndexResolve.resolve();
-        this.childProcIndexResolve = null;
-      }
-    });
+      return;
+    }
+
+    if( this.childProcIndexResolve ) {
+      let resolve = this.childProcIndexResolve.resolve;
+      this.childProcIndexResolve = null;
+      resolve(msg);
+    }
   }
 
   /**
@@ -92,7 +95,7 @@ class Indexer {
     try {
       await this.kafkaConsumer.consume(msg => this.onMessage(msg));
     } catch(e) {
-      console.error('kafka consume error', e);
+      logger.error('kafka consume error', e);
     }
   }
 
@@ -116,7 +119,7 @@ class Indexer {
     this.run = false;
 
     let id = kafka.utils.getMsgId(msg);
-    logger.info(`handling kafka message: ${id}`);
+    logger.debug(`handling kafka message: ${id}`);
 
     let payload;
     try {
@@ -165,8 +168,9 @@ class Indexer {
         index: payload.index,
         subject: payload.subject
       });
-      await this.index(payload.subject, payload);
 
+      await this.index(payload.subject, payload);
+      
       this.status.send({
         status: this.status.STATES.COMPLETE, 
         action: 'index', 
@@ -174,6 +178,7 @@ class Indexer {
         subject: payload.subject
       });
     } catch(e) {
+      if( !e ) e = {};
       logger.error('index error', e);
       this.status.send({
         status : this.status.STATES.ERROR, 
@@ -212,8 +217,12 @@ class Indexer {
     return null;
   }
 
-  index(key, msg) {
+  async index(key, msg) {
     this.createChildExec();
+
+    if( this.childProcIndexPromise ) {
+      await this.childProcIndexPromise;
+    }
 
     this.childProcIndexPromise = new Promise((resolve, reject) => {
       this.childProcIndexResolve = {resolve, reject};

@@ -107,8 +107,6 @@ class ElasticSearch {
       options.body.explain = true;
     }
 
-    console.log(options);
-
     return this.client.search(options);
   }
 
@@ -127,8 +125,6 @@ class ElasticSearch {
     if( !searchDocument.filters ) {
       searchDocument.filters = {};
     }
-
-    console.log(options.searchOpts);
 
     let esBody = utils.searchDocumentToEsBody(searchDocument, options.noLimit);
     let esResult = await this.search(esBody, undefined, options.searchOpts, roles);

@@ -5,6 +5,8 @@ const path = require('path');
 class StatusWorker {
 
   constructor() {
+    this.lastStatusUpdate = -1;
+
     this.status = new Status({
       consumer: 'status-worker',
       onMessage: async msg => {
@@ -94,8 +96,8 @@ class StatusWorker {
     });
 
     if( !this.indexerIntervalTimer ) {
-      this.indexerIntervalTimer = setInterval(() => this.sendIndexerStatus(), this.UPDATE_INTERVAL);
-      this.sendIndexerStatus();
+      this.indexerIntervalTimer = setInterval(() => this.sendIndexerStatus('interval'), this.UPDATE_INTERVAL);
+      this.sendIndexerStatus('start');
     }
 
     if( this.killIntervalTimer ) {
@@ -105,16 +107,25 @@ class StatusWorker {
     this.killIntervalTimer = setTimeout(() => {
       clearInterval(this.indexerIntervalTimer);
       this.indexerIntervalTimer = null;
-      this.sendIndexerStatus();
-    }, this.UPDATE_INTERVAL * 2);
+      this.sendIndexerStatus('end');
+    }, this.UPDATE_INTERVAL * 4);
   }
 
-  async sendIndexerStatus() {
+  async sendIndexerStatus(state) {
+    let timestamp = Date.now();
     let resp = await fetch(config.gateway.serviceHosts.api+'/api/indexer/stats');
+
+    logger.info(
+      'Sending status statistics to: '+config.kafka.topics.indexerStatusUpdate, 
+      ', reason='+state,
+      this.lastStatusUpdate !== -1 ? ', last status update='+Math.round((Date.now() - this.lastStatusUpdate)/1000)+'s ago'  : '',
+      ', Status status api request time: '+((Date.now() - timestamp)+'ms' )
+    );
     this.kafkaProducer.produce({
       topic : config.kafka.topics.indexerStatusUpdate,
       value : await resp.json()
     });
+    this.lastStatusUpdate = Date.now();    
   }
 
   /**
