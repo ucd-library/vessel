@@ -148,19 +148,35 @@ class Indexer {
     }
 
     let modelType = await this.getKnownModelType(payload);
+    let index = await redis.client.get(config.redis.keys.indexWrite);
+
     if( !modelType ) {
-      this.status.send({
-        status: 'ignored', 
-        action: 'index', 
-        index: await redis.client.get(config.redix.keys.indexWrite),
-        subject: payload.subject
-      });
-      logger.info(`Ignoring message ${payload.msgId} with subject ${payload.subject} sent by ${payload.sender || 'unknown'}: Type has no model ${modelType} ${JSON.stringify(payload.types || [])}`);
+      let deleted = await this.deleteIfExists(payload.subject, index);
+
+      if( deleted ) {
+        this.status.send({
+          status: this.status.STATES.COMPLETE, 
+          action: 'index', 
+          index,
+          subject: payload.subject
+        });
+        logger.info(`Message ${payload.msgId} with subject ${payload.subject} sent by ${payload.sender || 'unknown'}: was not is fuseki but found in elastic search.  record has been removed from elastic search`);
+      } else {
+        this.status.send({
+          status: 'ignored', 
+          action: 'index', 
+          index,
+          subject: payload.subject
+        });
+        logger.info(`Ignoring message ${payload.msgId} with subject ${payload.subject} sent by ${payload.sender || 'unknown'}: Type has no model ${modelType} ${JSON.stringify(payload.types || [])}`);
+      }
+
+      
       return;
     }
 
     try {
-      payload.index = await redis.client.get(config.redis.keys.indexWrite);
+      payload.index = index;
 
       this.status.send({
         status: this.status.STATES.START, 
@@ -230,6 +246,22 @@ class Indexer {
     });
 
     return this.childProcIndexPromise;
+  }
+
+  async deleteIfExists(id, index) {
+    id = id.replace(config.fuseki.rootPrefix.uri, config.fuseki.rootPrefix.prefix+':')
+    index = index ? index : config.elasticSearch.indexAlias;
+    let exists = await elasticSearch.client.exists({index, id});
+
+    logger.debug(`Checking subject ${id} is in elastic search:`, exists);
+    if( exists === false ) return false;
+
+    let response = await elasticSearch.client.delete({index, id});
+    if( response.result !== 'deleted' ) {
+      logger.error(`Failed to delete ${id} from elastic search`, response);
+    }
+
+    return true;
   }
 
 }

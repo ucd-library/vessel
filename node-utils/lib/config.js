@@ -39,8 +39,9 @@ module.exports = {
   },
 
   jwt : {
-    expiresIn : env.JWT_EXPIRES_IN || 1000 * 60 * 60 * 24 * 30,
+    expiresIn : env.JWT_EXPIRES_IN || 60 * 60 * 24 * 30,
     cookieName : env.JWT_COOKIE_NAME || 'rp-ucd-jwt',
+    secretStorage : env.SECRET_STORAGE || 'local'
   },
 
   authService : {
@@ -79,7 +80,8 @@ module.exports = {
     host : env.FUSEKI_HOST || 'fuseki',
     port : env.FUSEKI_PORT || 3030,
     database : env.FUSEKI_DATABASE || 'experts',
-    private_database : env.FUSEKI_PRIVATE_DATABASE || 'private',
+    privateDatabase : env.FUSEKI_PRIVATE_DATABASE || 'private',
+    privateDatabaseRole : env.FUSEKI_PRIVATE_DATABASE_ROLE || 'private-db',
     graphs,
     schemaPrefix : {
       uri : 'http://experts.ucdavis.edu/schema#',
@@ -124,7 +126,8 @@ module.exports = {
   },
 
   google : {
-    serviceAccountFile : ''
+    // Note, the google node libraries will automagically use this as well.
+    serviceAccountFile : env.GOOGLE_APPLICATION_CREDENTIALS
   },
 
   logging : {
@@ -153,7 +156,7 @@ module.exports = {
     },
     serviceHosts : {
       auth : env.AUTH_SERVICE_HOST || 'http://auth:3000',
-      client : env.CLIENT_SERVICE_NAME ? 'ws://'+CLIENT_SERVICE_NAME+':3000' : 'ws://client:3000',
+      client : env.CLIENT_SERVICE_NAME ? 'http://'+CLIENT_SERVICE_NAME+':3000' : 'http://client:3000',
       model : env.MODELS_SERVICE_NAME ? 'http://'+env.MODELS_SERVICE_NAME+':3000' : 'http://models:3000',
       api : env.API_SERVICE_HOST || 'http://api:3000',
       indexer : env.INDEXER_SERVICE_HOST || 'http://indexer:3000'
