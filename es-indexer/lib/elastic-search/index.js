@@ -1,4 +1,4 @@
-const {config, elasticSearch, redis, logger} = require('@ucd-lib/rp-node-utils');
+const {config, elasticSearch, redis, logger, fetch} = require('@ucd-lib/rp-node-utils');
 const fs = require('fs');
 const path = require('path');
 
@@ -117,20 +117,12 @@ class ElasticSearch {
           settings : {
             analysis : {
               analyzer: {
-                autocomplete: { 
-                  tokenizer: 'autocomplete',
-                  filter: [
-                    'lowercase'
-                  ]
+                defaultAnalyzer: { 
+                  tokenizer: 'standard',
+                  filter: ["lowercase", "stop", "asciifolding"]
                 },
-                autocomplete_search : {
-                  tokenizer: "lowercase"
-                },
-                // first_letter : {
-                //   filter : [
-                //    "lowercase"
-                //   ],
-                //   tokenizer : "first_letter"
+                // autocomplete_search : {
+                //   tokenizer: "lowercase"
                 // }
               },
               char_filter: {
@@ -148,18 +140,22 @@ class ElasticSearch {
                   filter: [
                     "lowercase"
                   ]
+                },
+                keyword_lowercase: {
+                  type: "custom",
+                  filter: ["lowercase"]
                 }
               },
               tokenizer: {
-                autocomplete: {
-                  type: 'edge_ngram',
-                  min_gram: 1,
-                  max_gram: 20,
-                  token_chars: [
-                    "letter",
-                    "digit"
-                  ]
-                },
+                // autocomplete: {
+                //   type: 'edge_ngram',
+                //   min_gram: 1,
+                //   max_gram: 20,
+                //   token_chars: [
+                //     "letter",
+                //     "digit"
+                //   ]
+                // },
                 // first_letter : {
                 //   pattern : "^(.).*$",
                 //   group : 1,

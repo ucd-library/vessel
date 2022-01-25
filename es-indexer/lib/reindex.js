@@ -63,15 +63,27 @@ class Reindex {
       if( index.indexer.complete !== index.total ) return;
 
       // set the search alias to the current write index
-      logger.info(`swapping aliases: ${config.elasticSearch.indexAlias} -> ${p.writeIndex}`);
-      await elasticSearch.client.indices.putAlias({
-        index: p.writeIndex, 
-        name: config.elasticSearch.indexAlias
-      });
+      this.setIndex(writeIndex);
     }
 
     // delete any pending indexes, cleanup stats
-    for( let index of p.pendingDeleteIndexes ) {
+    await this.deletePending(p.pendingDeleteIndexes);
+  }
+
+  setIndex(writeIndex) {
+    logger.info(`swapping aliases: ${config.elasticSearch.indexAlias} -> ${writeIndex}`);
+    return elasticSearch.client.indices.putAlias({
+      index: writeIndex, 
+      name: config.elasticSearch.indexAlias
+    });
+  }
+
+  async deletePending(pendingDeleteIndexes) {
+    if( !pendingDeleteIndexes ) {
+      pendingDeleteIndexes = await redis.client.get(config.redis.keys.indexesPendingDelete);
+    }
+
+    for( let index of pendingDeleteIndexes ) {
       logger.info(`deleting index: ${index}`);
       await elasticSearch.client.indices.delete({index});
       await elasticSearch.client.deleteByQuery({
@@ -88,7 +100,6 @@ class Reindex {
       });
     }
 
-    pendingDeleteIndexes = await redis.client.get(config.redis.keys.indexesPendingDelete);
     await redis.client.del(config.redis.keys.indexesPendingDelete);
   }
 
