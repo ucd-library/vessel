@@ -63,7 +63,7 @@ class Reindex {
       if( index.indexer.complete !== index.total ) return;
 
       // set the search alias to the current write index
-      this.setIndex(writeIndex);
+      this.setIndex(p.writeIndex);
     }
 
     // delete any pending indexes, cleanup stats
