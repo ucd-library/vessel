@@ -1,0 +1,46 @@
+{
+  "dynamic" : false,
+
+  "dynamic_templates": [
+    {
+      "labels": {
+        "match_mapping_type": "string",
+        "match":   "*.status",
+        "mapping": {
+          "type" : "keyword"
+        }
+      }
+    }
+  ],
+
+  "properties" : {
+    
+    "subject" : {
+      "type" : "keyword"
+    },
+
+    "shortId" : {
+      "type" : "keyword",
+      "fields": {
+        "text" : {
+          "type" : "text",
+          "analyzer": "autocomplete", 
+          "search_analyzer": "autocomplete_search"
+        }
+      }
+    },
+
+    "index" : {
+      "type" : "keyword"
+    },
+
+    "debouncer.status" : {
+      "type" : "keyword"
+    },
+
+    "indexer.status" : {
+      "type" : "keyword"
+    }
+
+  }
+}

@@ -1,6 +1,7 @@
 const {logger, config, auth, middleware} = require('@ucd-lib/rp-node-utils');
 const express = require('express');
 const app = express();
+const server = require('http').createServer(app);
 const compression = require('compression');
 const httpProxy = require('http-proxy');
 const cookieParser = require('cookie-parser');
@@ -71,6 +72,13 @@ function readBody(res) {
   });
 }
 
+// handle websocket upgrade requests
+server.on('upgrade', (req, socket, head) => {
+  proxy.ws(req, socket, head, {
+    target: config.gateway.wsHosts.client
+  });
+});
+
 /**
  * HTTP Logging
  */
@@ -120,10 +128,19 @@ app.use(/^\/auth(\/.*|$)/, (req, res) => {
   });
 });
 
-// app.use(/^\/fuseki(\/.*|$)/, middleware.acl(), (req, res) => {
-app.use(/^\/fuseki(\/.*|$)/, middleware.acl(), (req, res) => {
+
+let fusekiPublicRegex = new RegExp('/fuseki/'+config.fuseki.database+'(/.*|$)');
+app.use(fusekiPublicRegex, middleware.acl(), (req, res) => {
   proxy.web(req, res, {
     target: 'http://'+config.fuseki.host+':'+config.fuseki.port+'/'+config.fuseki.database+'/query',
+    ignorePath: true
+  });
+});
+
+let fusekiPrivateRegex = new RegExp('/fuseki/'+config.fuseki.privateDatabase+'(/.*|$)');
+app.use(fusekiPrivateRegex, middleware.roles([config.fuseki.privateDatabaseRole]), (req, res) => {
+  proxy.web(req, res, {
+    target: 'http://'+config.fuseki.host+':'+config.fuseki.port+'/'+config.fuseki.privateDatabase+'/query',
     ignorePath: true
   });
 });
@@ -139,7 +156,7 @@ app.use(/.*/, (req, res) => {
 /**
  * Start Server
  */
-app.listen(config.gateway.port, () => {
+server.listen(config.gateway.port, () => {
   logger.info('gateway listening on port: '+config.gateway.port);
   require('./lib/default-admins')();
 })

@@ -1,9 +1,9 @@
-const {kafka, redis, fuseki, logger, config, esSparqlModel} = require('@ucd-lib/rp-node-utils');
+const {kafka, redis, fuseki, logger, config, esSparqlModel, Status} = require('@ucd-lib/rp-node-utils');
 const {fork} = require('child_process');
 const elasticSearch = require('./elastic-search');
-const reindex = require('./reindex');
+const Reindex = require('./reindex');
 const path = require('path');
-
+let count = 0;
 /**
  * @class Indexer
  * @description main indexer that reads kafka stream, debounces uris, queries fuseki and
@@ -12,7 +12,7 @@ const path = require('path');
 class Indexer {
 
   constructor() {
-    this.lastMessageTimer = null;
+    // this.lastMessageTimer = null;
     this.run = true;
 
     this.childExecFile = path.resolve(__dirname, 'indexer-exec.js');
@@ -20,8 +20,12 @@ class Indexer {
       'group.id': config.kafka.groups.index,
       'metadata.broker.list': config.kafka.host+':'+config.kafka.port,
     },{
+      // subscribe to front of committed offset
       'auto.offset.reset' : 'earliest'
     });
+
+    this.status = new Status({producer: 'indexer'});
+    this.reindex = new Reindex();
   }
 
   /**
@@ -35,41 +39,20 @@ class Indexer {
     await redis.connect();
     await elasticSearch.connect();
 
-    await elasticSearch.client.deleteByQuery({
-      index : 'research-profiles',
-      body : {
-      query : {
-        term : {
-          '_indexer.success' : false
-        }
-      }
-    }
-    })
+    await this.reindex.connect();
 
-    try {
-      await this.kafkaConsumer.connect();
+    await this.kafkaConsumer.connect();
 
-      await kafka.utils.ensureTopic({
-        topic : config.kafka.topics.index,
-        num_partitions: 1,
-        replication_factor: 1
-      }, {'metadata.broker.list': config.kafka.host+':'+config.kafka.port});
+    let topics = [config.kafka.topics.index];
+    logger.info('waiting for topics: ', topics);
+    await this.kafkaConsumer.waitForTopics(topics);
+    logger.info('topics ready: ', topics);
 
-      let watermarks = await this.kafkaConsumer.queryWatermarkOffsets(config.kafka.topics.index);
-      let topics = await this.kafkaConsumer.committed(config.kafka.topics.index);
-      logger.info(`Indexer (group.id=${config.kafka.groups.index}) kafak status=${JSON.stringify(topics)} watermarks=${JSON.stringify(watermarks)}`);
+    await this.kafkaConsumer.subscribe([config.kafka.topics.index]);
 
-      // subscribe to front of committed offset
-      await this.kafkaConsumer.subscribe([config.kafka.topics.index]);
-    } catch(e) {
-      console.error('kafka init error', e);
-    }
+    await this.status.connect();
 
     this.listen();
-
-    setTimeout(() => {
-      this.handleMessages();
-    }, 1000);
   }
 
   createChildExec() {
@@ -77,28 +60,31 @@ class Indexer {
     logger.info('Creating child exec process');
 
     this.childProc = fork(this.childExecFile);
-    this.childProc.on('exit', (code) => {
+    this.childProc.on('exit', (code) => this._handleChildProcEvent(code));
+    this.childProc.on('error', e => this._handleChildProcEvent(e));
+    this.childProc.on('message', e => this._handleChildProcEvent(null, e));
+  }
+
+  _handleChildProcEvent(err, msg) {
+    if( err !== null && err !== undefined ) {
+      try { this.childProc.kill() }
+      catch(e) {};
+
       this.childProc = null;
-      logger.info('Child exec process exited: '+code);
+      logger.info('Child exec process exited', err);
       if( this.childProcIndexResolve ) {
-        this.childProcIndexResolve.reject({message: 'exit code: '+code, stack: 'not traceble, check process server logs'});
+        let reject = this.childProcIndexResolve.reject;
         this.childProcIndexResolve = null;
+        reject(err);
       }
-    });
-    this.childProc.on('error', e => {
-      this.childProc = null;
-      logger.info('Child exec process error', e);
-      if( this.childProcIndexResolve ) {
-        this.childProcIndexResolve.reject(e);
-        this.childProcIndexResolve = null;
-      }
-    });
-    this.childProc.on('message', e => {
-      if( this.childProcIndexResolve ) {
-        this.childProcIndexResolve.resolve();
-        this.childProcIndexResolve = null;
-      }
-    });
+      return;
+    }
+
+    if( this.childProcIndexResolve ) {
+      let resolve = this.childProcIndexResolve.resolve;
+      this.childProcIndexResolve = null;
+      resolve(msg);
+    }
   }
 
   /**
@@ -109,7 +95,7 @@ class Indexer {
     try {
       await this.kafkaConsumer.consume(msg => this.onMessage(msg));
     } catch(e) {
-      console.error('kafka consume error', e);
+      logger.error('kafka consume error', e);
     }
   }
 
@@ -133,7 +119,7 @@ class Indexer {
     this.run = false;
 
     let id = kafka.utils.getMsgId(msg);
-    logger.info(`handling kafka message: ${id}`);
+    logger.debug(`handling kafka message: ${id}`);
 
     let payload;
     try {
@@ -141,13 +127,6 @@ class Indexer {
       payload.msgId = id;
     } catch(e) {
       logger.error(`failed to parse index payload. message: ${id}`, e.message, msg.value.toString('utf-8'));
-      return;
-    }
-
-    // if the msg has the cmd attribute, it's not a index insert
-    // handle command and exit
-    if( await this.handleCmdMsg(payload) ) {
-      this.resetMessageDelayHandler();
       return;
     }
 
@@ -169,20 +148,68 @@ class Indexer {
     }
 
     let modelType = await this.getKnownModelType(payload);
+    let index = await redis.client.get(config.redis.keys.indexWrite);
+
     if( !modelType ) {
-      logger.info(`Ignoring message ${payload.msgId} with subject ${payload.subject} sent by ${payload.sender || 'unknown'}: Type has no model ${modelType} ${JSON.stringify(payload.types || [])}`);
+      let deleted = await this.deleteIfExists(payload.subject, index);
+
+      if( deleted ) {
+        this.status.send({
+          status: this.status.STATES.COMPLETE, 
+          action: 'index', 
+          index,
+          subject: payload.subject
+        });
+        logger.info(`Message ${payload.msgId} with subject ${payload.subject} sent by ${payload.sender || 'unknown'}: was not is fuseki but found in elastic search.  record has been removed from elastic search`);
+      } else {
+        this.status.send({
+          status: 'ignored', 
+          action: 'index', 
+          index,
+          subject: payload.subject
+        });
+        logger.info(`Ignoring message ${payload.msgId} with subject ${payload.subject} sent by ${payload.sender || 'unknown'}: Type has no model ${modelType} ${JSON.stringify(payload.types || [])}`);
+      }
+
+      
       return;
     }
 
-    // If force flag, directly index.  Don't debounce.
-    if( payload.force ) {
-      await this.index(payload);
-      return;
+    try {
+      payload.index = index;
+
+      this.status.send({
+        status: this.status.STATES.START, 
+        action: 'index',
+        index: payload.index,
+        subject: payload.subject
+      });
+
+      await this.index(payload.subject, payload);
+      
+      this.status.send({
+        status: this.status.STATES.COMPLETE, 
+        action: 'index', 
+        index : payload.index,
+        subject: payload.subject
+      });
+    } catch(e) {
+      if( !e ) e = {};
+      logger.error('index error', e);
+      this.status.send({
+        status : this.status.STATES.ERROR, 
+        subject : payload.subject,
+        action: 'index',
+        index: payload.index,
+        error : {
+          id : payload.subject.replace(config.fuseki.rootPrefix.uri, config.fuseki.rootPrefix.prefix+':'),
+          message : e.message,
+          stack : e.stack,
+          logs : ['index process died'],
+          kafkaMessage : payload
+        }
+      });
     }
-
-    await redis.client.set(config.redis.prefixes.indexer+payload.subject, JSON.stringify(payload));
-
-    this.resetMessageDelayHandler();
   }
 
   /**
@@ -206,60 +233,12 @@ class Indexer {
     return null;
   }
 
-  /**
-   * @method handleCmdMsg
-   * @description handle the special kafka messages with the 'cmd' flag.  These are mostly
-   * used for creating new indexes (with a new schema) and swapping the alias pointer when
-   * complete
-   * 
-   * {
-   *   cmd : [String]
-   *   index : [String]
-   * }
-   * 
-   * @param {Object} payload kafka message payload
-   * 
-   * @returns {Boolean} 
-   */
-  async handleCmdMsg(payload) {
-    if( !payload.cmd ) return false;
-
-    if( payload.cmd === reindex.COMMANDS.CREATE_INDEX ) {
-      logger.info(`Creating new index ${payload.index}`);
-      await elasticSearch.createIndex(config.elasticSearch.indexAlias, payload.index);
-
-    } else if( payload.cmd === reindex.COMMANDS.DELETE_INDEX ) {
-      // set for later, needs to be done after indexing
-      // There might be more than one, so this is a prefix
-      await redis.client.set(config.redis.prefixes.deleteIndex+payload.index, JSON.stringify(payload));
-
-    } else if( payload.cmd === reindex.COMMANDS.SET_ALIAS ) {
-      // set for later, needs to be done after indexing
-      await redis.client.set(config.redis.keys.setAlias, JSON.stringify(payload));
-    }
-
-    return true;
-  }
-
-  /**
-   * @method resetMessageDelayHandler
-   * @description every time a message comes in the kafka queue we reset the timer.
-   * When the timer fires we start the actual es update.
-   */
-  resetMessageDelayHandler() {
-    if( this.lastMessageTimer ) {
-      clearTimeout(this.lastMessageTimer);
-    }
-
-    this.lastMessageTimer = setTimeout(() => {
-      this.lastMessageTimer = null;
-      this.run = true;
-      this.handleMessages();
-    }, config.indexer.handleMessageDelay * 1000);
-  }
-
-  index(key, msg) {
+  async index(key, msg) {
     this.createChildExec();
+
+    if( this.childProcIndexPromise ) {
+      await this.childProcIndexPromise;
+    }
 
     this.childProcIndexPromise = new Promise((resolve, reject) => {
       this.childProcIndexResolve = {resolve, reject};
@@ -269,98 +248,20 @@ class Indexer {
     return this.childProcIndexPromise;
   }
 
-  /**
-   * @methd handleMessages
-   * @description Called when no message has come in for 5s. Scans redis for
-   * the indexer prefix keys
-   */
-  async handleMessages() {
-    if( !this.run ) return;
+  async deleteIfExists(id, index) {
+    id = id.replace(config.fuseki.rootPrefix.uri, config.fuseki.rootPrefix.prefix+':')
+    index = index ? index : config.elasticSearch.indexAlias;
+    let exists = await elasticSearch.client.exists({index, id});
 
-    let options = {
-      cursor: 0,
-      pattern : config.redis.prefixes.indexer+'*',
-      count : '1'
-    };
+    logger.debug(`Checking subject ${id} is in elastic search:`, exists);
+    if( exists === false ) return false;
 
-    while( 1 ) {
-      let res = await redis.scan(options);
-      for( let key of res.keys ) {
-        let msg = await redis.client.get(key);
-
-        try {
-          msg = JSON.parse(msg);
-          await this.index(key, msg);
-        } catch(e) {
-          // capture failures
-          await elasticSearch.insert({
-            '@id' : msg.subject.replace(config.fuseki.rootPrefix.uri, config.fuseki.rootPrefix.prefix+':'),
-            _acl : ['admin'],
-            _indexer : {
-              success : false,
-              error : {
-                message : e.message,
-                stack : e.stack
-              },
-              logs : ['index process died'],
-              kafkaMessage : msg,
-              timestamp: new Date()
-            }
-          }, msg.index);
-
-        }
-      }
-
-      if( !this.run || res.cursor == '0' ) break;
-      options.cursor = res.cursor;
+    let response = await elasticSearch.client.delete({index, id});
+    if( response.result !== 'deleted' ) {
+      logger.error(`Failed to delete ${id} from elastic search`, response);
     }
 
-    // now that we have finished indexing, check for commands
-    await this.setAliasCmd();
-    await this.deleteIndexCmd();
-
-    await redis.client.save();
-  }
-
-  /**
-   * @method setAliasCmd
-   * @description Run the set-alias command
-   */
-  async setAliasCmd() {
-    let payload;
-    try {
-      payload = await redis.client.get(config.redis.keys.setAlias);
-      if( !payload ) return;
-      payload = JSON.parse(payload);
-      logger.info(`Setting alias ${config.elasticSearch.indexAlias} to ${payload.index}`);
-      await elasticSearch.client.indices.putAlias({index: payload.index, name: config.elasticSearch.indexAlias});
-      await redis.client.del(config.redis.keys.setAlias);
-    } catch(e) {
-      logger.error('Failed to run set-index', e);
-    }
-  }
-
-  /**
-   * @method deleteIndexCmd
-   * @description run the delete-index command
-   */
-  async deleteIndexCmd() {
-    let payload;
-    try {
-      payload = await redis.client.keys(config.redis.prefixes.deleteIndex+'*');
-      if( !payload ) return;
-      if( !payload.length ) return;
-
-      for( let key of payload ) {
-        let index = key.replace(config.redis.prefixes.deleteIndex, '');
-        logger.info(`Removing index ${index}`);
-        await elasticSearch.client.indices.delete({index});
-        await redis.client.del(key);
-      }
-
-    } catch(e) {
-      logger.error('Failed to run delete-index', payload, e);
-    }
+    return true;
   }
 
 }

@@ -36,7 +36,7 @@ router.get(/^\/.*/, async (req, res) => {
     //   let token = auth.getTokenFromRequest(req);
     //   if( token ) {
     //     try {
-    //       user = await auth.verifyToken(token);
+    //       user = await auth.verifyToken(token, auth.getRequestIp(req));
     //       username = user.username.replace(/@.*/, '');
     //     } catch(e) {}
     //   }

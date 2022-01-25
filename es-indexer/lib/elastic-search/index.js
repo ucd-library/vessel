@@ -1,4 +1,4 @@
-const {config, elasticSearch, logger} = require('@ucd-lib/rp-node-utils');
+const {config, elasticSearch, redis, logger} = require('@ucd-lib/rp-node-utils');
 const fs = require('fs');
 const path = require('path');
 
@@ -10,6 +10,7 @@ class ElasticSearch {
    * @description connect to elasticsearch and ensure collection indexes
    */
   async connect() {
+    await redis.connect();
     await elasticSearch.connect();
     this.client = elasticSearch.client;
 
@@ -104,8 +105,10 @@ class ElasticSearch {
    */
   async createIndex(alias, newIndexName) {
     newIndexName = newIndexName && alias !== newIndexName ? newIndexName : `${alias}-${Date.now()}`;
-    let vivo = JSON.parse(fs.readFileSync(path.join(__dirname, 'vivo.json'), 'utf-8'));
+    let schemaTxt = fs.readFileSync(path.join(__dirname, 'vivo.json'));
+    let vivo = JSON.parse(schemaTxt, 'utf-8');
 
+    await redis.client.set(config.redis.keys.indexWrite, newIndexName);
 
     try {
       await this.client.indices.create({

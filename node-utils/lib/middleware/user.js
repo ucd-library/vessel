@@ -13,7 +13,7 @@ module.exports = async (req, res, next) => {
   if( !token ) return next();
 
   try {
-    req.jwt = await auth.verifyToken(token);
+    req.jwt = await auth.verifyToken(token, auth.getRequestIp(req));
   } catch(e) {}
 
   next();

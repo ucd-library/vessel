@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const reindex = require('../lib/reindex');
+const reindex = require('../lib/indexer').reindex;
 const es = require('../lib/elastic-search');
 const errorHandler = require('./error-handler');
 
@@ -19,10 +19,6 @@ router.get('/reindex', async (req, res) => {
  */
 router.get('/reindex/run/:type?', async (req, res) => {
   try {
-    if( reindex.getState().state === reindex.STATES.RUNNING ) {
-      return res.json({state: 'Already running'});
-    }
-
     reindex.run({
       type: req.params.type,
       updateSchema : req.query['rebuild-schema'] === 'true' ? true : false
@@ -38,10 +34,6 @@ router.get('/reindex/run/:type?', async (req, res) => {
  */
 router.get('/reindex/rebuild-schema', async (req, res) => {
   try {
-    if( reindex.getState().state === reindex.STATES.RUNNING ) {
-      return res.json({state: 'Already running'});
-    }
-
     reindex.run({updateSchema: true});
     res.json(reindex.getState());
   } catch(e) {

@@ -15,6 +15,7 @@ router.use('/search', require('./search'));
 router.use('/indexer', require('./indexer'));
 router.use('/miv', require('./miv'));
 router.use('/concept', require('./concept'));
+router.use('/token', require('./token'));
 
 /**
  * @swagger
@@ -68,6 +69,7 @@ router.get(/\/record\/.*/, middleware.user, async (req, res) => {
       res.json(arr);
     } else {
       let record = (await model.get(decodeURIComponent(id), opts))._source;
+      console.log(record._acl, req.jwt);
       if( record._acl && !record._acl.some(role => roles.includes(role)) ) {
         return res.status(404).json({error: true, message: 'record not found: '+decodeURIComponent(id)});
       }
