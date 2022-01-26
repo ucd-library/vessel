@@ -130,13 +130,13 @@
     },
 
     "hasContactInfo.givenName" : {
-      "type" : "keyword",
-      "fields": {
-        "text" : {
-          "type" : "text",
-          "analyzer": "defaultAnalyzer"
-        }
-      }
+      "type" : "text",
+      "analyzer": "defaultAnalyzer"
+    },
+
+    "hasContactInfo.middleName" : {
+      "type" : "text",
+      "analyzer": "defaultAnalyzer"
     },
 
     "relates.hasContactInfo.familyName" : {
