@@ -1,5 +1,6 @@
 const express = require('express');
 const {logger, config} = require('@ucd-lib/rp-node-utils');
+const bodyParser = require('body-parser');
 const app = express();
 
 process.on('unhandledRejection', e => {
@@ -10,6 +11,7 @@ process.on('unhandledRejection', e => {
 const indexer = require('./lib/indexer');
 indexer.connect();
 
+app.use(bodyParser.json());
 app.use(require('./controllers'));
 
 app.listen(config.indexer.port, () => {

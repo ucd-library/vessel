@@ -2,7 +2,7 @@ const router = require('express').Router();
 const model = require('../models/elastic-search');
 const swaggerSpec = require('./swagger/spec.json');
 const errorHandler = require('./utils/error-handler');
-const {auth, middleware} = require('@ucd-lib/rp-node-utils');
+const {auth, middleware, config, fetch} = require('@ucd-lib/rp-node-utils');
 const path = require('path');
 const fs = require('fs');
 

@@ -48,7 +48,8 @@ class ElasticSearch {
           .join(',');
       }
 
-      return this.client.get(query);
+      // await first here! important for try/catch
+      return await this.client.get(query);
     } catch(e) {}
 
     query = {
@@ -62,14 +63,15 @@ class ElasticSearch {
       }
     }
 
+    let options = {};
     if( opts.allFields !== true ) {
-      query._source_excludes = config.elasticSearch.fields.exclude
+      options._source_excludes = config.elasticSearch.fields.exclude
         .filter(item => item !== '_acl')
         .join(',');
     }
 
     // try by known identifiers
-    let result = await this.search({query}, null, opts);
+    let result = await this.search({query}, options, opts, ['public']);
 
     if( result.hits.hits.length ) {
       return result.hits.hits[0];
@@ -107,7 +109,7 @@ class ElasticSearch {
       }
     }
 
-    if( opts.allFields !== true ) {
+    if( opts.allFields !== true && !options._source_excludes ) {
       options._source_excludes = config.elasticSearch.fields.exclude.join(',');
     }
     if( opts.explain ) {
