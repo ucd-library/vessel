@@ -44,11 +44,11 @@ class Reindex {
 
   /**
    * @method onMessage
-   * @description listens to the indexer-status-update topic.  Checks for completed index, then swaps  
+   * @description listens to the indexer-status-update topic.  Checks for completed index, then swaps
    * if complete
-   * 
-   * @param {*} msg 
-   * @returns 
+   *
+   * @param {*} msg
+   * @returns
    */
   async onMessage(msg) {
     let p = JSON.parse(msg.value.toString('utf-8'));
@@ -111,9 +111,9 @@ class Reindex {
    * @method run
    * @description run the reindexer.  Will only run if in stopped state.  This method only adds items
    * to index
-   * 
-   * @param {Object} opts 
-   * @param {String} opts.type Es model type to reindex.  ex: person, organization, etc. If not provided, 
+   *
+   * @param {Object} opts
+   * @param {String} opts.type Es model type to reindex.  ex: person, organization, etc. If not provided,
    * all types will be reindexed
    * @param {Boolean} opts.updateSchema rebuild entire schema, replacing current when complete
    */
@@ -124,7 +124,7 @@ class Reindex {
         'metadata.broker.list': config.kafka.host+':'+config.kafka.port
       });
     }
-    
+
     // connect to kafka and ensure index topic
     await this.kafkaProducer.connect();
     this.kafkaProducer.client.setPollInterval(config.kafka.producerPollInterval);
@@ -194,8 +194,8 @@ class Reindex {
    * @method _indexType
    * @description query Fuseki for all subjects of a certain type,
    * then send subjects to index queue
-   * 
-   * @param {String} type 
+   *
+   * @param {String} type
    */
   async _indexType(type) {
     logger.info('Reindexing type: ', type);
@@ -226,10 +226,10 @@ class Reindex {
   /**
    * @method getSubjectsForType
    * @description get all subjects for a certain types.  Allows for pagination
-   * 
+   *
    * @param {String} type rdf type
-   * @param {Number} page 
-   * @param {Number} count 
+   * @param {Number} page
+   * @param {Number} count
    */
   async getSubjectsForType(type, page, count=100) {
     let response = await fuseki.query(`PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -244,7 +244,7 @@ class Reindex {
     try {
       response = await response.text();
       response = JSON.parse(response);
-      
+
       return [...new Set(response.results.bindings.map(term => term.subject.value))];
     } catch(e) {
       logger.error('Failed: reindex.getSubjectsForType: '+type+', '+page,  'reponse=', response, e);
