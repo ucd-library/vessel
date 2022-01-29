@@ -6,12 +6,9 @@ class PostProcess {
     // JM - removing page cleanup
     // if( model.pageStart ) model.pageStart = model.pageStart.replace(/\D*/g, '');
     // if( model.pageEnd ) model.pageEnd = model.pageEnd.replace(/\D*/g, '');
-    
-    if( model.Authorship ) {
-      this.cleanObject(model, 'Authorship');
-      model.Authorship = this.dedupeAuthorship(model.Authorship);
-    }
 
+
+    this.cleanObject(model, 'Authorship');
     this.cleanObject(model, 'hasSubjectArea');
     this.cleanObject(model, 'Journal');
 
@@ -24,7 +21,7 @@ class PostProcess {
       }
       model._.top20Citation = [];
       model._.lastCitation = [];
-      
+
       model.citation = model.citation.map(item => {
         item.authorsCount = asArray(item.authors).length;
 
@@ -76,7 +73,7 @@ class PostProcess {
     }
 
     let unique = new Set();
-    for( let item of terms ) {   
+    for( let item of terms ) {
       unique.add(item['@id']);
 
       let response = await esSparqlModel.getModel('concept', item['@id']);
@@ -104,71 +101,6 @@ class PostProcess {
       parent[attr] = {'@id': obj}
     }
   }
-
-  /**
-   * @method dedupeAuthorship
-   * @description remove duplicate authors, this can happen based on elements having multiple
-   * linked sources.  When removing dups, remove the one without rank.
-   * 
-   * @param {Array} arr 
-   */
-  dedupeAuthorship(arr) {
-    if( arr === undefined ) return arr;
-    if( !Array.isArray(arr) ) arr = [arr];
-
-    let dups = [];
-    arr.forEach((author, index) => {
-      // create array of all ids for author
-      let ids = [author['@id'], ... asArray(author.relates).map(item => item['@id']) ];
-
-      //  see if any new author id is already in array of dups
-      let exists = dups.findIndex(item => item.ids.some(id => ids.includes(id)));
-      if( exists > -1 ) {
-        // if so, we have a dup we need to sort out
-        dups[exists].authors.push(author);
-        ids.forEach(id => {
-          if( !dups[exists].ids.includes(id) ) {
-            dups[exists].ids.push(id);
-          }
-        });
-
-        return;
-      }
-
-      // this is a first of it's kind author
-      dups.push({authors: [author], index, ids});
-    });
-    arr = [];
-
-    for( let item of dups ) {
-      if( item.authors.length === 1 ) {
-        arr.push(item.authors[0]);
-        continue;
-      }
-
-      // if one has an author rank, keep it
-      let rankAuthor = item.authors.find(author => author['vivo:rank'] !== undefined );
-      if( rankAuthor ) {
-        arr.push(rankAuthor);
-        continue;
-      }
-
-      // use vcard
-      rankAuthor = item.authors.find(author => author['@type'].includes('vcard:Individual'));
-      if( rankAuthor ) {
-        arr.push(rankAuthor);
-        continue;
-      }
-
-
-      // otherwise just keep first
-      arr.push(item.authors[0]);
-    }
-
-    return arr;
-  }
-
-}
 
 function dashToCamel(str) {
   return str.replace(/-([a-z])/g, g => g[1].toUpperCase());

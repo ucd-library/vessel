@@ -18,12 +18,13 @@ CONSTRUCT {
   ?subject vivo:sponsorAwardId ?sponsorAwardId .
   ?subject vivo:totalAwardAmount ?totalAwardAmount .
 
-  ?subject vivo:assignedBy ?assignedBy . 
+  ?subject vivo:assignedBy ?assignedBy .
   ?assignedBy rdf:type ?assignedByType .
   ?assignedBy rdfs:label ?assignedByLabel .
 
-  ?subject vivo:relates ?relates . 
+  ?subject vivo:relates ?relates .
   ?relates rdf:type ?relatesType .
+  ?relates rdfs:label ?relates_label.
   ?relates obo:inheresIn ?inheresIn .
 
   ?relates obo:hasContactInfo ?relatesContactInfoFor .
@@ -37,9 +38,9 @@ CONSTRUCT {
   ?inheresInVcardName vcard:givenName ?inheresInGivenName .
   ?inheresInVcardName vcard:familyName ?inheresInFamilyName .
 
-  ?subject vivo:dateTimeInterval ?dateTimeInterval . 
+  ?subject vivo:dateTimeInterval ?dateTimeInterval .
   ?dateTimeInterval rdf:type ?dateTimeIntervalType .
-    
+
   ?dateTimeInterval vivo:start ?dateTimeStart .
   ?dateTimeStart rdf:type ?dateTimeStartType .
   ?dateTimeStart vivo:dateTime ?dateTimeStartTime .
@@ -57,16 +58,19 @@ CONSTRUCT {
   OPTIONAL { ?subject vivo:sponsorAwardId ?sponsorAwardId . }
   OPTIONAL { ?subject vivo:totalAwardAmount ?totalAwardAmount . }
 
-  OPTIONAL { 
-    ?subject vivo:assignedBy ?assignedBy . 
+  OPTIONAL {
+    ?subject vivo:assignedBy ?assignedBy .
     ?assignedBy rdf:type ?assignedByType .
     OPTIONAL { ?assignedBy rdfs:label ?assignedByLabel . }
   }
 
-  OPTIONAL { 
-    ?subject vivo:relates ?relates . 
+  OPTIONAL {
+    ?subject vivo:relates ?relates .
     ?relates rdf:type ?relatesType .
 
+    OPTIONAL {
+      ?relates rdfs:label ?relates_label.
+    }
     OPTIONAL {
       ?relates obo:ARG_2000028 ?relatesContactInfoFor .
 
@@ -77,7 +81,7 @@ CONSTRUCT {
       }
     }
 
-    OPTIONAL { 
+    OPTIONAL {
       ?relates obo:RO_000052 ?inheresIn .
       ?inheresIn rdf:type ?inheresInType .
 
@@ -94,7 +98,7 @@ CONSTRUCT {
   }
 
   OPTIONAL {
-    ?subject vivo:dateTimeInterval ?dateTimeInterval . 
+    ?subject vivo:dateTimeInterval ?dateTimeInterval .
     ?dateTimeInterval rdf:type ?dateTimeIntervalType .
 
     OPTIONAL {

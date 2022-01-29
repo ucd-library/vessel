@@ -42,9 +42,9 @@ class Debouncer {
    * @method connect
    * @description connect to redis and kafka, ensure kafka topcs, query for kafka watermarks,
    * query for kafka committed offset, start listening to kafka stream from last committed offset.
-   * Finally, after a small delay, check to see if any messages are stashed in redis that were 
+   * Finally, after a small delay, check to see if any messages are stashed in redis that were
    * never executed
-   * 
+   *
    * @returns {Promise}
    */
   async connect() {
@@ -69,7 +69,7 @@ class Debouncer {
       config.kafka.topics.index,
       config.kafka.topics.reindex
     ];
-    
+
     logger.info('waiting for topics: ', topics);
     await this.kafkaReindexConsumer.waitForTopics(topics);
     logger.info('topics ready: ', topics);
@@ -106,10 +106,10 @@ class Debouncer {
   /**
    * @method onMessage
    * @description handle a kafka message.  Messages should be the raw patch from the
-   * kafka-fuseki-connector extension.  This method parses the rdf patch and makes a 
+   * kafka-fuseki-connector extension.  This method parses the rdf patch and makes a
    * unqiue list of all subject and object uris, places the uris in redis, resets
    * the message handler timeout (the main part of the debouncer).
-   * 
+   *
    * @param {Object} msg kafka message
    */
   async onMessage(msg) {
@@ -137,7 +137,7 @@ class Debouncer {
       if( !validType ) {
         continue;
       }
-      
+
       await this.startDebounceDelay(subject);
     }
   }
@@ -159,8 +159,8 @@ class Debouncer {
   /**
    * @method startDebounceDelay
    * @description set that the key is about to be debounced
-   * 
-   * @param {*} subject 
+   *
+   * @param {*} subject
    */
   async startDebounceDelay(subject) {
     this.status.send({
@@ -171,7 +171,7 @@ class Debouncer {
     await redis.client.set(config.redis.prefixes.debouncer+subject,  Date.now());
     await redis.client.set(this.EXPIRE_PREFIX+config.redis.prefixes.debouncer+subject,  Date.now());
     await redis.client.expire(
-      this.EXPIRE_PREFIX+config.redis.prefixes.debouncer+subject,  
+      this.EXPIRE_PREFIX+config.redis.prefixes.debouncer+subject,
       config.debouncer.handleMessageDelay + Math.round(Math.random() * 5)
     );
   }
@@ -181,16 +181,16 @@ class Debouncer {
    * @description Called from the main handleMessages loop. Handles the redis key
    * message by parsing out the subject, sending the subject to the kafka indexer topic
    * and finally deleting the redis key.
-   * 
-   * @param {String} subject redis key 
-   * 
+   *
+   * @param {String} subject redis key
+   *
    * @return {Promise}
    */
   async sendKey(subject) {
     logger.info('Sending subject to indexer: ', subject);
 
     this.status.send({
-      status: this.status.STATES.COMPLETE, 
+      status: this.status.STATES.COMPLETE,
       index: await redis.client.get(config.redis.keys.indexWrite),
       subject
     });
@@ -208,11 +208,11 @@ class Debouncer {
   }
 
   async getTypes(subjects) {
-    let response = await fuseki.query(`select * where { 
+    let response = await fuseki.query(`select * where {
       values ?subject { <${Object.keys(subjects).join('> <')}> }
       ?subject <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?type
     }`)
-    
+
     let bodyText, body;
     bodyText = await response.text();
     body = JSON.parse(bodyText);
@@ -242,7 +242,7 @@ class Debouncer {
   /**
    * @method cleanup
    * @description every 30s scan all keys and check for any expired debounce keys
-   * 
+   *
    * @returns {Promise}.
    */
   async cleanup() {
