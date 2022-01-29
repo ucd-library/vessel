@@ -59,7 +59,8 @@ class ElasticSearch {
           {term: {'hasContactInfo.hasEmail.email': id}},
           {term: {'identifier.value': id}},
           {term: {casId: id}}
-        ]
+        ],
+        minimum_should_match : 1
       }
     }
 
