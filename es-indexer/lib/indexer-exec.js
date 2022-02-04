@@ -1,5 +1,5 @@
 const elasticSearch = require('./elastic-search');
-const {config, redis, logger, fuseki, esSparqlModel} = require('@ucd-lib/rp-node-utils');
+const {config, redis, logger, fuseki, esSparqlModel, Status} = require('@ucd-lib/rp-node-utils');
 
 
 process.on('unhandledRejection', e => {
@@ -29,6 +29,8 @@ class IndexerInsert {
       this.acl.types = [... config.data.private.types];
     }
 
+    this.status = new Status({producer: 'indexer-exec'});
+
     process.on('message', async event => {
       await this.connect();
 
@@ -39,28 +41,27 @@ class IndexerInsert {
       try {
         await this.index(event.msg);
       } catch(err) {
-        logger.error(`Failed to update ${event.msg.subject}`);
+        logger.error(`Failed to update`, event);
 
-        // capture failures
-        await elasticSearch.insert({
-          '@id' : event.msg.subject.replace(config.fuseki.rootPrefix.uri, config.fuseki.rootPrefix.prefix+':'),
-          _acl : ['admin'],
-          _indexer : {
-            success : false,
-            error : {
-              message : err.message,
-              stack : err.stack
-            },
+        this.status.send({
+          status : this.status.STATES.ERROR, 
+          subject : event.msg.subject,
+          action: 'index',
+          index : event.msg.index,
+          error : {
+            id : event.msg.subject.replace(config.fuseki.rootPrefix.uri, config.fuseki.rootPrefix.prefix+':'),
+            message : err.message,
+            stack : err.stack,
             logs : err.logs || null,
             kafkaMessage : event.msg,
-            timestamp: new Date()
           }
-        }, event.msg.index);
+        });
       }
 
-      await this.clearKey(event.key);
+      // await this.clearKey(event.key);
 
       event.finished = true;
+      event.timestamp = Date.now();
       process.send(event);
     });
   }
@@ -73,18 +74,18 @@ class IndexerInsert {
     if( this.connected ) return;
     await redis.connect();
     await elasticSearch.connect();
+    await this.status.connect();
     this.connected = true;
   }
 
-  clearKey(key) {
-    return redis.client.del(key);
-  }
+  // clearKey(key) {
+  //   return redis.client.del(key);
+  // }
 
   /**
    * @method insert
    * @description insert es model from uri/type
    * 
-   * @param {String} key redis key
    * @param {String} uri uri of model 
    * @param {String} id unique kafka message id
    * @param {Object} msg kafka message
@@ -92,7 +93,7 @@ class IndexerInsert {
    */
   async insert(uri, id, msg, type) {
     let modelType = await esSparqlModel.hasModel(type);
-    logger.info(`From ${id} sent by ${msg.sender || 'unknown'} loading ${uri} with model ${modelType}. ${msg.force ? 'force=true' : ''}`);
+    logger.debug(`From ${id} sent by ${msg.sender || 'unknown'} loading ${uri} with model ${modelType}. ${msg.force ? 'force=true' : ''}`);
     
     let result;
     try{ 
@@ -111,14 +112,11 @@ class IndexerInsert {
       result.model._acl = ['public'];
     }
 
-    result.model._indexer = {
-      success : true,
-      kafkaMessage : msg,
-      timestamp : new Date()
-    };
+    if( !result.model._ ) result.model._ = {};
+    result.model._.updated = Date.now();
 
     await elasticSearch.insert(result.model, msg.index);
-    logger.info(`Updated ${uri} into ${msg.index || 'default alias'}`);
+    // logger.info(`Updated ${uri} using ${modelType} into ${msg.index || 'default alias'}`);
   }
   
   /**

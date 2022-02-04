@@ -13,7 +13,7 @@ module.exports = async (req, res, next) => {
   if( !token ) return res.status(401).json({error: true, message: 'Unauthorized'});
 
   try {
-    req.jwt = await auth.verifyToken(token);
+    req.jwt = await auth.verifyToken(token, auth.getRequestIp(req));
   } catch(e) {
     return res.status(401).json({error: true, message: 'Unauthorized'});
   }

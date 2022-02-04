@@ -1,4 +1,4 @@
-const {config, elasticSearch, logger} = require('@ucd-lib/rp-node-utils');
+const {config, elasticSearch, redis, logger, fetch} = require('@ucd-lib/rp-node-utils');
 const fs = require('fs');
 const path = require('path');
 
@@ -10,6 +10,7 @@ class ElasticSearch {
    * @description connect to elasticsearch and ensure collection indexes
    */
   async connect() {
+    await redis.connect();
     await elasticSearch.connect();
     this.client = elasticSearch.client;
 
@@ -104,8 +105,10 @@ class ElasticSearch {
    */
   async createIndex(alias, newIndexName) {
     newIndexName = newIndexName && alias !== newIndexName ? newIndexName : `${alias}-${Date.now()}`;
-    let vivo = JSON.parse(fs.readFileSync(path.join(__dirname, 'vivo.json'), 'utf-8'));
+    let schemaTxt = fs.readFileSync(path.join(__dirname, 'vivo.json'));
+    let vivo = JSON.parse(schemaTxt, 'utf-8');
 
+    await redis.client.set(config.redis.keys.indexWrite, newIndexName);
 
     try {
       await this.client.indices.create({
@@ -114,20 +117,12 @@ class ElasticSearch {
           settings : {
             analysis : {
               analyzer: {
-                autocomplete: { 
-                  tokenizer: 'autocomplete',
-                  filter: [
-                    'lowercase'
-                  ]
+                defaultAnalyzer: { 
+                  tokenizer: 'standard',
+                  filter: ["lowercase", "stop", "asciifolding"]
                 },
-                autocomplete_search : {
-                  tokenizer: "lowercase"
-                },
-                // first_letter : {
-                //   filter : [
-                //    "lowercase"
-                //   ],
-                //   tokenizer : "first_letter"
+                // autocomplete_search : {
+                //   tokenizer: "lowercase"
                 // }
               },
               char_filter: {
@@ -145,18 +140,22 @@ class ElasticSearch {
                   filter: [
                     "lowercase"
                   ]
+                },
+                keyword_lowercase: {
+                  type: "custom",
+                  filter: ["lowercase"]
                 }
               },
               tokenizer: {
-                autocomplete: {
-                  type: 'edge_ngram',
-                  min_gram: 1,
-                  max_gram: 20,
-                  token_chars: [
-                    "letter",
-                    "digit"
-                  ]
-                },
+                // autocomplete: {
+                //   type: 'edge_ngram',
+                //   min_gram: 1,
+                //   max_gram: 20,
+                //   token_chars: [
+                //     "letter",
+                //     "digit"
+                //   ]
+                // },
                 // first_letter : {
                 //   pattern : "^(.).*$",
                 //   group : 1,

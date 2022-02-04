@@ -220,7 +220,12 @@ router.post('/',  middleware.user, async (req, res) => {
   let roles = getRoles(req);
 
   try {
-    let opts = {debug: req.query.debug === 'true'};
+    let opts = {
+      debug: req.query.debug === 'true',
+      searchOpts : {
+        explain: req.query.explain === 'true'
+      }
+    };
     res.json(await model.apiSearch(req.body, opts, roles));
   } catch(e) {
     onError(req, res, e, 'Error with search query');
@@ -260,7 +265,12 @@ router.get('/',  middleware.user, async (req, res) => {
   let roles = getRoles(req);
 
   try {
-    let opts = {debug: req.query.debug === 'true'};
+    let opts = {
+      debug: req.query.debug === 'true',
+      searchOpts : {
+        explain: req.query.explain === 'true'
+      }
+    };
     let q = JSON.parse(req.query.q || '{}');
     res.json(await model.apiSearch(q, opts, roles));
   } catch(e) {

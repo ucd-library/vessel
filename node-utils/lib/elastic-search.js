@@ -2,6 +2,7 @@ const {Client} = require('elasticsearch');
 const waitUntil = require('./wait-until');
 const config = require('./config');
 const logger = require('./logger');
+const fetch = require('node-fetch');
 
 class ElasticSearch {
   /**
@@ -38,6 +39,17 @@ class ElasticSearch {
 
     await this.isConnected();
     logger.error('Connected to Elastic Search');
+  }
+
+  analyze(body) {
+    return fetch(
+      `http://${config.elasticSearch.username}:${config.elasticSearch.password}@${config.elasticSearch.host}:${config.elasticSearch.port}/_analyze`,
+      {
+        method : 'POST',
+        header : {'content-type': 'appliation/json'},
+        body : JSON.stringify(body)
+      }
+    )
   }
 
 }

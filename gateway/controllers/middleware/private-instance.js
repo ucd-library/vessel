@@ -37,7 +37,7 @@ module.exports = async (req, res, next) => {
 
   // Verify the header
   try {
-    req.jwt = await auth.verifyToken(token);
+    req.jwt = await auth.verifyToken(token, auth.getRequestIp(req));
   } catch(e) {
     return handleAuthPortalRedirect(req, res);
   }

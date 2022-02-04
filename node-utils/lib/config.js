@@ -35,8 +35,9 @@ module.exports = {
   },
 
   jwt : {
-    expiresIn : env.JWT_EXPIRES_IN || 1000 * 60 * 60 * 24 * 30,
+    expiresIn : env.JWT_EXPIRES_IN || 60 * 60 * 24 * 30,
     cookieName : env.JWT_COOKIE_NAME || 'rp-ucd-jwt',
+    secretStorage : env.SECRET_STORAGE || 'local'
   },
 
   authService : {
@@ -58,7 +59,10 @@ module.exports = {
     producerPollInterval : 100,
     topics : {
       index : 'index-rdf-subject',
-      rdfPatch : 'fuseki-rdf-patch'
+      reindex : 'reindex-rdf-subject',
+      rdfPatch : 'fuseki-rdf-patch',
+      status : 'vessel-status-update',
+      indexerStatusUpdate : 'indexer-status-update'
     },
     groups : {
       debouncer : 'vessel-debouncer-group',
@@ -71,7 +75,9 @@ module.exports = {
     password : env.FUSEKI_PASSWORD || 'testing123',
     host : env.FUSEKI_HOST || 'fuseki',
     port : env.FUSEKI_PORT || 3030,
-    database : env.FUSEKI_DATABASE || 'vivo',
+    database : env.FUSEKI_DATABASE || 'experts',
+    privateDatabase : env.FUSEKI_PRIVATE_DATABASE || 'private',
+    privateDatabaseRole : env.FUSEKI_PRIVATE_DATABASE_ROLE || 'private-db',
     graphs,
     schemaPrefix : {
       uri : 'http://experts.ucdavis.edu/schema#',
@@ -96,7 +102,9 @@ module.exports = {
     },
     keys : {
       serverSecret : 'server-secret',
-      setAlias : 'indexercmd-set-alias'
+      setAlias : 'indexercmd-set-alias',
+      indexWrite : 'index-write',
+      indexesPendingDelete : 'indexes-pending-delete'
     }
   },
 
@@ -106,6 +114,7 @@ module.exports = {
     username : env.ELASTIC_SEARCH_USERNAME || 'elastic',
     password : env.ELASTIC_SEARCH_PASSWORD || 'changeme',
     requestTimeout : env.ELASTIC_SEARCH_REQUEST_TIME || 3*60*1000,
+    statusIndex : 'status',
     indexAlias : 'research-profiles',
     fields : {
       exclude : ['_', 'citation', '_indexer'],
@@ -113,7 +122,8 @@ module.exports = {
   },
 
   google : {
-    serviceAccountFile : ''
+    // Note, the google node libraries will automagically use this as well.
+    serviceAccountFile : env.GOOGLE_APPLICATION_CREDENTIALS
   },
 
   logging : {
@@ -122,12 +132,12 @@ module.exports = {
   },
 
   debouncer : {
-    handleMessageDelay : 5 // seconds
+    handleMessageDelay : 10 // seconds
   },
 
   indexer : {
     port : 3000,
-    handleMessageDelay : 5 // seconds
+    // handleMessageDelay : 5 // seconds
   },
 
   models : {
@@ -137,9 +147,12 @@ module.exports = {
 
   gateway : {
     port : 3000,
+    wsHosts : {
+      client : env.CLIENT_SERVICE_NAME ? 'ws://'+CLIENT_SERVICE_NAME+':3000' : 'ws://client:3000',
+    },
     serviceHosts : {
       auth : env.AUTH_SERVICE_HOST || 'http://auth:3000',
-      client : env.CLIENT_SERVICE_HOST || 'http://client:3000',
+      client : env.CLIENT_SERVICE_NAME ? 'http://'+CLIENT_SERVICE_NAME+':3000' : 'http://client:3000',
       model : env.MODELS_SERVICE_NAME ? 'http://'+env.MODELS_SERVICE_NAME+':3000' : 'http://models:3000',
       api : env.API_SERVICE_HOST || 'http://api:3000',
       indexer : env.INDEXER_SERVICE_HOST || 'http://indexer:3000'

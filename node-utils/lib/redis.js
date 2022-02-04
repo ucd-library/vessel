@@ -2,13 +2,16 @@ const redis = require('redis');
 const util = require('util');
 const config = require('./config');
 const logger = require('./logger');
+const waitUntil = require('./wait-until');
 
 // commands we want to wrap in promises, feel free to add to this list
 const promisify = ['get', 'set', 'del', 'keys', 'expire', 'send_command', 'save'];
 
 class RedisClient {
 
-  _initClient() {
+  async _initClient() {
+    await waitUntil(config.redis.host, config.redis.port);
+
     this.client = redis.createClient({
       host: config.redis.host,
       port : config.redis.port
@@ -36,7 +39,9 @@ class RedisClient {
    * @description create/connect redis client
    */
   connect() {
-    if( !this.client ) this._initClient();
+    if( !this.client ) {
+      return this._initClient();
+    }
   }
 
   /**
@@ -70,4 +75,6 @@ class RedisClient {
 
 }
 
-module.exports = new RedisClient();
+let client = new RedisClient();
+client.RedisClient = RedisClient;
+module.exports = client;

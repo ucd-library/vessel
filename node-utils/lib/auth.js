@@ -1,5 +1,6 @@
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
+const IPCIDR = require("ip-cidr");
 const redis = require('./redis');
 const config = require('./config');
 const logger = require('./logger');
@@ -15,10 +16,10 @@ class Auth {
    * @method _connect
    * @description ensure admin redis client is connected
    */
-  _connect() {
+  async _connect() {
     if( this.isRedisConnected ) return;
+    await redis.connect();
     this.isRedisConnected = true;
-    return redis.connect();
   }
 
   /**
@@ -42,8 +43,8 @@ class Auth {
    * 
    * @returns {Promise} resolves to string
    */
-  getSecret() {
-    this._connect();
+  async getSecret() {
+    await this._connect();
     return redis.client.get(config.redis.keys.serverSecret);
   }
 
@@ -78,11 +79,20 @@ class Auth {
    * @description mint a new jwt token with given payload
    * 
    * @param {Object} payload 
+   * @param {Object} opts
+   * @param {String} opts.expiresIn
    * 
    * @return {Promise} resolves to JWT string
    */
-  async mintToken(payload) {
-    return jwt.sign(payload, await this.getSecret(), { expiresIn: config.jwt.expiresIn });
+  async mintToken(payload, opts={}) {
+    let token = await jwt.sign(
+      payload, 
+      await this.getSecret(), { 
+        expiresIn: opts.expiresIn || config.jwt.expiresIn 
+      }
+    );
+
+    return token;
   }
 
   /**
@@ -91,11 +101,76 @@ class Auth {
    * successful otherwise throws error.
    * 
    * @param {String} token 
+   * @param {String|Array} reqIpAddresses
    * 
    * @returns {Promise}
    */
-  async verifyToken(token) {
-    return jwt.verify(token, await this.getSecret());
+  async verifyToken(token, reqIpAddresses) {
+    // safety check that we have done this correctly
+    if( !reqIpAddresses ) throw Error('Invalid jwt check, no ips provided');
+
+    token = await jwt.verify(token, await this.getSecret());
+
+    if( token.ips && !this.verifyCidr(token.ips, reqIpAddresses) ) {
+      throw new Error('Invalid IP: '+token.ips);
+    }
+
+    return token;
+  }
+
+  /**
+   * @method verifyCidr
+   * @description verify req ip addressess in cidr array
+   * 
+   * @param {String|Array} cidrAddresses 
+   * @param {String|Array} reqIpAddresses
+   * 
+   * @returns {Boolean} 
+   */
+   verifyCidr(cidrAddresses, reqIpAddresses) {
+    if( typeof cidrAddresses === 'string' ) {
+      cidrAddresses = cidrAddresses.split(',')
+		    .map(ip => ip.trim())
+	      .map(ip => {
+          if( !ip.match(/\//) ) return ip+'/32';
+          return ip;
+        });
+    }
+    if( typeof reqIpAddresses === 'string' ) {
+      reqIpAddresses = reqIpAddresses.split(',').map(ip => ip.trim());
+    }
+
+    let address, reqIp, cidr;
+    for( address of cidrAddresses ) {
+      cidr = new IPCIDR(address);
+      for( reqIp of reqIpAddresses ) {
+        if( cidr.contains(reqIp) ) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  getRequestIp(req) {
+    if( req.get && req.get('x-forwarded-for') ) {
+      return req.get('x-forwarded-for');
+    }
+
+    if( req.headers && req.headers['x-forwarded-for'] ) {
+      return req.headers['x-forwarded-for'];
+    }
+
+    if( req.ip || req.address ) {
+      return req.ip || req.address;
+    }
+
+    if( req.socket && req.socket.remoteAddress ) {
+      return req.socket.remoteAddress;
+    }
+
+    throw new Error('Could not find ip in request object');
   }
 
   /**
@@ -112,8 +187,8 @@ class Auth {
     let token = req.cookies[config.jwt.cookieName];
     if( token ) return token;
     
-    token = req.get('Authorization');
-    if( token ) return token.replace(/^Bearer /, '');
+    token = req.get('authorization');
+    if( token ) return token.replace(/^Bearer /i, '');
 
     return null;
   }

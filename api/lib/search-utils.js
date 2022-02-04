@@ -40,6 +40,7 @@ class SearchModelUtils {
         response.results = esResult.hits.hits
           .map(item => {
             item._source._score = item._score;
+            item._source._explanation = item._explanation;
             if( item.highlight ) {
               let fields = Object.keys(item.highlight);
               let field;
