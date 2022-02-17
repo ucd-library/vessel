@@ -3,7 +3,8 @@ module.exports = {
   person : {
     types : ['http://xmlns.com/foaf/0.1/Person', 'http://vivoweb.org/ontology/core#NonAcademic','http://vivoweb.org/ontology/core#FacultyMember'],
     additionalProperties : {
-      citation : 'person-citations'
+      citation : 'person-citations',
+      role:'person-grants'
     }
   },
 
@@ -17,12 +18,12 @@ module.exports = {
   ],
 
   organization : [
-    'http://vivoweb.org/ontology/core#AcademicDepartment', 
+    'http://vivoweb.org/ontology/core#AcademicDepartment',
     'http://vivoweb.org/ontology/core#College',
     'http://vivoweb.org/ontology/core#University'
   ],
 
   grant : [
     'http://vivoweb.org/ontology/core#Grant'
-  ] 
+  ]
 }
