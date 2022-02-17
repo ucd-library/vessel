@@ -105,6 +105,17 @@
       }
     },
 
+    "citation.doi" : {
+      "type" : "keyword",
+      "normalizer": "keyword_lowercase",
+      "fields": {
+        "text" : {
+          "type" : "text",
+          "analyzer": "defaultAnalyzer"
+        }
+      }
+    },
+
     "hasContactInfo.organization" : {
       "type" : "keyword",
       "normalizer": "keyword_lowercase",
@@ -275,6 +286,10 @@
       }
     },
 
+    "role.relatedBy.@type" : {
+      "type" : "keyword"
+    },
+
     "prefLabel" : {
       "type" : "keyword",
       "fields": {
@@ -374,7 +389,7 @@
     },
 
     "role.relatedBy.grantType" :{
-      "type" : "keyword",
+      "type" : "keyword"
     },
 
     "totalAwardAmount" : {
