@@ -20,11 +20,11 @@ class ElasticSearch {
   /**
    * @method ensureIndex
    * @description make sure given index exists in elastic search
-   * 
-   * @param {String} alias 
-   * @param {String} schemaName 
-   * @param {Object} schema 
-   * 
+   *
+   * @param {String} alias
+   * @param {String} schemaName
+   * @param {Object} schema
+   *
    * @returns {Promise}
    */
   async ensureIndex(alias, schemaName, schema) {
@@ -36,14 +36,14 @@ class ElasticSearch {
 
     let indexName = await this.createIndex(alias, schemaName, schema);
     await this.client.indices.putAlias({index: indexName, name: alias});
-    
+
     logger.info(`Index ${indexName} created pointing at alias ${alias}`);
   }
 
   /**
    * @method insert
    * @description insert record into research-profiles index
-   * 
+   *
    * @param {Object} record
    * @param {String} index index to insert into, defaults to main alias
    */
@@ -60,7 +60,7 @@ class ElasticSearch {
    * @description given a index alias name, find all real indexes that use this name.
    * This is done by querying for all indexes that regex for the alias name.  The indexers
    * index name creation always uses the alias name in the index.
-   * 
+   *
    * @param {String} alias name of alias to find real indexes for
    * @return {Promise} resolves to array of index names
    */
@@ -98,9 +98,9 @@ class ElasticSearch {
   /**
    * @method createIndex
    * @description create new new index with a unique name based on alias name
-   * 
+   *
    * @param {String} alias alias name to base index name off of
-   * 
+   *
    * @returns {Promise} resolves to string, new index name
    */
   async createIndex(alias, newIndexName) {
@@ -117,7 +117,7 @@ class ElasticSearch {
           settings : {
             analysis : {
               analyzer: {
-                defaultAnalyzer: { 
+                defaultAnalyzer: {
                   tokenizer: 'standard',
                   filter: ["lowercase", "stop", "asciifolding"]
                 },
@@ -134,7 +134,7 @@ class ElasticSearch {
                 }
               },
               normalizer: {
-                first_letter_normilizer: {
+                first_letter_normalizer: {
                   type: "custom",
                   char_filter: ["first_letter_filter"],
                   filter: [
