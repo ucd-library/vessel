@@ -15,7 +15,7 @@
             },
             "firstLetter" : {
               "type" : "keyword",
-              "normalizer": "first_letter_normilizer"
+              "normalizer": "first_letter_normalizer"
             }
           }
         }
@@ -105,8 +105,20 @@
       }
     },
 
+    "citation.doi" : {
+      "type" : "keyword",
+      "normalizer": "keyword_lowercase",
+      "fields": {
+        "text" : {
+          "type" : "text",
+          "analyzer": "defaultAnalyzer"
+        }
+      }
+    },
+
     "hasContactInfo.organization" : {
       "type" : "keyword",
+      "normalizer": "keyword_lowercase",
       "fields": {
         "text" : {
           "type" : "text",
@@ -124,7 +136,7 @@
         },
         "firstLetter" : {
           "type" : "keyword",
-          "normalizer": "first_letter_normilizer"
+          "normalizer": "first_letter_normalizer"
         }
       }
     },
@@ -178,10 +190,23 @@
       "type" : "keyword"
     },
     "hasSubjectArea.label" : {
-      "type" : "keyword"
+      "type" : "keyword",
+      "fields": {
+        "text" : {
+          "type" : "text",
+          "analyzer": "defaultAnalyzer"
+        }
+      }
+
     },
     "hasSubjectArea.prefLabel" : {
-      "type" : "keyword"
+      "type" : "keyword",
+      "fields": {
+        "text" : {
+          "type" : "text",
+          "analyzer": "defaultAnalyzer"
+        }
+      }
     },
 
     "_.allResearchArea" : {
@@ -191,10 +216,22 @@
       "type" : "keyword"
     },
     "hasResearchArea.label" : {
-      "type" : "keyword"
+      "type" : "keyword",
+      "fields": {
+        "text" : {
+          "type" : "text",
+          "analyzer": "defaultAnalyzer"
+        }
+      }
     },
     "hasResearchArea.prefLabel" : {
-      "type" : "keyword"
+      "type" : "keyword",
+      "fields": {
+        "text" : {
+          "type" : "text",
+          "analyzer": "defaultAnalyzer"
+        }
+      }
     },
 
     "issue" : {
@@ -230,9 +267,27 @@
         },
         "firstLetter" : {
           "type" : "keyword",
-          "normalizer": "first_letter_normilizer"
+          "normalizer": "first_letter_normalizer"
         }
       }
+    },
+
+    "role.relatedBy.label" : {
+      "type" : "keyword",
+      "fields": {
+        "text" : {
+          "type" : "text",
+          "analyzer": "defaultAnalyzer"
+        },
+        "firstLetter" : {
+          "type" : "keyword",
+          "normalizer": "first_letter_normalizer"
+        }
+      }
+    },
+
+    "role.relatedBy.@type" : {
+      "type" : "keyword"
     },
 
     "prefLabel" : {
@@ -244,7 +299,7 @@
         },
         "firstLetter" : {
           "type" : "keyword",
-          "normalizer": "first_letter_normilizer"
+          "normalizer": "first_letter_normalizer"
         }
       }
     },
@@ -303,18 +358,40 @@
 
     "assignedBy.label" : {
       "type" : "keyword",
-      "fields" : {
-        "text" : {"type": "text"}
+      "fields": {
+        "text" : {
+          "type" : "text",
+          "analyzer": "defaultAnalyzer"
+        }
       }
     },
 
     "sponsorAwardId" :{
       "type" : "keyword",
-      "fields" : {
-        "text" :{"type": "text"}
+      "normalizer": "keyword_lowercase",
+      "fields": {
+        "text" : {
+          "type" : "text",
+          "analyzer": "defaultAnalyzer"
+        }
       }
     },
-    
+
+    "role.relatedBy.sponsorAwardId" :{
+      "type" : "keyword",
+      "normalizer": "keyword_lowercase",
+      "fields": {
+        "text" : {
+          "type" : "text",
+          "analyzer": "defaultAnalyzer"
+        }
+      }
+    },
+
+    "role.relatedBy.grantType" :{
+      "type" : "keyword"
+    },
+
     "totalAwardAmount" : {
       "type" : "integer"
     },
