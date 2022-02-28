@@ -277,7 +277,9 @@ class Auth {
       config.jwt.cookieName, 
       await this.mintToken({username, roles}),
       { 
-        maxAge: config.jwt.expiresIn, 
+        // docs say seconds, but it's really milliseconds
+        // jwt.expiresIn is expressed in seconds
+        maxAge: config.jwt.expiresIn * 1000, 
         httpOnly: true,
         sameSite : 'lax'
       }
