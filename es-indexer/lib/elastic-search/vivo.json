@@ -71,27 +71,33 @@
     },
 
     "citation.publication" : {
-      "type" : "text"
+      "type" : "text",
+      "analyzer": "defaultAnalyzer"
     },
 
     "citation.label" : {
-      "type" : "text"
+      "type" : "text",
+      "analyzer": "defaultAnalyzer"
     },
 
     "lastCitation.publication" : {
-      "type" : "text"
+      "type" : "text",
+      "analyzer": "defaultAnalyzer"
     },
 
     "lastCitation.label" : {
-      "type" : "text"
+      "type" : "text",
+      "analyzer": "defaultAnalyzer"
     },
 
     "_.top20Citation.publication" : {
-      "type" : "text"
+      "type" : "text",
+      "analyzer": "defaultAnalyzer"
     },
 
     "_.top20Citation.label" : {
-      "type" : "text"
+      "type" : "text",
+      "analyzer": "defaultAnalyzer"
     },
 
     "doi" : {
