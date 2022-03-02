@@ -1,33 +1,36 @@
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> 
-PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> 
-PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> 
-PREFIX bibo: <http://purl.org/ontology/bibo/> 
-PREFIX vivo: <http://vivoweb.org/ontology/core#> 
-PREFIX vitro: <http://vitro.mannlib.cornell.edu/ns/vitro/0.7#> 
-PREFIX foaf: <http://xmlns.com/foaf/0.1/> 
-PREFIX vcard: <http://www.w3.org/2006/vcard/ns#> 
-PREFIX cito: <http://purl.org/spar/cito/> 
-PREFIX obo: <http://purl.obolibrary.org/obo/> 
-PREFIX experts: <http://experts.ucdavis.edu/#schema> 
-PREFIX ucdrp: <http://experts.ucdavis.edu/> 
-PREFIX meshv: <http://id.nlm.nih.gov/mesh/vocab#> 
-PREFIX skos: <http://www.w3.org/2004/02/skos/core#> 
-PREFIX purl: <http://purl.org/ontology/bibo/> 
-PREFIX vivo_inf: <http://vitro.mannlib.cornell.edu/default/vitro-kb-inf> 
-PREFIX cite: <http://citationstyles.org/schema/>  
+PREFIX bibo: <http://purl.org/ontology/bibo/>
+PREFIX cite: <http://citationstyles.org/schema/>
+PREFIX cito: <http://purl.org/spar/cito/>
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+PREFIX meshv: <http://id.nlm.nih.gov/mesh/vocab#>
+PREFIX obo: <http://purl.obolibrary.org/obo/>
+PREFIX purl: <http://purl.org/ontology/bibo/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX ucdrp: <http://experts.ucdavis.edu/schema#>
+PREFIX vcard: <http://www.w3.org/2006/vcard/ns#>
+PREFIX vitro: <http://vitro.mannlib.cornell.edu/ns/vitro/0.7#>
+PREFIX vivo: <http://vivoweb.org/ontology/core#>
+PREFIX vivo_inf: <http://vitro.mannlib.cornell.edu/default/vitro-kb-inf>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
 CONSTRUCT {
 
-  ?pub rdf:type ?type ;
-  ?pub_cp ?o ;
-  cite:page ?page;
-  cite:venue ?venue;
-  cite:container-title ?venue_title;
-  cite:ISSN ?venue_issn;
-  cite:issued ?issued;
-  cite:citation-label ?pub_id;
-  cite:author ?a.
-  ?a cite:rank ?rank; ?vname_cp ?vname_obj.
+  ?pub rdf:type ?type;
+       ?pub_cp ?o;
+       cite:page ?page;
+       cite:venue ?venue;
+       cite:container-title ?venue_title;
+       cite:ISSN ?venue_issn;
+       cite:issued ?issued;
+       cite:citation-label ?pub_id;
+       cite:author ?a;
+       .
+
+  ?a cite:rank ?rank;
+     ?vname_cp ?vname_obj;
+     .
 
 } WHERE {
 
@@ -51,7 +54,7 @@ CONSTRUCT {
   }
 
   GRAPH ?g {
-    bind(replace(str(?pub),str(ucdrp:),"") as ?pub_id)
+    bind(replace(str(?pub),str(<http://experts.ucdavis.edu/>),"") as ?pub_id)
     ?pub rdf:type ?type ;
       ?pub_p ?o ;
       vivo:relatedBy ?authorship .

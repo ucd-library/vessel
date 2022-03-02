@@ -51,8 +51,8 @@ class Miv {
 
     return graph.find(
       item => Array.isArray(item['@type']) ?
-        item['@type'].includes('bibo:AcademicArticle') :
-        item['@type'] === 'bibo:AcademicArticle'
+        item['@type'].includes('ucdrp:work') :
+        item['@type'] === 'ucdrp:work'
       );
   }
 
