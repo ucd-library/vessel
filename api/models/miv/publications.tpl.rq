@@ -19,6 +19,8 @@ CONSTRUCT {
 
   ?pub rdf:type ?type;
        ?pub_cp ?o;
+       cite:type ?cite_type;
+       cite:subtype ?cite_subtype;
        cite:page ?page;
        cite:venue ?venue;
        cite:container-title ?venue_title;
@@ -35,6 +37,18 @@ CONSTRUCT {
 } WHERE {
 
   bind (<{{publication}}> as ?pub)
+
+  values (?type ?cite_type ) {
+    (bibo:AcademicArticle 'article-journal')
+    (bibo:Book 'book')
+    (bibo:Chapter 'chapter')
+    (vivo:ConferencePaper 'paper-conference')
+    (ucdrp:PrePrint 'article')
+  }
+
+  values (?type ?cite_subtype ) {
+    (ucdrp:PrePrint 'preprint')
+  }
 
   values(?pub_p ?pub_cp) {
     (rdfs:label cite:title)
