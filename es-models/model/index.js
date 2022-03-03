@@ -159,7 +159,6 @@ class EsSparqlModel {
     }
 
     result.model = await this._requestModel(type, uri, opts.query);
-    result.orgmodel=Object.assign({},result.model)
 
     if( this.MODELS[model] ) {
       for( let prop in this.MODELS[model].additionalProperties ) {
@@ -221,7 +220,10 @@ class EsSparqlModel {
     }
 
     let model = this._constructModel(response['@graph'] || [], uri);
-    return model[uri] || {};
+    if( !model[uri] ) {
+      throw new Error('Model construction failed, uri not found: '+uri);
+    }
+    return model[uri];
   }
 
   /**
