@@ -10,9 +10,8 @@
           "type" : "keyword",
           "fields": {
             "text" : {
-              "type" : "text",
-              "analyzer": "defaultAnalyzer"
-            },
+              "type" : "text"
+              },
             "firstLetter" : {
               "type" : "keyword",
               "normalizer": "first_letter_normalizer"
@@ -54,8 +53,7 @@
     },
 
     "abstract" : {
-      "type" : "text",
-      "analyzer": "defaultAnalyzer"
+      "type" : "text"
     },
 
     "Authorship.rank" : {
@@ -71,33 +69,27 @@
     },
 
     "citation.publication" : {
-      "type" : "text",
-      "analyzer": "defaultAnalyzer"
+      "type" : "text"
     },
 
     "citation.label" : {
-      "type" : "text",
-      "analyzer": "defaultAnalyzer"
+      "type" : "text"
     },
 
-    "lastCitation.publication" : {
-      "type" : "text",
-      "analyzer": "defaultAnalyzer"
+    "_.lastCitation.publication" : {
+      "type" : "text"
     },
 
-    "lastCitation.label" : {
-      "type" : "text",
-      "analyzer": "defaultAnalyzer"
+    "_.lastCitation.label" : {
+      "type" : "text"
     },
 
     "_.top20Citation.publication" : {
-      "type" : "text",
-      "analyzer": "defaultAnalyzer"
+      "type" : "text"
     },
 
     "_.top20Citation.label" : {
-      "type" : "text",
-      "analyzer": "defaultAnalyzer"
+      "type" : "text"
     },
 
     "doi" : {
@@ -105,8 +97,7 @@
       "normalizer": "keyword_lowercase",
       "fields": {
         "text" : {
-          "type" : "text",
-          "analyzer": "defaultAnalyzer"
+          "type" : "text"
         }
       }
     },
@@ -116,8 +107,7 @@
       "normalizer": "keyword_lowercase",
       "fields": {
         "text" : {
-          "type" : "text",
-          "analyzer": "defaultAnalyzer"
+          "type" : "text"
         }
       }
     },
@@ -127,8 +117,7 @@
       "normalizer": "keyword_lowercase",
       "fields": {
         "text" : {
-          "type" : "text",
-          "analyzer": "defaultAnalyzer"
+          "type" : "text"
         }
       }
     },
@@ -137,8 +126,7 @@
       "type" : "keyword",
       "fields": {
         "text" : {
-          "type" : "text",
-          "analyzer": "defaultAnalyzer"
+          "type" : "text"
         },
         "firstLetter" : {
           "type" : "keyword",
@@ -148,13 +136,11 @@
     },
 
     "hasContactInfo.givenName" : {
-      "type" : "text",
-      "analyzer": "defaultAnalyzer"
+      "type" : "text"
     },
 
     "hasContactInfo.middleName" : {
-      "type" : "text",
-      "analyzer": "defaultAnalyzer"
+      "type" : "text"
     },
 
     "relates.hasContactInfo.familyName" : {
@@ -179,8 +165,7 @@
       "type" : "keyword",
       "fields": {
         "text" : {
-          "type" : "text",
-          "analyzer": "defaultAnalyzer"
+          "type" : "text"
         }
       }
     },
@@ -199,8 +184,7 @@
       "type" : "keyword",
       "fields": {
         "text" : {
-          "type" : "text",
-          "analyzer": "defaultAnalyzer"
+          "type" : "text"
         }
       }
 
@@ -209,8 +193,7 @@
       "type" : "keyword",
       "fields": {
         "text" : {
-          "type" : "text",
-          "analyzer": "defaultAnalyzer"
+          "type" : "text"
         }
       }
     },
@@ -225,8 +208,7 @@
       "type" : "keyword",
       "fields": {
         "text" : {
-          "type" : "text",
-          "analyzer": "defaultAnalyzer"
+          "type" : "text"
         }
       }
     },
@@ -234,8 +216,7 @@
       "type" : "keyword",
       "fields": {
         "text" : {
-          "type" : "text",
-          "analyzer": "defaultAnalyzer"
+          "type" : "text"
         }
       }
     },
@@ -248,8 +229,7 @@
       "type" : "keyword",
       "fields": {
         "text" : {
-          "type" : "text",
-          "analyzer": "defaultAnalyzer"
+          "type" : "text"
         }
       }
     },
@@ -258,8 +238,7 @@
       "type" : "keyword",
       "fields": {
         "text" : {
-          "type" : "text",
-          "analyzer": "defaultAnalyzer"
+          "type" : "text"
         }
       }
     },
@@ -268,8 +247,7 @@
       "type" : "keyword",
       "fields": {
         "text" : {
-          "type" : "text",
-          "analyzer": "defaultAnalyzer"
+          "type" : "text"
         },
         "firstLetter" : {
           "type" : "keyword",
@@ -282,8 +260,7 @@
       "type" : "keyword",
       "fields": {
         "text" : {
-          "type" : "text",
-          "analyzer": "defaultAnalyzer"
+          "type" : "text"
         },
         "firstLetter" : {
           "type" : "keyword",
@@ -300,8 +277,7 @@
       "type" : "keyword",
       "fields": {
         "text" : {
-          "type" : "text",
-          "analyzer": "defaultAnalyzer"
+          "type" : "text"
         },
         "firstLetter" : {
           "type" : "keyword",
@@ -325,8 +301,7 @@
       "type" : "keyword",
       "fields": {
         "text" : {
-          "type" : "text",
-          "analyzer": "defaultAnalyzer"
+          "type" : "text"
         }
       }
     },
@@ -334,8 +309,7 @@
       "type" : "keyword",
       "fields": {
         "text" : {
-          "type" : "text",
-          "analyzer": "defaultAnalyzer"
+          "type" : "text"
         }
       }
     },
@@ -347,8 +321,7 @@
       "type" : "keyword",
       "fields": {
         "text" : {
-          "type" : "text",
-          "analyzer": "defaultAnalyzer"
+          "type" : "text"
         }
       }
     },
@@ -356,8 +329,7 @@
       "type" : "keyword",
       "fields": {
         "text" : {
-          "type" : "text",
-          "analyzer": "defaultAnalyzer"
+          "type" : "text"
         }
       }
     },
@@ -366,8 +338,7 @@
       "type" : "keyword",
       "fields": {
         "text" : {
-          "type" : "text",
-          "analyzer": "defaultAnalyzer"
+          "type" : "text"
         }
       }
     },
@@ -377,8 +348,7 @@
       "normalizer": "keyword_lowercase",
       "fields": {
         "text" : {
-          "type" : "text",
-          "analyzer": "defaultAnalyzer"
+          "type" : "text"
         }
       }
     },
@@ -388,8 +358,7 @@
       "normalizer": "keyword_lowercase",
       "fields": {
         "text" : {
-          "type" : "text",
-          "analyzer": "defaultAnalyzer"
+          "type" : "text"
         }
       }
     },
