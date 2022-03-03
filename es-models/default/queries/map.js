@@ -11,10 +11,12 @@ module.exports = {
   concept : ['http://www.w3.org/2004/02/skos/core#Concept'],
 
   // https://wiki.lyrasis.org/display/VIVODOC110x/Publication+Model
-  work : ['http://purl.org/ontology/bibo/AcademicArticle',
+  work : [
+    'http://purl.org/ontology/bibo/AcademicArticle',
     'http://purl.org/ontology/bibo/Book',
     'http://purl.org/ontology/bibo/Chapter',
-    'http://vivoweb.org/ontology/core#ConferencePaper'
+    'http://vivoweb.org/ontology/core#ConferencePaper',
+    'http://experts.ucdavis.edu/schema#PrePrint'
   ],
 
   organization : [
