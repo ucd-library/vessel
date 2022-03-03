@@ -26,8 +26,8 @@ class EsSparqlModel {
    * @description read in the map.js and *.tpl.rq files that define an
    * elastic search model/record.  All files are expected to be in the same
    * directory
-   * 
-   * @param {String} dir 
+   *
+   * @param {String} dir
    */
   readModels(dir) {
     logger.info('Loading models from: '+dir);
@@ -72,11 +72,11 @@ class EsSparqlModel {
 
   /**
    * @method hasModel
-   * @description give a type (es model name or rdf uri) return the 
+   * @description give a type (es model name or rdf uri) return the
    * es model name if a model is registered or false.
-   * 
-   * @param {String} type 
-   * 
+   *
+   * @param {String} type
+   *
    * @returns {String|Boolean}
    */
   hasModel(type) {
@@ -88,10 +88,10 @@ class EsSparqlModel {
    * @method getSparqlQuery
    * @description given a type (es model name or rdf uri), subject uri and optional graph
    * uri, return the SPARQL query
-   * 
+   *
    * @param {String} type es model name or rdf uri
    * @param {String} uri subject uri
-   * 
+   *
    * @returns {String}
    */
   getSparqlQuery(type, uri) {
@@ -119,13 +119,13 @@ class EsSparqlModel {
    * @method getModel
    * @description get a es model from model name or rdf type uri and a subject uri.  Gets
    * model for all registered graphs and merges.
-   * 
+   *
    * @param {String} type es model name or rdf uri
    * @param {String} uri subject uri
    * @param {Object} opts additional options
    * @param {Boolean} opts.verbose include SPARQL queries
    * @param {String} opts.query custom SPARQL query
-   * 
+   *
    * @returns {Object}
    */
   async getModel(type, uri, opts={}) {
@@ -152,19 +152,20 @@ class EsSparqlModel {
 
     if( opts.verbose ) {
       if( opts.query ) {
-        result.sparql = opts.query
+        result.sparql = [opts.query];
       } else {
         result.sparql = [this.getSparqlQuery(type, uri)];
       }
     }
 
     result.model = await this._requestModel(type, uri, opts.query);
+    result.orgmodel=Object.assign({},result.model)
 
     if( this.MODELS[model] ) {
       for( let prop in this.MODELS[model].additionalProperties ) {
         type = this.MODELS[model].additionalProperties[prop];
         if( opts.verbose ) {
-          result.sparql = [this.getSparqlQuery(type, uri)];
+          result.sparql.push(this.getSparqlQuery(type, uri));
         }
         let propResult = await this._requestModel(type, uri);
         result.model[prop] = propResult[prop];
@@ -172,10 +173,10 @@ class EsSparqlModel {
     }
 
     await postProcess.run(result.model, {
-      type, 
+      type,
       modelType: result.modelType,
       uri: result.uri,
-      timestamp: result.timestamp 
+      timestamp: result.timestamp
     }, this);
 
     return result;
@@ -184,10 +185,10 @@ class EsSparqlModel {
   /**
    * @method _requestModel
    * @description make request for es model
-   * 
+   *
    * @param {String} type es model name or rdf uri
    * @param {String} uri subject uri
-   * 
+   *
    * @returns {Object}
    */
   async _requestModel(type, uri, sparqlQuery) {
@@ -227,16 +228,16 @@ class EsSparqlModel {
    * @method _constructModel
    * @description loop through returned sparql response and contruct in JSON-LD
    * like es model object
-   * 
-   * @param {Array|Object} graph 
+   *
+   * @param {Array|Object} graph
    * @param {String} id uri to crawl
    * @param {Object} crawled already crawled uri hash
-   * 
+   *
    * @return Object
    */
   _constructModel(graph, id, crawled={}) {
     if( crawled[id] ) return graph;
-  
+
     if( Array.isArray(graph) ) {
       let g = {};
       for( let node of graph ) {
@@ -249,11 +250,11 @@ class EsSparqlModel {
     crawled[id] = graph[id];
     let node = graph[id];
     let value;
-  
+
     for( let property in node ) {
       if( property === '@id' ) continue;
       value = node[property];
-  
+
       // check for array of valkues
       if( Array.isArray(value) ) {
 
@@ -270,7 +271,7 @@ class EsSparqlModel {
             value[i] = crawled[subid]
             continue;
           }
-  
+
           //
           if( graph[subid] ) {
             this._constructModel(graph, subid, crawled);
@@ -297,7 +298,7 @@ class EsSparqlModel {
         }
       }
     }
-  
+
     return graph;
   }
 
