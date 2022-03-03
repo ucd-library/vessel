@@ -30,9 +30,10 @@ class Miv {
 
       let resp = await fuseki.query(q, 'application/ld+json');
       let graph = await resp.json();
-
       graph = graph['@graph'] ? graph['@graph'] : graph;
+      console.log(graph);
       pubs[i] = this.formatAuthors(this.getPub(graph), graph);
+      console.log(pubs[i])
       // if( i === 5 ) break;
 
       // TODO: test
