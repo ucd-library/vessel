@@ -21,7 +21,6 @@ CONSTRUCT {
   ?pub a ?type;
        ?pub_cp ?o;
        cite:type ?cite_type;
-       cite:subtype ?cite_subtype;
        cite:page ?page;
        cite:venue ?venue;
        cite:container-title ?venue_title;
@@ -38,18 +37,6 @@ CONSTRUCT {
 } WHERE {
 
   bind (<{{publication}}> as ?pub)
-
-  values (?type ?cite_type ) {
-    (bibo:AcademicArticle 'article-journal')
-    (bibo:Book 'book')
-    (bibo:Chapter 'chapter')
-    (vivo:ConferencePaper 'paper-conference')
-    (ucdrp:PrePrint 'article')
-  }
-
-  values (?type ?cite_subtype ) {
-    (ucdrp:PrePrint 'preprint')
-  }
 
   values(?pub_p ?pub_cp) {
     (rdfs:label cite:title)
@@ -70,6 +57,19 @@ CONSTRUCT {
 
   GRAPH ?g {
     bind(replace(str(?pub),str(<http://experts.ucdavis.edu/>),"") as ?pub_id)
+
+    {
+      select ?pub (max(?ct) as ?cite_type) WHERE {
+	      values (?type ?ct ) {
+    	  (bibo:AcademicArticle 'article-journal')
+        (bibo:Book 'book')
+        (bibo:Chapter 'chapter')
+        (vivo:ConferencePaper 'paper-conference')
+        (ucdrp:PrePrint 'article') }
+        ?pub a ?type
+      } group by ?pub
+    }
+
     ?pub rdf:type ?type ;
       ?pub_p ?o ;
       vivo:relatedBy ?authorship .
