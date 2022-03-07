@@ -81,11 +81,11 @@ module.exports = {
     graphs,
     schemaPrefix : {
       uri : 'http://experts.ucdavis.edu/schema#',
-      prefix: 'experts'
+      prefix: 'ucdrp'
     },
     rootPrefix : {
       uri : 'http://experts.ucdavis.edu/',
-      prefix: 'ucdrp'
+      prefix: 'experts'
     }
   },
 
