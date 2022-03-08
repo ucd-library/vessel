@@ -117,7 +117,7 @@ class ElasticSearch {
           settings : {
             analysis : {
               analyzer: {
-                defaultAnalyzer: {
+                default: {
                   tokenizer: 'standard',
                   filter: ["lowercase", "stop", "asciifolding"]
                 },
