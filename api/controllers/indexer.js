@@ -118,4 +118,17 @@ router.post('/analyze', middleware.admin, async (req, res) => {
   }
 });
 
+router.get('/schema/:name', middleware.admin, async (req, res) => {
+  let body = req.body;
+  if( typeof body === 'object' ) body = JSON.stringify(body);
+  let url = 'http://'+config.elasticSearch.host+':'+config.elasticSearch.port+'/'+req.params.name;
+  try {
+    let indexResp = await fetch(url);
+    res.json(await indexResp.json());
+  } catch(e) {
+    console.log(e);
+    errorHandler(req, res, e);
+  }
+});
+
 module.exports = router;

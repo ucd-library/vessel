@@ -30,7 +30,6 @@ class Miv {
 
       let resp = await fuseki.query(q, 'application/ld+json');
       let graph = await resp.json();
-
       graph = graph['@graph'] ? graph['@graph'] : graph;
       pubs[i] = this.formatAuthors(this.getPub(graph), graph);
       // if( i === 5 ) break;
@@ -51,8 +50,8 @@ class Miv {
 
     return graph.find(
       item => Array.isArray(item['@type']) ?
-        item['@type'].includes('bibo:AcademicArticle') :
-        item['@type'] === 'bibo:AcademicArticle'
+        item['@type'].includes('ucdrp:work') :
+        item['@type'] === 'ucdrp:work'
       );
   }
 

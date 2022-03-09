@@ -11,7 +11,7 @@
           "fields": {
             "text" : {
               "type" : "text"
-              },
+            },
             "firstLetter" : {
               "type" : "keyword",
               "normalizer": "first_letter_normalizer"

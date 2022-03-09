@@ -7,8 +7,6 @@ class Citation {
   }
 
   convert(data, opts={}) {
-    // if( !opts.style ) opts.style = 'ris';
-    // opts.format = 'string';
 
     // HACK for demo
     data = data.map(item => {
@@ -23,8 +21,10 @@ class Citation {
       if( item.venue ) {
         item.venue = {id: item.venue};
       }
-      item.type = 'article';
-
+      // Required  for GEN as ris type, only works for RIS
+      if (item.type=='article') {
+        item.type='treaty';  // This citeproc -> GEN in RIS
+      }
       return item;
     });
 
