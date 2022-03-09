@@ -9,6 +9,8 @@ class Citation {
   convert(data, opts={}) {
     // if( !opts.style ) opts.style = 'ris';
     // opts.format = 'string';
+      console.log('Quinn is Great');
+      console.log(data);
 
     // HACK for demo
     data = data.map(item => {
@@ -23,8 +25,8 @@ class Citation {
       if( item.venue ) {
         item.venue = {id: item.venue};
       }
-      item.type = 'article';
-
+//      item.type = 'article';
+      console.log(item);
       return item;
     });
 
