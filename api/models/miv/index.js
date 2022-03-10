@@ -47,11 +47,12 @@ class Miv {
 
   getPub(graph) {
     if( !Array.isArray(graph) ) return graph;
+    let type = config.fuseki.schemaPrefix.prefix+':work';
 
     return graph.find(
       item => Array.isArray(item['@type']) ?
-        item['@type'].includes('ucdrp:work') :
-        item['@type'] === 'ucdrp:work'
+        item['@type'].includes(type) :
+        item['@type'] === type
       );
   }
 

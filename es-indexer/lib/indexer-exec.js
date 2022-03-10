@@ -41,9 +41,7 @@ class IndexerInsert {
       try {
         await this.index(event.msg);
       } catch(err) {
-        logger.error(`Failed to update`, event);
-
-        this.status.send({
+        let payload = {
           status : this.status.STATES.ERROR, 
           subject : event.msg.subject,
           action: 'index',
@@ -55,7 +53,11 @@ class IndexerInsert {
             logs : err.logs || null,
             kafkaMessage : event.msg,
           }
-        });
+        };
+
+        logger.error(`Failed to update`, event, payload);
+
+        this.status.send(payload);
       }
 
       // await this.clearKey(event.key);

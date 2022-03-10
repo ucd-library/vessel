@@ -101,13 +101,13 @@ class EsSparqlModel {
       if( !model ) throw new Error('Unknown model or type: '+type);
     }
 
-    if( uri.startsWith(config.fuseki.rootPrefix.prefix+':') ) {
-      uri = uri.replace(config.fuseki.rootPrefix.prefix+':', config.fuseki.rootPrefix.uri);
-    } else if( uri.startsWith(config.fuseki.schemaPrefix.prefix+':') ) {
+    if( uri.startsWith(config.fuseki.schemaPrefix.prefix+':') ) {
       uri = uri.replace(config.fuseki.schemaPrefix.prefix+':', config.fuseki.schemaPrefix.uri);
+    } else if( uri.startsWith(config.fuseki.rootPrefix.prefix+':') ) {
+      uri = uri.replace(config.fuseki.rootPrefix.prefix+':', config.fuseki.rootPrefix.uri);
     }
 
-    if( uri.match('http(s)?:\/\/') ) {
+    if( uri.match('http(s)?:\/\/')  ) {
       uri = '<'+uri+'>';
     }
 
@@ -166,8 +166,24 @@ class EsSparqlModel {
         if( opts.verbose ) {
           result.sparql.push(this.getSparqlQuery(type, uri));
         }
-        let propResult = await this._requestModel(type, uri);
-        result.model[prop] = propResult[prop];
+        try {
+          let propResult = await this._requestModel(type, uri);
+          result.model[prop] = propResult[prop];
+        } catch(e){
+          // only putting misses in verbose
+          if( opts.verbose ) {
+            if( !result.warnings ) result.warnings = [];
+
+            result.warnings.push({
+              message : 'unable to find sub model query',
+              type, uri, prop,
+              error : {
+                message : e.message,
+                stack : e.stack
+              }
+            });
+          }
+        }
       }
     }
 
@@ -201,8 +217,6 @@ class EsSparqlModel {
     // response = JSON.parse(t);
     response = await response.json();
 
-    // TODO: this is wrong
-    // uri = uri.replace(config.fuseki.rootPrefix.uri, config.fuseki.rootPrefix.prefix+':');
     if( response['@context'] ) {
       for( let prefix in response['@context'] ) {
         let prefixUri = response['@context'][prefix];
