@@ -1,54 +1,68 @@
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX bibo: <http://purl.org/ontology/bibo/>
-PREFIX vivo: <http://vivoweb.org/ontology/core#>
-PREFIX vitro: <http://vitro.mannlib.cornell.edu/ns/vitro/0.7#>
-PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-PREFIX vcard: <http://www.w3.org/2006/vcard/ns#>
 PREFIX cito: <http://purl.org/spar/cito/>
+PREFIX experts: <http://experts.ucdavis.edu/>
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 PREFIX obo: <http://purl.obolibrary.org/obo/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX ucdrp: <http://experts.ucdavis.edu/schema#>
+PREFIX vcard: <http://www.w3.org/2006/vcard/ns#>
+PREFIX vitro: <http://vitro.mannlib.cornell.edu/ns/vitro/0.7#>
+PREFIX vivo: <http://vivoweb.org/ontology/core#>
 
 CONSTRUCT {
 
-  ?subject rdf:type ?type .
-  ?subject rdf:type ucdrp:grant .
-  ?subject rdfs:label ?label .
-  ?subject vivo:sponsorAwardId ?sponsorAwardId .
-  ?subject vivo:totalAwardAmount ?totalAwardAmount .
+  ?subject rdf:type ?type;
+           rdf:type ucdrp:grant;
+           rdfs:label ?label;
+           vivo:sponsorAwardId ?sponsorAwardId;
+           vivo:totalAwardAmount ?totalAwardAmount;
+           vivo:assignedBy ?assignedBy;
+           vivo:relates ?relates;
+           vivo:dateTimeInterval ?dateTimeInterval;
+         .
 
-  ?subject vivo:assignedBy ?assignedBy .
-  ?assignedBy rdf:type ?assignedByType .
-  ?assignedBy rdfs:label ?assignedByLabel .
 
-  ?subject vivo:relates ?relates .
-  ?relates rdf:type ?relatesType .
-  ?relates rdfs:label ?relates_label.
-  ?relates obo:inheresIn ?inheresIn .
+  ?assignedBy rdf:type ?assignedByType;
+              rdfs:label ?assignedByLabel;
+              .
 
-  ?relates obo:hasContactInfo ?relatesContactInfoFor .
-  ?relatesContactInfoFor vcard:hasName ?relatesVcardName .
-  ?relatesVcardName vcard:givenName ?relatesGivenName .
-  ?relatesVcardName vcard:familyName ?relatesFamilyName .
+  ?relates rdf:type ?relatesType;
+           rdfs:label ?relates_label;
+           obo:inheresIn ?inheresIn;
+           obo:hasContactInfo ?relatesContactInfoFor;
+           .
 
-  ?inheresIn rdf:type ?inheresInType .
-  ?inheresIn obo:hasContactInfo ?inheresInContactInfoFor .
-  ?inheresInContactInfoFor vcard:hasName ?inheresInVcardName .
-  ?inheresInVcardName vcard:givenName ?inheresInGivenName .
-  ?inheresInVcardName vcard:familyName ?inheresInFamilyName .
+  ?relatesContactInfoFor vcard:hasName ?relatesVcardName;
+                         .
 
-  ?subject vivo:dateTimeInterval ?dateTimeInterval .
-  ?dateTimeInterval rdf:type ?dateTimeIntervalType .
+  ?relatesVcardName vcard:givenName ?relatesGivenName;
+                    vcard:familyName ?relatesFamilyName;
+                    .
 
-  ?dateTimeInterval vivo:start ?dateTimeStart .
-  ?dateTimeStart rdf:type ?dateTimeStartType .
-  ?dateTimeStart vivo:dateTime ?dateTimeStartTime .
-  ?dateTimeStart vivo:dateTimePrecision ?dateTimeStartPrecision .
+  ?inheresIn rdf:type ?inheresInType;
+             obo:hasContactInfo ?inheresInContactInfoFor;
+             .
+  ?inheresInContactInfoFor vcard:hasName ?inheresInVcardName;
+                           .
 
-  ?dateTimeInterval vivo:end ?dateTimeEnd .
-  ?dateTimeEnd rdf:type ?dateTimeEndType .
-  ?dateTimeEnd vivo:dateTime ?dateTimeEndTime .
-  ?dateTimeEnd vivo:dateTimePrecision ?dateTimeEndPrecision .
+  ?inheresInVcardName vcard:givenName ?inheresInGivenName;
+                      vcard:familyName ?inheresInFamilyName;
+                      .
+
+    ?dateTimeInterval rdf:type ?dateTimeIntervalType;
+                      vivo:start ?dateTimeStart;
+                      vivo:end ?dateTimeEnd;
+                      .
+  ?dateTimeStart rdf:type ?dateTimeStartType;
+                 vivo:dateTime ?dateTimeStartTime;
+                 vivo:dateTimePrecision ?dateTimeStartPrecision;
+                 .
+
+  ?dateTimeEnd rdf:type ?dateTimeEndType;
+               vivo:dateTime ?dateTimeEndTime;
+               vivo:dateTimePrecision ?dateTimeEndPrecision;
+               .
 
 } WHERE {
   ?subject rdf:type ?type .

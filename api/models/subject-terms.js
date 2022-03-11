@@ -142,14 +142,16 @@ class SubjectTerms {
       });
     });
 
-    let ids = Array.from(terms).splice(0, count);
+    let ids = Array.from(terms).splice(0, count*2);
 
     results = await this.client.mget({
       index: config.elasticSearch.indexAlias,
       body : {ids}
     });
 
-    return results.docs.map(item => item._source);
+    return results.docs.map(item => item._source)
+      .filter(item => item !== null && item !== undefined)
+      .splice(0, count); // make sure we only return ids in system
   }
 
 }

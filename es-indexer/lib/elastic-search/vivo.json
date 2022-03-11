@@ -76,11 +76,11 @@
       "type" : "text"
     },
 
-    "lastCitation.publication" : {
+    "_.lastCitation.publication" : {
       "type" : "text"
     },
 
-    "lastCitation.label" : {
+    "_.lastCitation.label" : {
       "type" : "text"
     },
 
