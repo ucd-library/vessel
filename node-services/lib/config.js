@@ -13,6 +13,8 @@ if( graphs ) {
   ]
 }
 
+const DATA_ENV = env.DATA_ENV || 'sandbox';
+
 module.exports = {
   server : {
     url : env.SERVER_URL || 'http://localhost:8080',
@@ -24,6 +26,7 @@ module.exports = {
 
   // a
   data : {
+    env : DATA_ENV,
     private: {
       roles : env.PRIVATE_RECORD_ROLES ? env.PRIVATE_RECORD_ROLES.split(/\s+/).map(g => g.trim()) : [],
       types :  env.PRIVATE_RECORD_TYPES ? env.PRIVATE_RECORD_TYPES.split(/\s+/).map(g => g.trim()) : []
@@ -123,7 +126,10 @@ module.exports = {
 
   google : {
     // Note, the google node libraries will automagically use this as well.
-    serviceAccountFile : env.GOOGLE_APPLICATION_CREDENTIALS
+    serviceAccountFile : env.GOOGLE_APPLICATION_CREDENTIALS,
+    storage : {
+      bucket : 'aggie-experts-' + DATA_ENV
+    }
   },
 
   logging : {

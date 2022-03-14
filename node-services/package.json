@@ -1,0 +1,49 @@
+{
+  "name": "@ucd-lib/rp-node-utils",
+  "version": "0.0.1",
+  "description": "",
+  "main": "lib/index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "api-swagger": "swagger-jsdoc -o ./api/controllers/swagger/spec.json -d ./api/controllers/swagger/def.js ./controllers/**.js",
+    "gateway": "node services/gateway",
+    "api": "node services/api",
+    "auth-cas": "node services/auth-cas",
+    "es-models": "node services/es-models",
+    "es-indexer": "node services/es-indexer",
+    "gcs": "node services/gcs",
+    "state": "node services/status"
+  },
+  "author": "jrmerz@ucdavis.edu",
+  "license": "MIT",
+  "dependencies": {
+    "@google-cloud/logging-bunyan": "^3.2.2",
+    "@google-cloud/pubsub": "^2.19.0",
+    "@google-cloud/storage": "^5.18.2",
+    "@ucd-lib/node-kafka": "^0.0.8",
+    "body-parser": "^1.19.2",
+    "bunyan": "^1.8.14",
+    "cas-authentication": "^0.0.8",
+    "citation-js": "^0.5.6",
+    "clone": "^2.1.2",
+    "compression": "^1.7.4",
+    "connect-redis": "^6.1.2",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "deepmerge": "^4.2.2",
+    "elasticsearch": "^16.7.1",
+    "express": "^4.17.3",
+    "express-session": "^1.17.2",
+    "http-proxy": "^1.18.1",
+    "ip-cidr": "^3.0.4",
+    "jsonwebtoken": "^8.5.1",
+    "n3": "^1.5.0",
+    "node-fetch": "^2.6.0",
+    "redis": "^3.1.2",
+    "sparqljs": "^3.0.1",
+    "swagger-jsdoc": "^6.1.0"
+  }
+}
