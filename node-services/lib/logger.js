@@ -20,7 +20,11 @@ if( fs.existsSync(config.google.serviceAccountFile) ) {
   let loggingBunyan = new LoggingBunyan({
     projectId: accountFile.project_id,
     keyFilename: config.google.serviceAccountFile,
-    resource : {type: 'project'}
+    // enables error reporting on error
+    serviceContext: {
+      service: config.server.url,
+      version: config.version
+    }
   });
 
   // add new logger stream

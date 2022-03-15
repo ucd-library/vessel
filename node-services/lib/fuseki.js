@@ -51,6 +51,28 @@ class Fuseki {
   }
 
   /**
+   * @method update
+   * @description send SPARQL update to fuseki.
+   * 
+   * @param {String} update SPARQL statement
+   * 
+   * @returns {Promise} resolves to fetch response object
+   */
+     async updateJsonld(update) {
+      if( typeof update === 'object' ) {
+        update = JSON.stringify(update);
+      }
+
+      return fetch(this.url+'/'+this.database+'/data', {
+        method : 'POST',
+        headers : this._setAuthorization({
+          'Content-Type': 'application/ld+json'
+        }),
+        body : update
+      });
+    }
+
+  /**
    * @method _setAuthorization
    * @description helper method for setting authorization header in fuseki query
    * 

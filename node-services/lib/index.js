@@ -10,5 +10,6 @@ module.exports = {
   logger : require('./logger'),
   auth : require('./auth'),
   middleware : require('./middleware'),
-  Status : require('./status')
+  Status : require('./status'),
+  metrics : require('./metrics')
 }

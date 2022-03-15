@@ -1,5 +1,6 @@
 const env = process.env;
 const {URL} = require('url');
+const fs = require('fs');
 
 // order matters.  Top graphs take precident
 let graphs = env.FUSEKI_GRAPHS || '';
@@ -13,9 +14,17 @@ if( graphs ) {
   ]
 }
 
+let gcProjectId = '';
+if( env.GOOGLE_APPLICATION_CREDENTIALS ) {
+  gcProjectId = JSON.parse(fs.readFileSync(env.GOOGLE_APPLICATION_CREDENTIALS, 'utf-8')).project_id;
+  env.GOOGLE_PROJECT_ID = gcProjectId;
+}
+
 const DATA_ENV = env.DATA_ENV || 'sandbox';
 
 module.exports = {
+  version : env.APP_VERSION || '-1',
+
   server : {
     url : env.SERVER_URL || 'http://localhost:8080',
     private : env.PRIVATE_SERVER ? env.PRIVATE_SERVER.trim().toLowerCase() === 'true' : true,
@@ -61,11 +70,10 @@ module.exports = {
     port : env.KAFKA_PORT || 9092,
     producerPollInterval : 100,
     topics : {
+      gcs: 'gcs-update',
       index : 'index-rdf-subject',
       reindex : 'reindex-rdf-subject',
-      rdfPatch : 'fuseki-rdf-patch',
       status : 'vessel-status-update',
-      indexerStatusUpdate : 'indexer-status-update'
     },
     groups : {
       debouncer : 'vessel-debouncer-group',
@@ -127,8 +135,10 @@ module.exports = {
   google : {
     // Note, the google node libraries will automagically use this as well.
     serviceAccountFile : env.GOOGLE_APPLICATION_CREDENTIALS,
+    projectId : gcProjectId,
     storage : {
-      bucket : 'aggie-experts-' + DATA_ENV
+      bucket : 'aggie-experts-' + DATA_ENV,
+      types : ['work', 'grant', 'person']
     }
   },
 
@@ -162,6 +172,100 @@ module.exports = {
       model : env.MODELS_SERVICE_NAME ? 'http://'+env.MODELS_SERVICE_NAME+':3000' : 'http://models:3000',
       api : env.API_SERVICE_HOST || 'http://api:3000',
       indexer : env.INDEXER_SERVICE_HOST || 'http://indexer:3000'
+    }
+  },
+
+  metrics : {
+    exportInterval : parseInt(env.EXPORT_INTERVAL || 60),
+    indexAgeWarning : 48, // hours
+    indexStatus : {
+      SUCCESS : 'success',
+      ERROR : 'error',
+      IGNORED_NO_UPDATE : 'ignored-no-update',
+      IGNORED : 'ignored'
+    },
+
+    // this is dumb... the metric point type defined in the metric (below), has a deferent attribute
+    // name when actually reporting the dataPoint in the timeSeriesData. this maps the difference.
+    pointValueMap : {
+      INT64 : 'int64Value',
+      DOUBLE : 'doubleValue',
+      DISTRIBUTION : 'distributionValue'
+    },
+
+    definitions : {
+      "es-index-status" : {
+        description: 'Status at time of inserting into elastic search (success, failure, ignored, etc)',
+        displayName: 'RP - Fuseki to ElasticSearch index status',
+        type: 'custom.googleapis.com/researcher-profiles/es-index-status',
+        metricKind: 'GAUGE',
+        valueType: 'INT64',
+        unit: '1',
+        labels: [
+          {
+            key: 'instance',
+            valueType: 'STRING',
+            description: 'Aggie Experts url',
+          },
+          {
+            key: 'server_env',
+            valueType: 'STRING',
+            description: 'Aggie Experts instance SERVER_ENV flag',
+          },
+          {
+            key: 'data_env',
+            valueType: 'STRING',
+            description: 'Aggie Experts instance DATA_ENV flag',
+          },
+          {
+            key: 'type',
+            valueType: 'STRING',
+            description: 'webpage type, ie person, work, publication',
+          },
+          {
+            key: 'status',
+            valueType: 'STRING',
+            description: 'ex: success, error, ignored',
+          }
+        ]
+      },
+
+      "fuseki-index-status" : {
+        description: 'Status at time of reading from GCS bucket and inserting into elastic search',
+        displayName: 'RP - GCS to Fuseki index status',
+        type: 'custom.googleapis.com/researcher-profiles/fuseki-index-status',
+        metricKind: 'GAUGE',
+        valueType: 'INT64',
+        unit: '1',
+        labels: [
+          {
+            key: 'instance',
+            valueType: 'STRING',
+            description: 'Aggie Experts url',
+          },
+          {
+            key: 'server_env',
+            valueType: 'STRING',
+            description: 'Aggie Experts instance SERVER_ENV flag',
+          },
+          {
+            key: 'data_env',
+            valueType: 'STRING',
+            description: 'Aggie Experts instance DATA_ENV flag',
+          },
+          {
+            key: 'type',
+            valueType: 'STRING',
+            description: 'webpage type, ie person, work, publication',
+          },
+          {
+            key: 'status',
+            valueType: 'STRING',
+            description: 'ex: success, error, ignored',
+          }
+        ]
+      }
+
     }
   }
 }

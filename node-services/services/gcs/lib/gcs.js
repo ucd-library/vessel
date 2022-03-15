@@ -1,5 +1,5 @@
 const {Storage} = require('@google-cloud/storage');
-const {config} = require('@ucd-lib/rp-node-utils');
+const {config, logger} = require('@ucd-lib/rp-node-utils');
 
 class GCS {
 
@@ -9,6 +9,10 @@ class GCS {
 
   bucket() {
     return this.storage.bucket(config.google.storage.bucket);
+  }
+
+  file(filename, opts) {
+    return this.bucket().file(filename, opts);
   }
 
   async getTypeFiles(type) {
@@ -38,22 +42,17 @@ class GCS {
 
   async _parallelDownloadList(list, callback) {
     for( let file of list ) {
-      let contents = await file.download();
-      await callback(file, JSON.parse(contents.toString('utf-8')));
+      try {
+        logger.info('Downloading '+file.name+' from gcs');
+        let contents = await file.download();
+        await callback(null, file, JSON.parse(contents.toString('utf-8')));
+      } catch(e) {
+        await callback(e, file);
+      }
     }
   }
 
 }
 
 const instance = new GCS();
-
-(async function() {
-  let files = await instance.getTypeFiles('grant');
-
-  await instance.parallelDownload(files, {concurrent:4}, (file, contents) => {
-    console.log(file.name, contents);
-  });
-
-})();
-
 module.exports = instance;

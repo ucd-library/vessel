@@ -21,6 +21,7 @@
   "license": "MIT",
   "dependencies": {
     "@google-cloud/logging-bunyan": "^3.2.2",
+    "@google-cloud/monitoring": "^2.3.5",
     "@google-cloud/pubsub": "^2.19.0",
     "@google-cloud/storage": "^5.18.2",
     "@ucd-lib/node-kafka": "^0.0.8",
