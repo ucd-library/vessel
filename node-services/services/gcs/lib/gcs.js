@@ -29,7 +29,7 @@ class GCS {
       opts.concurrent = 2;
     }
 
-    let size = Math.floor(list.length / opts.concurrent);
+    let size = Math.ceil(list.length / opts.concurrent);
     let arrays = [];
     for( let i = 0; i < opts.concurrent; i++ ) {
       arrays.push(list.splice(0, size));

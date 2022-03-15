@@ -1,6 +1,6 @@
 const {kafka, fuseki, logger, config, metrics} = require('@ucd-lib/rp-node-utils');
 const gcs = require('./gcs');
-const path = require('path');
+const pubsub = require('./pubsub');
 
 /**
  * @class GCSIndexerModel
@@ -14,6 +14,49 @@ class GCSIndexerModel {
       'metadata.broker.list': config.kafka.host+':'+config.kafka.port
     });
     metrics.ensureMetrics();
+
+    this.checkPubSub();
+  }
+
+  checkPubSub() {
+    pubsub.process(
+      config.google.storage.pubsub.topic,
+      config.google.storage.pubsub.batchSize,
+      (msg, index, total) => this.handlePubSubResponse(msg, index, total)
+    );
+  }
+
+  async handlePubSubResponse(msg, index, total) {
+
+    if( msg ) {
+      // Not handling for now, this could be update or delete
+      // as updates send a along a delete revision message
+      if( msg.timeDeleted ) {  
+        return;
+      }
+
+      let action = 'updated';
+      if( msg.timeCreated === msg.updated ) {
+        action = 'created';
+      }
+
+      // msg actions: 
+      if( msg ) {
+        // send along filename to reindex, method will strip .json
+        await this.reindexIds(msg.name);
+      }
+    }
+
+    // we are not at the end of current request
+    if( index !== total ) return;
+
+    // there may be more messages waiting, fire right away
+    if( total === config.google.storage.pubsub.batchSize ) {
+      this.checkPubSub()
+    // give a break
+    } else {
+      setTimeout(() => this.checkPubSub(), 2000);
+    }
   }
 
   /**
@@ -38,7 +81,7 @@ class GCSIndexerModel {
     this.listen();
   }
 
-  async reindexAll() {
+  async reindexAll(triggeredBy='not set') {
     logger.info('Starting reindex of ALL gcs data, bucket='+config.google.storage.bucket);
 
     let files = [];
@@ -46,12 +89,12 @@ class GCSIndexerModel {
       files = [...files, ...(await gcs.getTypeFiles(type))];
     }
 
-    await this.harvest(files);
+    await this.reindexIds(files, triggeredBy);
   }
 
   /**
-   * @method harvest
-   * @description harvest gcs .json files into fuseki.  Method should be 
+   * @method reindexIds
+   * @description pull from gcs .json files into fuseki.  Method should be 
    * provided array of aggie experts ids (w/ or w/o prefix, it will be striped).
    * GCS bucket should have the format [type]/[id].json.  Type flag is informational
    * and should be one of: api, user, gc-pubsub 
@@ -59,10 +102,10 @@ class GCSIndexerModel {
    * @param {Array} ids Aggie Expert ids to harvest or gcs file objects
    * @param {String} triggeredBy should be one of: api, user, gc-pubsub 
    */
-  async harvest(ids, triggeredBy='not set') {
+  async reindexIds(ids, triggeredBy='not set') {
     if( !Array.isArray(ids) ) ids = [ids];
 
-    logger.info('Starting harvest of '+ids.length+' id(s)');
+    logger.info('Starting reindex of '+ids.length+' id(s)');
     
     let files = ids;
     if( typeof files[0] !== 'object' ) {
@@ -137,8 +180,4 @@ class GCSIndexerModel {
 }
 
 const instance = new GCSIndexerModel();
-
-(async function() {
-  await instance.connect();
-  await instance.reindexAll();
-})();
+module.exports = instance;

@@ -1,4 +1,4 @@
-const {kafka, redis, fuseki, logger, config, esSparqlModel, Status} = require('@ucd-lib/rp-node-utils');
+const {kafka, redis, metrics, logger, config, esSparqlModel} = require('@ucd-lib/rp-node-utils');
 const {fork} = require('child_process');
 const elasticSearch = require('./elastic-search');
 const Reindex = require('./reindex');
@@ -24,7 +24,6 @@ class Indexer {
       'auto.offset.reset' : 'earliest'
     });
 
-    this.status = new Status({producer: 'indexer'});
     this.reindex = new Reindex();
   }
 
@@ -43,14 +42,12 @@ class Indexer {
 
     await this.kafkaConsumer.connect();
 
-    let topics = [config.kafka.topics.index];
+    let topics = [config.kafka.topics.gcs];
     logger.info('waiting for topics: ', topics);
     await this.kafkaConsumer.waitForTopics(topics);
     logger.info('topics ready: ', topics);
 
-    await this.kafkaConsumer.subscribe([config.kafka.topics.index]);
-
-    await this.status.connect();
+    await this.kafkaConsumer.subscribe([config.kafka.topics.gcs]);
 
     this.listen();
   }
@@ -99,25 +96,7 @@ class Indexer {
     }
   }
 
-  /**
-   * @method onMessage
-   * @description handle a kafka message.  Messages should subject index requests or index
-   * commands. Resets the message handler timeout (the main part of the debouncer).
-   * 
-   * Subject index request message:
-   * {
-   *   subject: [uri],
-   *   sender: [label] optional,
-   *   force: [boolean] optional,
-   *   type: [uri] optional
-   * }
-   * 
-   * 
-   * @param {Object} msg kafka message
-   */
-  async onMessage(msg) {
-    this.run = false;
-
+  onMessages(msg) {
     let id = kafka.utils.getMsgId(msg);
     logger.debug(`handling kafka message: ${id}`);
 
@@ -130,85 +109,36 @@ class Indexer {
       return;
     }
 
-    // unlike the debouncer, lookup subject types 
-    // we will only debounce known types
-    if( !payload.type || payload.types ) {
-      let response = await fuseki.query(`select * { <${payload.subject}> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?type}`)
-    
-      let body;
-      try {
-        body = await response.text();
-        body = JSON.parse(body);
+    for( id of msg.ids ) {
+      let type = '';
+      try {  
+        type = id.replace(/.*:/, '').split(/\/.*/, '');
+        await this.onMessage(id, type, msg.triggeredBy);
       } catch(e) {
-        logger.error(`From ${payload.msgId} sent by ${payload.sender || 'unknown'}: Fuseki request failed (${response.status}):`, body);
-        return;
+        this.logError(id, type, e)
       }
-  
-      payload.types = [...new Set(body.results.bindings.map(term => term.type.value))];
     }
 
-    let modelType = await this.getKnownModelType(payload);
+  }
+
+  /**
+   * @method onMessage
+   * @description handle a kafka message.  Messages should subject index requests or index
+   * commands. Resets the message handler timeout (the main part of the debouncer).
+   * 
+   */
+  async onMessage(id, type, sender) {
+    let subject = config.fuseki.rootPrefix.uri + id.replace(/.*:/, '');
     let index = await redis.client.get(config.redis.keys.indexWrite);
 
-    if( !modelType ) {
-      let deleted = await this.deleteIfExists(payload.subject, index);
-
-      if( deleted ) {
-        this.status.send({
-          status: this.status.STATES.COMPLETE, 
-          action: 'index', 
-          index,
-          subject: payload.subject
-        });
-        logger.info(`Message ${payload.msgId} with subject ${payload.subject} sent by ${payload.sender || 'unknown'}: was not is fuseki but found in elastic search.  record has been removed from elastic search`);
-      } else {
-        this.status.send({
-          status: 'ignored', 
-          action: 'index', 
-          index,
-          subject: payload.subject
-        });
-        logger.info(`Ignoring message ${payload.msgId} with subject ${payload.subject} sent by ${payload.sender || 'unknown'}: Type has no model ${modelType} ${JSON.stringify(payload.types || [])}`);
-      }
-
-      
-      return;
-    }
-
     try {
-      payload.index = index;
-
-      this.status.send({
-        status: this.status.STATES.START, 
-        action: 'index',
-        index: payload.index,
-        subject: payload.subject
-      });
-
-      await this.index(payload.subject, payload);
-      
-      this.status.send({
-        status: this.status.STATES.COMPLETE, 
-        action: 'index', 
-        index : payload.index,
-        subject: payload.subject
-      });
+      let payload = {id, subject, type, sender, index};
+      let resp = await this.index(payload.subject, payload);
+      if( resp.success ) {
+        this.logSuccess(id, type);
+      }
     } catch(e) {
-      if( !e ) e = {};
-      logger.error('index error', e);
-      this.status.send({
-        status : this.status.STATES.ERROR, 
-        subject : payload.subject,
-        action: 'index',
-        index: payload.index,
-        error : {
-          id : payload.subject.replace(config.fuseki.rootPrefix.uri, config.fuseki.rootPrefix.prefix+':'),
-          message : e.message,
-          stack : e.stack,
-          logs : ['index process died'],
-          kafkaMessage : payload
-        }
-      });
+      this.logError(id, type, e);
     }
   }
 
@@ -262,6 +192,15 @@ class Indexer {
     }
 
     return true;
+  }
+
+
+  logError(id, type, error) {
+    metrics.logIndexEvent(
+      metrics.DEFINITIONS['es-index-status'].type,
+      {status: 'error', type}, 1,
+      id, {error}
+    )
   }
 
 }

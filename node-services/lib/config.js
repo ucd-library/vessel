@@ -137,9 +137,16 @@ module.exports = {
     serviceAccountFile : env.GOOGLE_APPLICATION_CREDENTIALS,
     projectId : gcProjectId,
     storage : {
+      indexer : {
+        port : 3000
+      },
       bucket : 'aggie-experts-' + DATA_ENV,
-      types : ['work', 'grant', 'person']
-    }
+      types : ['work', 'grant', 'person'],
+      pubsub : {
+        topic : 'gcs-aggie-experts-'+DATA_ENV+'-updates',
+        batchSize : 100
+      }
+    },
   },
 
   logging : {
@@ -147,13 +154,8 @@ module.exports = {
     level : env.LOG_LEVEL || global.LOG_LEVEL || 'info'
   },
 
-  debouncer : {
-    handleMessageDelay : 10 // seconds
-  },
-
   indexer : {
-    port : 3000,
-    // handleMessageDelay : 5 // seconds
+    port : 3000
   },
 
   models : {

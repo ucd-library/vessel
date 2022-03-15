@@ -1,5 +1,5 @@
 const elasticSearch = require('./elastic-search');
-const {config, redis, logger, fuseki, esSparqlModel, Status} = require('@ucd-lib/rp-node-utils');
+const {config, logger, metrics, esSparqlModel} = require('@ucd-lib/rp-node-utils');
 
 
 process.on('unhandledRejection', e => {
@@ -20,16 +20,11 @@ class IndexerInsert {
       roles : []
     }
     
-    if( config.data && config.data.private 
-        && config.data.private.types
-        && config.data.private.types.length 
-        && config.data.private.roles
-        && config.data.private.roles.length ) {
+    if( config?.data?.private?.types?.length &&
+        config?.data?.private?.roles?.length ) {
       this.acl.roles = [... config.data.private.roles];
       this.acl.types = [... config.data.private.types];
     }
-
-    this.status = new Status({producer: 'indexer-exec'});
 
     process.on('message', async event => {
       await this.connect();
@@ -38,29 +33,14 @@ class IndexerInsert {
         event.msg = JSON.parse(event.msg);
       }
 
+      let {id, type} = event.msg;
+
       try {
         await this.index(event.msg);
+        event.success = true;
       } catch(err) {
-        let payload = {
-          status : this.status.STATES.ERROR, 
-          subject : event.msg.subject,
-          action: 'index',
-          index : event.msg.index,
-          error : {
-            id : event.msg.subject.replace(config.fuseki.rootPrefix.uri, config.fuseki.rootPrefix.prefix+':'),
-            message : err.message,
-            stack : err.stack,
-            logs : err.logs || null,
-            kafkaMessage : event.msg,
-          }
-        };
-
-        logger.error(`Failed to update`, event, payload);
-
-        this.status.send(payload);
+        this.logError(id, type, err);
       }
-
-      // await this.clearKey(event.key);
 
       event.finished = true;
       event.timestamp = Date.now();
@@ -74,15 +54,30 @@ class IndexerInsert {
    */
   async connect() {
     if( this.connected ) return;
-    await redis.connect();
     await elasticSearch.connect();
-    await this.status.connect();
     this.connected = true;
   }
 
-  // clearKey(key) {
-  //   return redis.client.del(key);
-  // }
+  /**
+   * @method index
+   * @description given subject uri; check if the subject rdf:type is of a
+   * known es model type, if so query Fuseki using es model sparql query and
+   * insert into elastic search
+   */
+  async index(msg) {
+    await this.connecting;
+
+    if( typeof msg === 'string' ) {
+      msg = JSON.parse(msg);
+    }
+
+    for( let type of types ) {
+      if( !(await esSparqlModel.hasModel(type)) ) continue;
+      await this.insert(msg.subject, msg.msgId, msg, type);
+      break;
+    }
+  }
+
 
   /**
    * @method insert
@@ -97,15 +92,7 @@ class IndexerInsert {
     let modelType = await esSparqlModel.hasModel(type);
     logger.debug(`From ${id} sent by ${msg.sender || 'unknown'} loading ${uri} with model ${modelType}. ${msg.force ? 'force=true' : ''}`);
     
-    let result;
-    try{ 
-      result = await esSparqlModel.getModel(type, uri);
-    } catch(e) {
-      e.logs = [
-        'Failed to get sparql model'
-      ]
-      throw e;
-    }
+    let result = await esSparqlModel.getModel(type, uri);
 
     // apply acl
     if( this.acl.types.includes(modelType) ) {
@@ -120,28 +107,6 @@ class IndexerInsert {
     await elasticSearch.insert(result.model, msg.index);
     // logger.info(`Updated ${uri} using ${modelType} into ${msg.index || 'default alias'}`);
   }
-  
-  /**
-   * @method index
-   * @description given subject uri; check if the subject rdf:type is of a
-   * known es model type, if so query Fuseki using es model sparql query and
-   * insert into elastic search
-   */
-  async index(msg) {
-    await this.connecting;
-
-    if( typeof msg === 'string' ) {
-      msg = JSON.parse(msg);
-    }
-
-    let types = await this.getTypes(msg);
-
-    for( let type of types ) {
-      if( !(await esSparqlModel.hasModel(type)) ) continue;
-      await this.insert(msg.subject, msg.msgId, msg, type);
-      break;
-    }
-  }
 
   async getTypes(msg) {
     if( msg.type ) {
@@ -150,21 +115,19 @@ class IndexerInsert {
 
     let response = await fuseki.query(`select * { <${msg.subject}> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?type}`)
     
-    let bodyText, body;
-    try {
-      bodyText = await response.text();
-      body = JSON.parse(bodyText);
-    } catch(e) {
-      logger.error(`From ${msg.msgId} sent by ${msg.sender || 'unknown'}: Fuseki request failed (${response.status}):`, bodyText);
-      e.logs = [
-        `query: select * { <${msg.subject}> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?type}`
-        `From ${msg.msgId} sent by ${msg.sender || 'unknown'}: Fuseki request failed (${response.status}):`, bodyText
-      ]
-      throw e;
-    }
+    let bodyText = await response.text();
+    let body = JSON.parse(bodyText);
 
     let types = [...new Set(body.results.bindings.map(term => term.type.value))];
     return types;
+  }
+
+  logError(id, type, error) {
+    metrics.logIndexEvent(
+      metrics.DEFINITIONS['es-index-status'].type,
+      {status: 'error', type}, 1,
+      id, {error}
+    )
   }
   
 }
