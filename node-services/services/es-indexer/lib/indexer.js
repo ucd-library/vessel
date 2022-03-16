@@ -96,7 +96,7 @@ class Indexer {
     }
   }
 
-  onMessages(msg) {
+  async onMessage(msg) {
     let id = kafka.utils.getMsgId(msg);
     logger.debug(`handling kafka message: ${id}`);
 
@@ -109,11 +109,11 @@ class Indexer {
       return;
     }
 
-    for( id of msg.ids ) {
+    for( id of payload.ids ) {
       let type = '';
       try {  
-        type = id.replace(/.*:/, '').split(/\/.*/, '');
-        await this.onMessage(id, type, msg.triggeredBy);
+        type = id.replace(/.*:/, '').replace(/\/.*/, '');
+        await this.onIdUpdated(id, type, payload.triggeredBy);
       } catch(e) {
         this.logError(id, type, e)
       }
@@ -122,12 +122,12 @@ class Indexer {
   }
 
   /**
-   * @method onMessage
+   * @method onIdUpdated
    * @description handle a kafka message.  Messages should subject index requests or index
    * commands. Resets the message handler timeout (the main part of the debouncer).
    * 
    */
-  async onMessage(id, type, sender) {
+  async onIdUpdated(id, type, sender) {
     let subject = config.fuseki.rootPrefix.uri + id.replace(/.*:/, '');
     let index = await redis.client.get(config.redis.keys.indexWrite);
 
@@ -200,6 +200,14 @@ class Indexer {
       metrics.DEFINITIONS['es-index-status'].type,
       {status: 'error', type}, 1,
       id, {error}
+    )
+  }
+
+  logSuccess(id, type) {
+    metrics.logIndexEvent(
+      metrics.DEFINITIONS['es-index-status'].type,
+      {status: 'success', type}, 1,
+      id
     )
   }
 

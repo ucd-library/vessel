@@ -81,12 +81,17 @@ class GCSIndexerModel {
     this.listen();
   }
 
-  async reindexAll(triggeredBy='not set') {
-    logger.info('Starting reindex of ALL gcs data, bucket='+config.google.storage.bucket);
+  async reindexAll(triggeredBy='not set', type) {
+    if( !type ) type = 'ALL';
+    logger.info('Starting reindex of '+type+' gcs data, bucket='+config.google.storage.bucket);
 
     let files = [];
-    for( let type of config.google.storage.types ) {
-      files = [...files, ...(await gcs.getTypeFiles(type))];
+    if( type === 'ALL' ) {
+      for( type of config.google.storage.types ) {
+        files = [...files, ...(await gcs.getTypeFiles(type))];
+      }
+    } else {
+      files = await gcs.getTypeFiles(type);
     }
 
     await this.reindexIds(files, triggeredBy);
@@ -158,7 +163,7 @@ class GCSIndexerModel {
 
   logError(id, type, error) {
     metrics.logIndexEvent(
-      metrics.DEFINITIONS['fuseki-index-status'].type,
+      metrics.DEFINITIONS['es-index-status'].type,
       {status: 'error', type}, 1,
       id, {error}
     )
@@ -166,7 +171,7 @@ class GCSIndexerModel {
 
   logSuccess(id, type) {
     metrics.logIndexEvent(
-      metrics.DEFINITIONS['fuseki-index-status'].type,
+      metrics.DEFINITIONS['es-index-status'].type,
       {status: 'success', type}, 1,
       id
     )

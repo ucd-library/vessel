@@ -71,6 +71,8 @@ class IndexerInsert {
       msg = JSON.parse(msg);
     }
 
+    let types = await this.getTypes(msg);
+
     for( let type of types ) {
       if( !(await esSparqlModel.hasModel(type)) ) continue;
       await this.insert(msg.subject, msg.msgId, msg, type);

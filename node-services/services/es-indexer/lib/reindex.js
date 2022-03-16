@@ -25,8 +25,10 @@ class Reindex {
     await redis.connect();
     await elasticSearch.connect();
     await this.kafkaConsumer.connect();
-    await this.kafkaConsumer.waitForTopics([config.kafka.topics.indexerStatusUpdate]);
-    await this.kafkaConsumer.subscribe([config.kafka.topics.indexerStatusUpdate]);
+    // logger.info('waiting for topics: ', [config.kafka.topics.indexerStatusUpdate]);
+    // await this.kafkaConsumer.waitForTopics([config.kafka.topics.indexerStatusUpdate]);
+    // logger.info('topics ready: ', [config.kafka.topics.indexerStatusUpdate]);
+    // await this.kafkaConsumer.subscribe([config.kafka.topics.indexerStatusUpdate]);
     this.listen();
   }
 
