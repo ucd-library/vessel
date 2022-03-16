@@ -38,7 +38,7 @@ class ElasticSearch {
     }
 
     await this.isConnected();
-    logger.error('Connected to Elastic Search');
+    logger.log('Connected to Elastic Search');
   }
 
   analyze(body) {
