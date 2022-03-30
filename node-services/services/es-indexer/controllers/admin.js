@@ -4,61 +4,38 @@ const es = require('../lib/elastic-search');
 const errorHandler = require('./error-handler');
 const {fetch, config} = require('@ucd-lib/rp-node-utils');
 
-/**
- * Get current reindex state
- */
-router.get('/reindex', async (req, res) => {
+router.get('/set-index-alias/:aliasName', async (req, res) => {
   try {
-    res.json(reindex.getState());
-  } catch(e) {
-    errorHandler(req, res, e);
-  }
-});
-
-/**
- * Run the reindexer
- */
-router.get('/reindex/run/:type?', async (req, res) => {
-  try {
-    reindex.run({
-      type: req.params.type,
-      updateSchema : req.query['rebuild-schema'] === 'true' ? true : false
-    });
-    res.json(reindex.getState());
-  } catch(e) {
-    errorHandler(req, res, e);
-  }
-});
-
-/**
- * Completely rebuild the elastic search schema and index
- */
-router.get('/reindex/rebuild-schema', async (req, res) => {
-  try {
-    reindex.run({updateSchema: true});
-    res.json(reindex.getState());
-  } catch(e) {
-    errorHandler(req, res, e);
-  }
-});
-
-router.get('/set-index/:indexName', async (req, res) => {
-  try {
-    let response = await reindex.setIndex(req.params.indexName);
+    let response = await reindex.setIndex(req.params.aliasName);
     res.json(response);
   } catch(e) {
     errorHandler(req, res, e);
   }
 });
 
-router.get('/deletePending', async (req, res) => {
+router.get('/delete-index/:indexName', async (req, res) => {
   try {
-    reindex.run({updateSchema: true});
-    res.json(reindex.getState());
+    let response = await reindex.deleteIndex(req.params.indexName);
+    res.json(response);
   } catch(e) {
     errorHandler(req, res, e);
   }
 });
+
+router.get('/reindex', async (req, res) => {
+  let flags = {};
+
+  (req.query.flags || '')
+    .split(',')
+    .array.forEach(item => flags[item] = true);
+  
+  try {
+    res.json(await reindex.reindex(flag));
+  } catch(e) {
+    errorHandler(req, res, e);
+  }
+});
+
 
 router.post('/analyze', async (req, res) => {
   let body = req.body;

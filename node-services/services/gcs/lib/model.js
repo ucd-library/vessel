@@ -27,8 +27,13 @@ class GCSIndexerModel {
   }
 
   async handlePubSubResponse(msg, index, total) {
-
     if( msg ) {
+      let type = msg.name.split('/')[0];
+      if( !config.google.storage.types.includes(type) ) {
+        logger.info(`Ignoring pubsub update for message: ${msg.name} with unknown type: ${type}`);
+        return;
+      }
+
       // Not handling for now, this could be update or delete
       // as updates send a along a delete revision message
       if( msg.timeDeleted ) {  
@@ -79,6 +84,24 @@ class GCSIndexerModel {
     this.kafkaProducer.client.setPollInterval(config.kafka.producerPollInterval);
 
     this.listen();
+  }
+
+  /**
+   * @method getFiles
+   * @description helper method to get file type counts.  Mostly used for
+   * admin / status UI.
+   * 
+   * @returns {Promise<Object>} Resolves to key/value Object, key is type, value is count
+   */
+  async getFiles() {
+    let resp = {
+      bucket : config.google.storage.bucket,
+      type : {}
+    };
+    for( let type of config.google.storage.types ) {
+      resp.type[type] = (await gcs.getTypeFiles(type)).map(file => file.name);
+    }
+    return resp;
   }
 
   async reindexAll(triggeredBy='not set', type) {
@@ -175,11 +198,6 @@ class GCSIndexerModel {
       {status: 'success', type}, 1,
       id
     )
-  }
-
-  // listen to pub/sub update message for bucket
-  listen() {
-
   }
 
 }

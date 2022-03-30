@@ -21,13 +21,12 @@ app.get(/\/reindex-all\/?.*/, async (req, res) => {
     res.json({success: true, message: 'reindex of all gcs started'});
     await p;
   } catch(e) {
-    logger.error('reindex all failed', e);
+    onError(res, e, 'reindex all failed');
   }
 });
 
 app.get('/reindex/:ids', reindex);
 app.post('/reindex', reindex);
-
 async function reindex(req, res) {
   let ids = req.params.ids || req.body;
   if( typeof ids === 'string' ) {
@@ -39,10 +38,31 @@ async function reindex(req, res) {
     res.json({success: true, message: 'reindex of gcs started', ids});
     await p;
   } catch(e) {
-    logger.error('reindex failed', e);
+    onError(res, e, 'reindex failed');
   }
 }
 
+app.get('/files', async (req, res) => {
+  try {
+    res.json(await gcsIndexer.getFiles());
+  } catch(e) {
+    onError(res, e);
+  }
+});
+
+function onError(res, e, msg) {
+  if( msg ) logger.error(msg, e);
+  else logger.error(e);
+  
+  res.status(500).json({
+    success : false,
+    message : msg || e.message,
+    error : {
+      message : e.message,
+      stack : e.stack
+    }
+  });
+}
 
 app.listen(config.google.storage.indexer.port, () => {
   logger.info('GCS Indexer API listening on port', config.google.storage.indexer.port);

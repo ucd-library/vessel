@@ -15,7 +15,7 @@
     "es-models": "node services/es-models",
     "es-indexer": "node services/es-indexer",
     "gcs": "node services/gcs",
-    "state": "node services/status"
+    "status": "node services/status"
   },
   "author": "jrmerz@ucdavis.edu",
   "license": "MIT",

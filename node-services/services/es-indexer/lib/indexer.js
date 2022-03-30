@@ -1,9 +1,8 @@
-const {kafka, redis, metrics, logger, config, esSparqlModel} = require('@ucd-lib/rp-node-utils');
+const {kafka, fetch, redis, metrics, logger, config, elasticSearch, esSparqlModel} = require('@ucd-lib/rp-node-utils');
 const {fork} = require('child_process');
-const elasticSearch = require('./elastic-search');
-const Reindex = require('./reindex');
+const { type } = require('os');
 const path = require('path');
-let count = 0;
+
 /**
  * @class Indexer
  * @description main indexer that reads kafka stream, debounces uris, queries fuseki and
@@ -23,8 +22,6 @@ class Indexer {
       // subscribe to front of committed offset
       'auto.offset.reset' : 'earliest'
     });
-
-    this.reindex = new Reindex();
   }
 
   /**
@@ -37,8 +34,7 @@ class Indexer {
   async connect() {
     await redis.connect();
     await elasticSearch.connect();
-
-    await this.reindex.connect();
+    await elasticSearch.ensureIndex();
 
     await this.kafkaConsumer.connect();
 
@@ -50,6 +46,36 @@ class Indexer {
     await this.kafkaConsumer.subscribe([config.kafka.topics.gcs]);
 
     this.listen();
+  }
+
+  /**
+   * @method reindex
+   * @description reindex gcs files, optionally by type.  Flags allow 
+   * you to create and write to a new index as well as update search
+   * alias when complete (todo).
+   * 
+   * @param {Object} flags
+   * @param {Boolean} flags.fresh-index
+   * @param {Boolean} flags.auto-update-alias 
+   * @param {String} flags.type 
+   * 
+   * @returns {Promise<Object>}
+   */
+  async reindex(flags) {
+    let resp = {flags};
+    
+    if( flags['fresh-index'] ) {
+      resp.newIndex = await elasticSearch.createIndex();
+      await elasticSearch.setWriteIndex(resp.newIndex);
+    }
+
+    let url = config.gateway.serviceHosts.gcs+'/api/reindex-all';
+    if( flags.type ) url += '/'+type;
+
+    let gcsResp = await fetch(url);
+    gcsResp = await gcsResp.json();
+
+    return Object.assign(res, gcsResp);
   }
 
   createChildExec() {
@@ -129,11 +155,11 @@ class Indexer {
    */
   async onIdUpdated(id, type, sender) {
     let subject = config.fuseki.rootPrefix.uri + id.replace(/.*:/, '');
-    let index = await redis.client.get(config.redis.keys.indexWrite);
+    let index = await this.getWriteIndex();
 
     try {
       let payload = {id, subject, type, sender, index};
-      let resp = await this.index(payload.subject, payload);
+      let resp = await this.indexRecord(payload.subject, payload);
       if( resp.success ) {
         this.logSuccess(id, type);
       }
@@ -163,7 +189,15 @@ class Indexer {
     return null;
   }
 
-  async index(key, msg) {
+  /**
+   * @method indexRecord
+   * @description 
+   * 
+   * @param {String} key 
+   * @param {Object} msg 
+   * @returns 
+   */
+  async indexRecord(key, msg) {
     this.createChildExec();
 
     if( this.childProcIndexPromise ) {
@@ -194,6 +228,10 @@ class Indexer {
     return true;
   }
 
+  setSearchIndex(index) {
+    logger.info(`swapping aliases: ${config.elasticSearch.indexAlias} -> ${writeIndex}`);
+    return elasticSearch.setAlias(index);
+  }
 
   logError(id, type, error) {
     metrics.logIndexEvent(

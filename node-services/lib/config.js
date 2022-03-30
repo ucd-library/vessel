@@ -173,7 +173,8 @@ module.exports = {
       client : env.CLIENT_SERVICE_NAME ? 'http://'+CLIENT_SERVICE_NAME+':3000' : 'http://client:3000',
       model : env.MODELS_SERVICE_NAME ? 'http://'+env.MODELS_SERVICE_NAME+':3000' : 'http://models:3000',
       api : env.API_SERVICE_HOST || 'http://api:3000',
-      indexer : env.INDEXER_SERVICE_HOST || 'http://indexer:3000'
+      indexer : env.INDEXER_SERVICE_HOST || 'http://indexer:3000',
+      gcs : env.GCS_SERVICE_HOST || 'http://gcs:3000'
     }
   },
 

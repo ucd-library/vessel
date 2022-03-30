@@ -114,6 +114,7 @@ app.use(/^\/api(\/.*|$)/, (req, res) => {
   });
 });
 
+// TODO: lets move this to /api
 app.use(/^\/indexer\/model\/.*/, (req, res) => {
   proxy.web(req, res, {
     target: config.gateway.serviceHosts.model+req.originalUrl.replace(/^\/indexer\/model/, ''),
