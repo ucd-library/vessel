@@ -15,6 +15,7 @@ CONSTRUCT {
   ?subject rdf:type ?type;
            rdf:type ucdrp:grant;
            rdfs:label ?label;
+           ucdrp:gcsMetadata ?gcsMetadata;
            vivo:sponsorAwardId ?sponsorAwardId;
            vivo:totalAwardAmount ?totalAwardAmount;
            vivo:assignedBy ?assignedBy;
@@ -68,6 +69,7 @@ CONSTRUCT {
   ?subject rdf:type ?type .
 
   OPTIONAL { ?subject rdfs:label ?label . }
+  OPTIONAL { ?subject ucdrp:gcsMetadata ?gcsMetadata . }
   OPTIONAL { ?subject vivo:sponsorAwardId ?sponsorAwardId . }
   OPTIONAL { ?subject vivo:totalAwardAmount ?totalAwardAmount . }
 

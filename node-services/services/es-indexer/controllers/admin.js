@@ -1,8 +1,7 @@
 const router = require('express').Router();
 const reindex = require('../lib/indexer').reindex;
-const es = require('../lib/elastic-search');
 const errorHandler = require('./error-handler');
-const {fetch, config} = require('@ucd-lib/rp-node-utils');
+const {fetch, config, elasticSearch} = require('@ucd-lib/rp-node-utils');
 
 router.get('/set-index-alias/:aliasName', async (req, res) => {
   try {
@@ -59,7 +58,7 @@ router.post('/analyze', async (req, res) => {
  */
 router.get('/getCurrentIndexes/:id?', async (req, res) => {
   try {
-    res.json(await es.getCurrentIndexes(req.params.id));
+    res.json(await elasticSearch.getCurrentIndexes(req.params.id));
   } catch(e) {
     errorHandler(req, res, e);
   }

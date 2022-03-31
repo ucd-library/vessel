@@ -155,7 +155,7 @@ class Indexer {
    */
   async onIdUpdated(id, type, sender) {
     let subject = config.fuseki.rootPrefix.uri + id.replace(/.*:/, '');
-    let index = await this.getWriteIndex();
+    let index = await elasticSearch.getWriteIndex();
 
     try {
       let payload = {id, subject, type, sender, index};

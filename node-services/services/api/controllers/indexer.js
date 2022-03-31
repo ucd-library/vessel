@@ -1,6 +1,5 @@
 const router = require('express').Router();
 const {middleware, config, fetch} = require('@ucd-lib/rp-node-utils');
-const model = require('../models/elastic-search');
 const errorHandler = require('./utils/error-handler');
 
 router.get('/reindex', middleware.admin, async (req, res) => {
@@ -10,15 +9,6 @@ router.get('/reindex', middleware.admin, async (req, res) => {
   try {
     let indexResp = await fetch(url.href);
     res.json(await indexResp.text());
-  } catch(e) {
-    console.log(e);
-    errorHandler(req, res, e);
-  }
-});
-
-router.get('/stats', middleware.admin, async (req, res) => {
-  try {
-    res.json(await model.indexerStats());
   } catch(e) {
     console.log(e);
     errorHandler(req, res, e);
@@ -71,6 +61,19 @@ router.get('/schema/:name', middleware.admin, async (req, res) => {
   try {
     let indexResp = await fetch(url);
     res.json(await indexResp.json());
+  } catch(e) {
+    console.log(e);
+    errorHandler(req, res, e);
+  }
+});
+
+router.get(/^\/model\//, async (req, res) => {
+  let path = req.path.replace(/\/(model\/)?/, '');
+  let url = config.gateway.serviceHosts.model+'/'+path;
+
+  try {
+    let indexResp = await fetch(url);
+    res.json(await indexResp.text());
   } catch(e) {
     console.log(e);
     errorHandler(req, res, e);

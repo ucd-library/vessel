@@ -19,6 +19,7 @@ CONSTRUCT {
 
   ?subject rdfs:label ?label .
   ?subject vivo:scopusId ?scopusId .
+  ?subject ucdrp:gcsMetadata ?gcsMetadata .
   ?subject vivo:researcherId ?researcherId .
   ?subject vivo:eRACommonsId ?eRACommonsId .
   ?subject vivo:overview ?overview .
@@ -79,6 +80,7 @@ CONSTRUCT {
 
     ?subject rdf:type ?type .
     OPTIONAL { ?subject rdfs:label ?label . }
+    OPTIONAL { ?subject ucdrp:gcsMetadata ?gcsMetadata . }
     OPTIONAL { ?subject vivo:scopusId ?scopusId . }
     OPTIONAL { ?subject vivo:researcherId ?researcherId . }
     OPTIONAL { ?subject vivo:eRACommonsId ?eRACommonsId . }

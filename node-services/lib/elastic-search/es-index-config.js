@@ -5,7 +5,8 @@ let schemaTxt = fs.readFileSync(path.join(__dirname, 'es-vivo-schema.json'));
 let vivo = JSON.parse(schemaTxt, 'utf-8');
 
 const config = {
-  index: newIndexName,
+  // this needs to be assigned on instantiation
+  // index: newIndexName,
   body : {
     settings : {
       analysis : {

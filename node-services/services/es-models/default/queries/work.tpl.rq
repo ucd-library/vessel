@@ -16,6 +16,7 @@ PREFIX vivo: <http://vivoweb.org/ontology/core#>
 CONSTRUCT {
   ?subject rdf:type ?type, ucdrp:work ;
     rdfs:label ?label ;
+    ucdrp:gcsMetadata ?gcsMetadata ;
     bibo:abstract ?abstract ;
     bibo:doi ?doi ;
     bibo:volume ?volume ;
@@ -73,6 +74,7 @@ CONSTRUCT {
 
   ?subject rdf:type ?type .
   OPTIONAL { ?subject rdfs:label ?label . }
+  OPTIONAL { ?subject ucdrp:gcsMetadata ?gcsMetadata . }
   OPTIONAL { ?subject bibo:abstract ?abstract . }
   OPTIONAL { ?subject bibo:doi ?doi . }
   OPTIONAL { ?subject bibo:volume ?volume . }

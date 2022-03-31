@@ -1,5 +1,4 @@
-const elasticSearch = require('./elastic-search');
-const {config, logger, metrics, esSparqlModel} = require('@ucd-lib/rp-node-utils');
+const {config, logger, metrics, esSparqlModel, elasticSearch} = require('@ucd-lib/rp-node-utils');
 
 
 process.on('unhandledRejection', e => {

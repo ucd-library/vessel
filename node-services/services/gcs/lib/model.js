@@ -22,35 +22,12 @@ class GCSIndexerModel {
     pubsub.process(
       config.google.storage.pubsub.topic,
       config.google.storage.pubsub.batchSize,
-      (msg, index, total) => this.handlePubSubResponse(msg, index, total)
+      (msg, index, total) => this.batchedPubSubMessageIterator(msg, index, total)
     );
   }
 
-  async handlePubSubResponse(msg, index, total) {
-    if( msg ) {
-      let type = msg.name.split('/')[0];
-      if( !config.google.storage.types.includes(type) ) {
-        logger.info(`Ignoring pubsub update for message: ${msg.name} with unknown type: ${type}`);
-        return;
-      }
-
-      // Not handling for now, this could be update or delete
-      // as updates send a along a delete revision message
-      if( msg.timeDeleted ) {  
-        return;
-      }
-
-      let action = 'updated';
-      if( msg.timeCreated === msg.updated ) {
-        action = 'created';
-      }
-
-      // msg actions: 
-      if( msg ) {
-        // send along filename to reindex, method will strip .json
-        await this.reindexIds(msg.name);
-      }
-    }
+  async batchedPubSubMessageIterator(msg, index, total) {
+    if( msg ) await this.handlePubSubMsg(msg);
 
     // we are not at the end of current request
     if( index !== total ) return;
@@ -61,6 +38,44 @@ class GCSIndexerModel {
     // give a break
     } else {
       setTimeout(() => this.checkPubSub(), 2000);
+    }
+  }
+
+  async handlePubSubMsg(msg) {
+    console.log(msg);
+
+    let type = msg.name.split('/')[0];
+    if( !config.google.storage.types.includes(type) ) {
+      logger.info(`Ignoring pubsub update for message: ${msg.name} with unknown type: ${type}`);
+      return;
+    }
+
+    let action = 'updated';
+
+    // Not handling for now, this could be update or delete
+    // as updates send a along a delete revision message
+    if( msg.timeDeleted ) {
+      let [exists] = await gcs.file(msg.name).exists();
+
+      if( !exists ) {
+        action = 'deleted';
+      } else {
+        // this condition means the object was updated, and
+        // this message represents the deleted object.  Another
+        // message will come in representing the 'new' updated
+        // object.  So we can ignore this message.
+        return; 
+      }
+    }
+
+    if( msg.timeCreated === msg.updated ) {
+      action = 'created';
+    }
+
+    // msg actions: 
+    if( action !== 'deleted' ) {
+      // send along filename to reindex, method will strip .json
+      await this.reindexIds(msg.name);
     }
   }
 
@@ -82,8 +97,6 @@ class GCSIndexerModel {
 
 
     this.kafkaProducer.client.setPollInterval(config.kafka.producerPollInterval);
-
-    this.listen();
   }
 
   /**
@@ -157,14 +170,29 @@ class GCSIndexerModel {
   }
 
   async _onFileDownload(error, file, contents, successIds) {
-    let id = config.fuseki.rootPrefix.prefix+':'+file.name.replace(/\.json$/, '');
+    let shortId = file.name.replace(/\.json$/, '');
+    let id = config.fuseki.rootPrefix.prefix+':'+shortId;
+    let longId = config.fuseki.rootPrefix.uri+shortId;
     let type = file.name.replace(/\/.*/, '');
-
+    
     if( error ) {
       // send error metric
       this.logError(id, type, error);
       return;
     }
+
+    // append gcs metadata
+    for( let node of contents['@graph'] ) {
+      let nid = node['@id'] || '';
+      if( nid === id || nid === longId || nid.replace(/.*:/, '') === shortId.replace(/.*\//, '') ) {
+        node.gcsMetadata = JSON.stringify(file.metadata);
+        break;
+      }
+    }
+    
+    contents['@context']['gcsMetadata'] = { 
+      '@id': 'http://experts.ucdavis.edu/schema#gcsMetadata' 
+    };
 
     try {
       logger.info('Inserting '+file.name+' into fuseki');

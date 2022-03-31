@@ -56,6 +56,13 @@ class PostProcess {
       model._[dashToCamel(args.modelType || 'default')+'Label'] = model.label;
     }
 
+    if( model.gcsMetadata ) {
+      try {
+        model._.gcsMetadata = JSON.parse(model.gcsMetadata);
+      } catch(e) {}
+      delete model.gcsMetadata; 
+    }
+
     // create the broader subjects index
     if( model.hasSubjectArea ) {
       model._.allSubjectArea = await this.getBroaderSubjectTerms(model.hasSubjectArea, esSparqlModel);

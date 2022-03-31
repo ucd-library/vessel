@@ -2,6 +2,7 @@ const {Client} = require('elasticsearch');
 const waitUntil = require('../wait-until');
 const config = require('../config');
 const logger = require('../logger');
+const redis = require('../redis');
 const fetch = require('node-fetch');
 const esIndexConfig = require('./es-index-config');
 
@@ -16,6 +17,8 @@ class ElasticSearch {
 
     logger.info('waiting for es connection');
     await waitUntil(config.elasticSearch.host, config.elasticSearch.port);
+
+    await redis.connect();
 
     // sometimes we still aren't ready....
     try {
@@ -40,7 +43,7 @@ class ElasticSearch {
     }
 
     await this.isConnected();
-    logger.log('Connected to Elastic Search');
+    logger.info('Connected to Elastic Search');
   }
 
   analyze(body) {
@@ -66,18 +69,14 @@ class ElasticSearch {
     let config = Object.assign({}, esIndexConfig);
     config.index = (newIndexName && alias !== newIndexName) ? newIndexName : `${alias}-${Date.now()}`;
 
-    try {
-      await this.client.indices.create(config);
-    } catch(e) {
-      throw e;
-    }
+    await this.client.indices.create(config);
 
     return config.index;
   }
 
   deleteIndex(index) {
     logger.warn(`deleting index: ${index}`);
-    await elasticSearch.client.indices.delete({index});
+    return elasticSearch.client.indices.delete({index});
   }
 
   /**
