@@ -1,4 +1,4 @@
-const {kafka, fuseki, logger, config, metrics} = require('@ucd-lib/rp-node-utils');
+const {kafka, fetch, fuseki, logger, config, metrics} = require('@ucd-lib/rp-node-utils');
 const gcs = require('./gcs');
 const pubsub = require('./pubsub');
 
@@ -181,6 +181,9 @@ class GCSIndexerModel {
       return;
     }
 
+    // attempt delete first
+    await this.delete(id, type);
+
     // append gcs metadata
     for( let node of contents['@graph'] ) {
       let nid = node['@id'] || '';
@@ -210,6 +213,17 @@ class GCSIndexerModel {
       // send error metric
       this.logError(id, type, error);
     }
+  }
+
+  async delete(uri, type) {
+//     // first fetch the delete template
+//     let url = config.gateway.serviceHosts.model+'/'+type+'/'+encodeURIComponent(uri)+'?templateOnly=delete';
+//     let resp = await fetch(url);
+//     let sparql = await resp.text();
+// console.log(sparql);
+//     resp = await fuseki.update(sparql, 'update');
+
+//     console.log(resp.status, await resp.text());
   }
 
   logError(id, type, error) {

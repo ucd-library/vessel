@@ -21,6 +21,13 @@ app.get(/\/.+/, async (req, res) => {
   try {
     type = decodeURIComponent(type);
     uri = decodeURIComponent(uri);
+
+    if( req.query.templateOnly ) {
+      res.set('content-type', 'application/sparql-update');
+      res.send(await model.getSparqlQuery(type, uri, req.query.templateOnly));
+      return;
+    }
+
     let verbose = req.query.verbose ? true : false;
 
     let data = await model.getModel(type, uri, {verbose});

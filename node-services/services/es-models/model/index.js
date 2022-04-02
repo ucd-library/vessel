@@ -9,6 +9,7 @@ class EsSparqlModel {
     this.TYPES = {};
     this.MODELS = {};
     this.TEMPLATES = {};
+    this.DELETE_TEMPLATES = {};
 
     this.readModels(path.join(__dirname, '..', 'default', 'queries'));
 
@@ -64,6 +65,12 @@ class EsSparqlModel {
           logger.info(`Loaded es model ${model} additional property: ${key}`);
         }
 
+        let deleteTemplateFile = path.join(dir, '..', 'delete', model+'.tpl.rq');
+        if( fs.existsSync(deleteTemplateFile) ) {
+          this.DELETE_TEMPLATES[model] = fs.readFileSync(deleteTemplateFile, 'utf-8');
+          logger.info(`Loaded delete template ${model} for types`, typeMap[model]);
+        }
+
       } catch(e) {
         logger.error(`Unable to load es model ${model} for types`, typeMap[model], e);
       }
@@ -87,18 +94,24 @@ class EsSparqlModel {
   /**
    * @method getSparqlQuery
    * @description given a type (es model name or rdf uri), subject uri and optional graph
-   * uri, return the SPARQL query
+   * uri, return the SPARQL query.  The type parameter controls if this is a query template
+   * or a delete template
    *
    * @param {String} type es model name or rdf uri
    * @param {String} uri subject uri
+   * @param {String} tplType query or delete
    *
    * @returns {String}
    */
-  getSparqlQuery(type, uri) {
+  getSparqlQuery(type, uri, tplType='query') {
     let model = type;
-    if( !this.TEMPLATES[model] ) {
+
+    // let library = (tplType === 'delete') ? this.DELETE_TEMPLATES : this.TEMPLATES;
+    let library = this.TEMPLATES;
+
+    if( !library[model] ) {
       model = this.hasModel(type);
-      if( !model ) throw new Error('Unknown model or type: '+type);
+      if( !model ) throw new Error('Unknown '+tplType+' model or type: '+type);
     }
 
     if( uri.startsWith(config.fuseki.schemaPrefix.prefix+':') ) {
@@ -111,8 +124,14 @@ class EsSparqlModel {
       uri = '<'+uri+'>';
     }
 
-    return this.TEMPLATES[model]
+    let sparql = library[model]
       .replace(/"{{uri}}"/g, uri);
+    
+    if( tplType === 'delete' ) {
+      sparql = sparql.replace(/CONSTRUCT {/, 'DELETE {');
+    }
+
+    return sparql;
   }
 
   /**

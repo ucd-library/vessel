@@ -9,6 +9,7 @@ process.on('unhandledRejection', e => {
 });
 
 const gcsIndexer = require('./lib/model');
+const crawler = require('./lib/model-crawler');
 gcsIndexer.connect();
 
 app.use(bodyParser.json());
@@ -22,6 +23,17 @@ app.get(/\/reindex-all\/?.*/, async (req, res) => {
     await p;
   } catch(e) {
     onError(res, e, 'reindex all failed');
+  }
+});
+
+app.get('/remove/:id', async (req, res) => {
+  try {
+    let response = await crawler.delete(req.params.id);
+    
+
+    res.json({success: true, id: req.params.id, response});
+  } catch(e) {
+    onError(res, e, 'reindex failed');
   }
 });
 
