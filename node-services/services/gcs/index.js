@@ -1,5 +1,5 @@
 const express = require('express');
-const {logger, config} = require('@ucd-lib/rp-node-utils');
+const {logger, config, fuseki, fusekiModelCrawler} = require('@ucd-lib/rp-node-utils');
 const bodyParser = require('body-parser');
 const app = express();
 
@@ -9,7 +9,6 @@ process.on('unhandledRejection', e => {
 });
 
 const gcsIndexer = require('./lib/model');
-const crawler = require('./lib/model-crawler');
 gcsIndexer.connect();
 
 app.use(bodyParser.json());
@@ -28,10 +27,8 @@ app.get(/\/reindex-all\/?.*/, async (req, res) => {
 
 app.get('/remove/:id', async (req, res) => {
   try {
-    let response = await crawler.delete(req.params.id);
-    
-
-    res.json({success: true, id: req.params.id, response});
+    let response = await gcsIndexer.delete(req.params.id);
+    res.json(response);
   } catch(e) {
     onError(res, e, 'reindex failed');
   }

@@ -2,6 +2,7 @@ module.exports = {
   config : require('./config'),
   kafka : require('@ucd-lib/node-kafka'),
   fuseki : require('./fuseki'),
+  fusekiModelCrawler : require('./fuseki-model-crawler'),
   elasticSearch : require('./elastic-search'),
   redis : require('./redis'),
   'wait-util' : require('./wait-until'),

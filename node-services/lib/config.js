@@ -159,6 +159,7 @@ module.exports = {
   },
 
   models : {
+    rootDir : env.ES_MODELS_ROOT_DIR || '/etc/vessel/models',
     serviceName : env.MODELS_SERVICE_NAME || 'models',
     port : 3000,
   },

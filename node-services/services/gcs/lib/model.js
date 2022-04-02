@@ -1,4 +1,4 @@
-const {kafka, fetch, fuseki, logger, config, metrics} = require('@ucd-lib/rp-node-utils');
+const {kafka, fusekiModelCrawler,  fuseki, logger, config, metrics} = require('@ucd-lib/rp-node-utils');
 const gcs = require('./gcs');
 const pubsub = require('./pubsub');
 
@@ -42,8 +42,6 @@ class GCSIndexerModel {
   }
 
   async handlePubSubMsg(msg) {
-    console.log(msg);
-
     let type = msg.name.split('/')[0];
     if( !config.google.storage.types.includes(type) ) {
       logger.info(`Ignoring pubsub update for message: ${msg.name} with unknown type: ${type}`);
@@ -76,6 +74,10 @@ class GCSIndexerModel {
     if( action !== 'deleted' ) {
       // send along filename to reindex, method will strip .json
       await this.reindexIds(msg.name);
+    } else {
+      let shortId = msg.name.replace(/\.json$/, '');
+      let uri = config.fuseki.rootPrefix.uri+shortId;
+      await this.delete(uri);
     }
   }
 
@@ -182,7 +184,7 @@ class GCSIndexerModel {
     }
 
     // attempt delete first
-    await this.delete(id, type);
+    await this.delete(id);
 
     // append gcs metadata
     for( let node of contents['@graph'] ) {
@@ -215,20 +217,33 @@ class GCSIndexerModel {
     }
   }
 
-  async delete(uri, type) {
-//     // first fetch the delete template
-//     let url = config.gateway.serviceHosts.model+'/'+type+'/'+encodeURIComponent(uri)+'?templateOnly=delete';
-//     let resp = await fetch(url);
-//     let sparql = await resp.text();
-// console.log(sparql);
-//     resp = await fuseki.update(sparql, 'update');
+  /**
+   * @method delete
+   * @description completely remove a vessel model from the fuseki graph
+   * by crawling graph for all triples of the model type
+   * 
+   * @param {String} uri 
+   * @returns 
+   */
+  async delete(uri) {
+    logger.info('Cleaning fuseki uri model: '+uri);
+    let query = await fusekiModelCrawler.createDeleteQuery(uri);
+    if( !query ) return {query, message: 'ignored, uri has not triples'}
+    let response = await fuseki.update(query, 'update');
 
-//     console.log(resp.status, await resp.text());
+    if( response.status > 299 ) {
+      this.logError(
+        uri.replace(config.fuseki.rootPrefix.uri, config.fuseki.rootPrefix.prefix),
+        null, {error: {message: 'failed to remove '+uri+' from fuseki'}}
+      );
+    }
+
+    return {query, status: response.status, body: await response.text()}
   }
 
   logError(id, type, error) {
     metrics.logIndexEvent(
-      metrics.DEFINITIONS['es-index-status'].type,
+      metrics.DEFINITIONS['fuseki-index-status'].type,
       {status: 'error', type}, 1,
       id, {error}
     )
@@ -236,7 +251,7 @@ class GCSIndexerModel {
 
   logSuccess(id, type) {
     metrics.logIndexEvent(
-      metrics.DEFINITIONS['es-index-status'].type,
+      metrics.DEFINITIONS['fuseki-index-status'].type,
       {status: 'success', type}, 1,
       id
     )

@@ -1,5 +1,3 @@
-const fetch = require('node-fetch');
-
 class PostProcess {
 
   async run(model, args, esSparqlModel) {

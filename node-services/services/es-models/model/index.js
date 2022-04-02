@@ -1,7 +1,8 @@
 const {logger, config, fuseki} = require('@ucd-lib/rp-node-utils');
-const postProcess = require('../default/post-process');
 const path = require('path');
 const fs = require('fs');
+
+const postProcess = require(path.join(config.models.rootDir, 'post-process.js'));
 
 class EsSparqlModel {
 
@@ -11,15 +12,7 @@ class EsSparqlModel {
     this.TEMPLATES = {};
     this.DELETE_TEMPLATES = {};
 
-    this.readModels(path.join(__dirname, '..', 'default', 'queries'));
-
-    if( process.env.MODEL_FOLDER ) {
-      this.readModels(process.env.MODEL_FOLDER);
-    }
-    if( process.env.CUSTOM_POST_PROCESSOR ) {
-      logger.info('Using custom model post processor: '+process.env.CUSTOM_POST_PROCESSOR);
-      postProcess = require(process.env.CUSTOM_POST_PROCESSOR);
-    }
+    this.readModels(path.join(config.models.rootDir, 'queries'));
   }
 
   /**
