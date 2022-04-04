@@ -212,22 +212,6 @@ class Indexer {
     return this.childProcIndexPromise;
   }
 
-  async deleteIfExists(id, index) {
-    id = id.replace(config.fuseki.rootPrefix.uri, config.fuseki.rootPrefix.prefix+':')
-    index = index ? index : config.elasticSearch.indexAlias;
-    let exists = await elasticSearch.client.exists({index, id});
-
-    logger.debug(`Checking subject ${id} is in elastic search:`, exists);
-    if( exists === false ) return false;
-
-    let response = await elasticSearch.client.delete({index, id});
-    if( response.result !== 'deleted' ) {
-      logger.error(`Failed to delete ${id} from elastic search`, response);
-    }
-
-    return true;
-  }
-
   setSearchIndex(index) {
     logger.info(`swapping aliases: ${config.elasticSearch.indexAlias} -> ${writeIndex}`);
     return elasticSearch.setAlias(index);

@@ -1,4 +1,4 @@
-const {kafka, fusekiModelCrawler,  fuseki, logger, config, metrics} = require('@ucd-lib/rp-node-utils');
+const {kafka, fusekiModelCrawler, elasticSearch, fuseki, logger, config, metrics} = require('@ucd-lib/rp-node-utils');
 const gcs = require('./gcs');
 const pubsub = require('./pubsub');
 
@@ -15,7 +15,8 @@ class GCSIndexerModel {
     });
     metrics.ensureMetrics();
 
-    this.checkPubSub();
+    elasticSearch.connect()
+      .then(() => this.checkPubSub());
   }
 
   checkPubSub() {
@@ -66,7 +67,8 @@ class GCSIndexerModel {
       }
     }
 
-    if( msg.timeCreated === msg.updated ) {
+    if( msg.timeCreated === msg.updated && 
+        action === 'updated' ) {
       action = 'created';
     }
 
@@ -220,7 +222,7 @@ class GCSIndexerModel {
   /**
    * @method delete
    * @description completely remove a vessel model from the fuseki graph
-   * by crawling graph for all triples of the model type
+   * by crawling graph for all triples of the model type as well as elastic search
    * 
    * @param {String} uri 
    * @returns 
@@ -237,6 +239,10 @@ class GCSIndexerModel {
         null, {error: {message: 'failed to remove '+uri+' from fuseki'}}
       );
     }
+
+    // attempt to delete from elastic search as well
+    // TODO: we need to have metrics on this
+    await elasticSearch.deleteIfExists(uri);
 
     return {query, status: response.status, body: await response.text()}
   }

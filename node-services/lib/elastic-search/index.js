@@ -159,6 +159,25 @@ class ElasticSearch {
     return results;
   }
 
+  async deleteIfExists(id, index) {
+    if( !index ) index = await this.getWriteIndex();
+    id = id.replace(config.fuseki.rootPrefix.uri, config.fuseki.rootPrefix.prefix+':')
+    
+    let exists = await this.client.exists({index, id});
+
+    logger.debug(`Checking subject ${id} is in elastic search index ${index}:`, exists);
+    if( exists === false ) return false;
+
+    let response = await this.client.delete({index, id});
+    if( response.result !== 'deleted' ) {
+      logger.error(`Failed to delete ${id} from elastic search index ${index}`, response);
+    }
+
+    logger.info(`Deleted subject ${id} from elastic search index ${index}`);
+
+    return true;
+  }
+
   /**
    * @method setWriteIndex
    * @description set the current write index for elastic search
