@@ -35,13 +35,21 @@ class FusekiModelCrawler {
   async createDeleteQuery(uri) {
     let triples = await this.walk(uri);
 
+    if( !triples ) return;
     if( triples.length === 0 ) return '';
     
-    let q = `DELETE WHERE {
-  GRAPH ?g {
-    ${triples.map(row => '  '+row.join(' ')+' .').join('\n')}
-  }
-}`;
+    let q = triples.map(row => `DELETE WHERE {
+      GRAPH ?g {
+        ${row.join(' ')} .
+      }
+    };`).join('\n');
+
+// JM - this can be really slooow in fuseki :(
+//     let q = `DELETE WHERE {
+//   GRAPH ?g {
+//     ${triples.map(row => '  '+row.join(' ')+' .').join('\n')}
+//   }
+// }`;
 
     return q;
   }
