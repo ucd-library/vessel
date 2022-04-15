@@ -20,6 +20,7 @@ CONSTRUCT {
            vivo:assignedBy ?assignedBy;
            vivo:relates ?relates;
            vivo:dateTimeInterval ?dateTimeInterval;
+           ucdrp:subAwardOf ?super_award;
          .
 
 
@@ -62,6 +63,12 @@ CONSTRUCT {
   ?dateTimeEnd rdf:type ?dateTimeEndType;
                vivo:dateTime ?dateTimeEndTime;
                vivo:dateTimePrecision ?dateTimeEndPrecision;
+               .
+
+  ?super_award vivo:assignedBy ?super_funding_org.
+  ?super_funding_org rdfs:label ?super_funder_label;
+               a ?super_funder_type;
+               vivo:assigns ?super_award_this_is_circular;
                .
 
 } WHERE {
@@ -127,6 +134,17 @@ CONSTRUCT {
       OPTIONAL { ?dateTimeEnd vivo:dateTime ?dateTimeEndTime . }
       OPTIONAL { ?dateTimeEnd vivo:dateTimePrecision ?dateTimeEndPrecision . }
     }
+
+    OPTIONAL {
+      ?subject ucdrp:subAwardOf ?super_award;
+             .
+      ?super_award vivo:assignedBy ?super_funding_org.
+
+      ?super_funding_org rdfs:label ?super_funder_label;
+                         a ?super_funder_type;
+                         .
+    }
+
   }
 
   FILTER(?subject = "{{uri}}")
