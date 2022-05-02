@@ -22,6 +22,8 @@ CONSTRUCT {
   ?subject vivo:researcherId ?researcherId .
   ?subject vivo:eRACommonsId ?eRACommonsId .
   ?subject vivo:overview ?overview .
+  ?subject ucdrp:teachingSummary ?teachingSummary .
+  ?subject ucdrp:researchInterests ?researchInterests .
 
   ?subject ucdrp:casId ?casId .
   ?subject ucdrp:identifier ?identifier .
@@ -83,6 +85,8 @@ CONSTRUCT {
     OPTIONAL { ?subject vivo:researcherId ?researcherId . }
     OPTIONAL { ?subject vivo:eRACommonsId ?eRACommonsId . }
     OPTIONAL { ?subject vivo:overview ?overview . }
+    OPTIONAL { ?subject ucdrp:teachingSummary ?teachingSummary . }
+    OPTIONAL { ?subject ucdrp:researchInterests ?researchInterests . }    
 
     OPTIONAL { ?subject ucdrp:casId ?casId . }
     OPTIONAL {
