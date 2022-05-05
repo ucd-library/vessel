@@ -14,7 +14,7 @@ module.exports = {
   },
 
   concept : [
-//    'http://www.w3.org/2004/02/skos/core#Concept',
+    'http://www.w3.org/2004/02/skos/core#Concept',
     'http://experts.ucdavis.edu/schema#concept'
             ],
 
