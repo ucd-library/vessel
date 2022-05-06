@@ -18,6 +18,9 @@ CONSTRUCT {
   ?publication rdfs:label ?publicationLabel .
   ?publication ucdrp:publication ?publicationVenueLabel .
 
+  ?subject vivo:hasSubjectArea ?subjectArea .
+  ?subjectArea rdfs:label ?subjectAreaLabel .
+
   ?publication ucdrp:authors ?citationAuthors .
   ?citationAuthors vivo:rank ?authorRank .
   ?citationAuthors vivo:identifiers ?citationPerson .
@@ -46,6 +49,8 @@ CONSTRUCT {
     OPTIONAL {
       ?publication vivo:hasPublicationVenue ?publicationVenue .
       ?publicationVenue rdfs:label ?publicationVenueLabel .
+      ?subject vivo:hasSubjectArea ?subjectArea .
+      ?subjectArea rdfs:label ?subjectAreaLabel .
     }
   }
   FILTER(
