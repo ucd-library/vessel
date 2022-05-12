@@ -136,10 +136,12 @@ class Indexer {
     }
 
     for( id of payload.ids ) {
-      let type = '';
+      let type = payload.type;
       try {  
-        type = id.replace(/.*:/, '').replace(/\/.*/, '');
-        await this.onIdUpdated(id, type, payload.triggeredBy);
+        if( !type ) {
+          type = id.replace(/.*:/, '').replace(/\/.*/, '');
+        }
+        await this.onIdUpdated(id, type, payload.database, payload.triggeredBy);
       } catch(e) {
         this.logError(id, type, e)
       }
@@ -153,12 +155,15 @@ class Indexer {
    * commands. Resets the message handler timeout (the main part of the debouncer).
    * 
    */
-  async onIdUpdated(id, type, sender) {
-    let subject = config.fuseki.rootPrefix.uri + id.replace(/.*:/, '');
+  async onIdUpdated(id, type, database, sender) {
+    let subject = id;
+    if( !id.match(/^http(s)?:\/\//) ) {
+      subject = config.fuseki.rootPrefix.uri + id.replace(/.*:/, '');
+    }
     let index = await elasticSearch.getWriteIndex();
 
     try {
-      let payload = {id, subject, type, sender, index};
+      let payload = {id, subject, type, sender, index, database};
       let resp = await this.indexRecord(payload.subject, payload);
       if( resp.success ) {
         this.logSuccess(id, type);

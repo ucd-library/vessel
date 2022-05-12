@@ -16,8 +16,9 @@ app.use(bodyParser.json());
 app.get(/\/reindex-all\/?.*/, async (req, res) => {
   try {
     let type = req.path.replace(/^\/(api\/)?reindex-all\/?/, '');
+    let subjects = (req.query.subjects || '').trim().toLowerCase() === 'true';
 
-    let p = gcsIndexer.reindexAll('api', type);
+    let p = gcsIndexer.reindexAll('api', {type, subjects});
     res.json({success: true, message: 'reindex of all gcs started'});
     await p;
   } catch(e) {

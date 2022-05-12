@@ -14,11 +14,14 @@ class EsSqarqlModels {
     }
   }
 
-  async getModel(type, uri) {
+  async getModel(type, uri, database) {
     let modelType = await this.hasModel(type);
     if( !modelType ) throw new Error('Unknown type: '+type);
 
-    let response = await fetch(`${baseUrl}/${modelType}/${encodeURIComponent(uri)}`);
+    if( database ) database = '?database='+database;
+    else database = '';
+
+    let response = await fetch(`${baseUrl}/${modelType}/${encodeURIComponent(uri)}${database}`);
     let data = await response.json();
 
     if( !data.model || !data.uri ) {

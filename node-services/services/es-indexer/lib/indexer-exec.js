@@ -1,4 +1,4 @@
-const {config, logger, metrics, esSparqlModel, elasticSearch} = require('@ucd-lib/rp-node-utils');
+const {config, logger, metrics, fuseki, esSparqlModel, elasticSearch} = require('@ucd-lib/rp-node-utils');
 
 
 process.on('unhandledRejection', e => {
@@ -93,7 +93,7 @@ class IndexerInsert {
     let modelType = await esSparqlModel.hasModel(type);
     logger.debug(`From ${id} sent by ${msg.sender || 'unknown'} loading ${uri} with model ${modelType}. ${msg.force ? 'force=true' : ''}`);
     
-    let result = await esSparqlModel.getModel(type, uri);
+    let result = await esSparqlModel.getModel(type, uri, msg.database);
 
     // apply acl
     if( this.acl.types.includes(modelType) ) {
@@ -114,7 +114,10 @@ class IndexerInsert {
       return Array.isArray(msg.type) ? msg.type : [msg.type];
     }
 
-    let response = await fuseki.query(`select * { <${msg.subject}> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?type}`)
+    let response = await fuseki.query(
+      `select * { <${msg.subject}> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?type}`,
+      null, msg.database  
+    )
     
     let bodyText = await response.text();
     let body = JSON.parse(bodyText);

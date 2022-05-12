@@ -121,12 +121,20 @@ class GCSIndexerModel {
     return resp;
   }
 
-  async reindexAll(triggeredBy='not set', type) {
+  async reindexAll(triggeredBy='not set', opts={}) {
+    let type = opts.type;
+    let subjects = opts.subjects;
+
     if( !type ) type = 'ALL';
     logger.info('Starting reindex of '+type+' gcs data, bucket='+config.google.storage.bucket);
 
     let files = [];
     if( type === 'ALL' ) {
+      // index subjects
+      if( subjects === true ) {
+        await this.reindexSubjects();
+      }
+
       for( type of config.google.storage.types ) {
         files = [...files, ...(await gcs.getTypeFiles(type))];
       }
@@ -135,6 +143,24 @@ class GCSIndexerModel {
     }
 
     await this.reindexIds(files, triggeredBy);
+  }
+
+  async reindexSubjects(triggeredBy) {
+    let q =`PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    
+    SELECT ?s
+    WHERE {
+    	?s rdf:type <http://www.w3.org/2004/02/skos/core#Concept>
+    }`;
+    let resp = await fuseki.query(q, null, 'vocabularies');
+    let json = await resp.json();
+
+    let ids = json.results.bindings.map(item => item.s.value);
+
+    this.kafkaProducer.produce({
+      topic : config.kafka.topics.gcs,
+      value : {ids, type: 'concept', database: 'vocabularies', task:'fuseki-update', triggeredBy}
+    });
   }
 
   /**
@@ -193,12 +219,16 @@ class GCSIndexerModel {
       let nid = node['@id'] || '';
       if( nid === id || nid === longId || nid.replace(/.*:/, '') === shortId.replace(/.*\//, '') ) {
         node.gcsMetadata = JSON.stringify(file.metadata);
+        node.gcsMetadata = file.metadata;
         break;
       }
     }
     
     contents['@context']['gcsMetadata'] = { 
       '@id': 'http://experts.ucdavis.edu/schema#gcsMetadata' 
+    };
+    contents['@context']['gcsVersion'] = { 
+      '@id': 'http://experts.ucdavis.edu/schema#gcsVersion' 
     };
 
     try {

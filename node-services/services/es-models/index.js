@@ -17,6 +17,7 @@ app.get(/\/.+/, async (req, res) => {
   let path = req.path.replace(/\/(model\/)?/, '').split('/');
   let type = path.shift();
   let uri = path.join('/');
+  let database = req.query.database || '';
 
   try {
     type = decodeURIComponent(type);
@@ -30,7 +31,7 @@ app.get(/\/.+/, async (req, res) => {
 
     let verbose = req.query.verbose ? true : false;
 
-    let data = await model.getModel(type, uri, {verbose});
+    let data = await model.getModel(type, uri, {verbose, database});
     res.json(data);
   } catch(e) {
     res.status(500).json({
@@ -47,12 +48,13 @@ app.post(/\/.+/, async (req, res) => {
   let path = req.path.replace(/\/(model\/)?/, '').split('/');
   let type = path.shift();
   let uri = path.join('/');
+  let database = req.query.database || '';
   let verbose = true;
   let query = req.body;
 
   try {
     uri = decodeURIComponent(uri);
-    let data = await model.getModel(type, uri, {verbose, query});
+    let data = await model.getModel(type, uri, {verbose, query, database});
     res.json(data);
   } catch(e) {
     res.status(500).json({

@@ -20,8 +20,8 @@ class Fuseki {
    * 
    * @returns {Promise} resolves to fetch response object
    */
-  async query(query, responseType) {
-    return fetch(this.url+'/'+this.database+'/query', {
+  async query(query, responseType, database) {
+    return fetch(this.url+'/'+(database || this.database)+'/query', {
       method : 'POST',
       headers : this._setAuthorization({
         accept : (responseType || 'application/sparql-results+json')+',*/*;q=0.9',

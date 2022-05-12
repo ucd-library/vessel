@@ -137,6 +137,7 @@ class EsSparqlModel {
    * @param {Object} opts additional options
    * @param {Boolean} opts.verbose include SPARQL queries
    * @param {String} opts.query custom SPARQL query
+   * @param {String} opts.database
    *
    * @returns {Object}
    */
@@ -158,7 +159,7 @@ class EsSparqlModel {
       uri,
       custom : opts.query ? true : false,
       timestamp : Date.now(),
-      database : config.fuseki.database,
+      database : opts.database || config.fuseki.database,
       model : {}
     }
 
@@ -170,7 +171,7 @@ class EsSparqlModel {
       }
     }
 
-    result.model = await this._requestModel(type, uri, opts.query);
+    result.model = await this._requestModel(type, uri, opts.query, opts.database);
 
     if( this.MODELS[model] ) {
       for( let prop in this.MODELS[model].additionalProperties ) {
@@ -179,7 +180,7 @@ class EsSparqlModel {
           result.sparql.push(this.getSparqlQuery(type, uri));
         }
         try {
-          let propResult = await this._requestModel(type, uri);
+          let propResult = await this._requestModel(type, uri, null, opts.database);
           result.model[prop] = propResult[prop];
         } catch(e){
           // only putting misses in verbose
@@ -218,11 +219,11 @@ class EsSparqlModel {
    *
    * @returns {Object}
    */
-  async _requestModel(type, uri, sparqlQuery) {
+  async _requestModel(type, uri, sparqlQuery, database) {
     if( !sparqlQuery ) {
       sparqlQuery = this.getSparqlQuery(type, uri);
     }
-    let response = await fuseki.query(sparqlQuery, 'application/ld+json');
+    let response = await fuseki.query(sparqlQuery, 'application/ld+json', database);
 
     // let t = await response.text();
     // console.log(t);
@@ -247,7 +248,7 @@ class EsSparqlModel {
 
     let model = this._constructModel(response['@graph'] || [], uri);
     if( !model[uri] ) {
-      throw new Error('Model construction failed, uri not found: '+uri);
+      throw new Error('Model construction failed from db '+(database || config.fuseki.database)+', uri not found: '+uri);
     }
     return model[uri];
   }
