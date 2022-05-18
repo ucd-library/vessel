@@ -103,6 +103,7 @@ class SearchModelUtils {
    * @param {String} query.text text search
    * @param {Array} query.textFields fields to include in text search
    * @param {Object} query.facets facet to return with query
+   * @param {Object} query.functionScore function_score to use in es query
    * @param {Number} query.offset
    * @param {Number} query.limit
    * @param {Object} query.sort 
@@ -138,12 +139,24 @@ class SearchModelUtils {
 
 
     esBody.query = {
-      bool : {}
+      function_score: {
+        query: {
+          bool: {}
+        }
+      }
+    }
+
+    // append functionScore
+    if( query.functionScore ) {
+      esBody.query.function_score = query.functionScore; // under bool?
+      esBody.query.function_score.query = {
+        bool: {}
+      }
     }
 
     // append a text 'multi_match' search
     if( query.text && query.textFields ) {
-      esBody.query.bool.must = [{
+      esBody.query.function_score.query.bool.must = [{
         multi_match : {
           query : query.text,
           type : 'most_fields',
@@ -225,14 +238,14 @@ class SearchModelUtils {
 
     // if we found keyword filters, append the 'filter' attribute
     if( keywords.length > 0 ) {
-      esBody.query.bool.filter = keywords;
+      esBody.query.function_score.query.bool.filter = keywords;
     }
 
     // if a property must exist, add to exists object using query.bool.should
     if (fieldExists.length > 0)  {
-      if (!esBody.query.bool.must) esBody.query.bool.must = [];
+      if (!esBody.query.function_score.query.bool.must) esBody.query.function_score.query.bool.must = [];
       for (const field of fieldExists) {
-        esBody.query.bool.must.push({exists: {field}})
+        esBody.query.function_score.query.bool.must.push({exists: {field}})
       }
     }
 
@@ -240,27 +253,27 @@ class SearchModelUtils {
     // just like text search, so check to see if query.bool.must was already
     // created
     if( Object.keys(range).length > 0 ) {
-      if( !esBody.query.bool.must ) {
-        esBody.query.bool.must = [];
+      if( !esBody.query.function_score.query.bool.must ) {
+        esBody.query.function_score.query.bool.must = [];
       }
 
-      esBody.query.bool.must.push({range});
+      esBody.query.function_score.query.bool.must.push({range});
     }
 
     // just like above, range with null uses query.bool.must, so repeat steps
     if( rangeWithNull.length > 0 ) {
-      if( !esBody.query.bool.must ) {
-        esBody.query.bool.must = [];
+      if( !esBody.query.function_score.query.bool.must ) {
+        esBody.query.function_score.query.bool.must = [];
       }
 
-      esBody.query.bool.must = esBody.query.bool.must.concat(rangeWithNull);
+      esBody.query.function_score.query.bool.must = esBody.query.function_score.query.bool.must.concat(rangeWithNull);
     }
 
     if( Object.keys(prefix).length > 0 ) {
-      if( !esBody.query.bool.must ) {
-        esBody.query.bool.must = [];
+      if( !esBody.query.function_score.query.bool.must ) {
+        esBody.query.function_score.query.bool.must = [];
       }
-      esBody.query.bool.must.push({prefix});
+      esBody.query.function_score.query.bool.must.push({prefix});
     }
 
     // if( !Object.keys(esBody.query.bool).length ) {

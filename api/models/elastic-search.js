@@ -98,11 +98,11 @@ class ElasticSearch {
 
     if( opts.bypassRoles !== true ) {
       if( config.data && config.data.private && config.data.private.roles && config.data.private.roles.length ) {
-        if( !body.query ) body.query = {};
-        if( !body.query.bool ) body.query.bool = {};
-        if( !body.query.bool.filter ) body.query.bool.filter = [];
+        if( !body.query.function_score.query ) body.query.function_score.query = {};
+        if( !body.query.function_score.query.bool ) body.query.function_score.query.bool = {};
+        if( !body.query.function_score.query.bool.filter ) body.query.function_score.query.bool.filter = [];
         
-        body.query.bool.filter.push({
+        body.query.function_score.query.bool.filter.push({
           terms : {
             _acl : roles
           }

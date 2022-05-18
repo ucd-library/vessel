@@ -9,51 +9,77 @@ PREFIX ucdrp: <http://experts.ucdavis.edu/schema#>
 PREFIX vcard: <http://www.w3.org/2006/vcard/ns#>
 PREFIX vitro: <http://vitro.mannlib.cornell.edu/ns/vitro/0.7#>
 PREFIX vivo: <http://vivoweb.org/ontology/core#>
+PREFIX work: <http://experts.ucdavis.edu/work/>
+PREFIX person: <http://experts.ucdavis.edu/person/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX CRediT: <https://credit.niso.org/contributor-roles/>
+
 
 CONSTRUCT {
-  ?subject rdf:type ?type .
-  ?subject rdf:type ucdrp:person .
+  ?expert rdf:type ?type;
+  	rdf:type ucdrp:person;
+    ucdrp:citation ?publication;
+    # ucdrp:FirstorLastAuthor ?plus;
+    .
 
-  ?subject ucdrp:citation ?publication .
-  ?publication rdfs:label ?publicationLabel .
-  ?publication ucdrp:publication ?publicationVenueLabel .
+  ?publication rdfs:label ?publicationLabel;
+  	ucdrp:publication ?publicationVenueLabel;
+    ucdrp:authors ?authorship ;
+    vivo:hasSubjectArea ?subject;
+    ucdrp:authorCount ?max;
+    # ucdrp:FirstorLastAuthor ?FirstorLastAuthor;
+    ucdrp:contrib-type ?FirstorLastAuthor ;
+    .
 
-  ?subject vivo:hasSubjectArea ?subjectArea .
-  ?subjectArea rdfs:label ?subjectAreaLabel .
+  ?subject rdfs:label ?subject_label;
+    skos:prefLabel ?subject_prefLabel;
+    .
 
-  ?publication ucdrp:authors ?citationAuthors .
-  ?citationAuthors vivo:rank ?authorRank .
-  ?citationAuthors vivo:identifiers ?citationPerson .
+  ?authorship vivo:rank ?authorRank;
+  	vivo:identifiers ?author;
+    .
 } WHERE {
 
-  ?subject rdf:type ?type .
+  {select ?expert ?publication (max(?rank) as ?max) WHERE {
+      ?expert rdf:type ucdrp:person;
+              vivo:relatedBy/vivo:relates ?publication;
+          .
+      ?publication a ucdrp:work;
+      	vivo:relatedBy/vivo:rank ?rank.                   
+    } group by ?expert ?publication}
+        
+  ?expert rdf:type ?type;
+          vivo:relatedBy ?authorship;
+          .
+    
+    ?authorship rdf:type vivo:Authorship;
+	    vivo:relates ?publication ;
+                .
+    
+    ?publication rdf:type ucdrp:work;
+    	rdfs:label ?publicationLabel;
+     	.
 
   OPTIONAL {
-    ?subject vivo:relatedBy ?authorship .
-    ?authorship rdf:type vivo:Authorship .
-
-    ?authorship vivo:relates ?publication .
-    ?publication rdf:type ucdrp:work .
-    ?publication rdfs:label ?publicationLabel .
-
-    OPTIONAL {
-      ?publication vivo:relatedBy ?citationAuthors .
-      ?citationAuthors rdf:type vivo:Authorship .
-      ?citationAuthors vivo:relates ?citationPerson .
-      ?citationPerson rdf:type ?citationPersonType .
-
+      ?publication vivo:hasSubjectArea ?subject.
+      ?subject rdfs:label ?subject_label.
       OPTIONAL {
-        ?citationAuthors vivo:rank ?authorRank .
+        ?subject skos:prefLabel ?subject_prefLabel.
       }
+    }	
+  OPTIONAL {
+      ?authorship vivo:relates ?publication;
+                  vivo:rank ?authorRank.
+      bind(?publication as ?plus)
+      bind("ucdrp:FirstorLastAuthor" as ?FirstorLastAuthor)
+      filter(?authorRank=?max || ?authorRank=1) 
     }
-    OPTIONAL {
+
+  OPTIONAL {
       ?publication vivo:hasPublicationVenue ?publicationVenue .
       ?publicationVenue rdfs:label ?publicationVenueLabel .
-      ?subject vivo:hasSubjectArea ?subjectArea .
-      ?subjectArea rdfs:label ?subjectAreaLabel .
     }
-  }
   FILTER(
-    ?subject = "{{uri}}" &&
-    ?citationPersonType IN (vcard:Individual, vivo:FacultyMember, vivo:NonAcademic, foaf:Person))
+    ?expert = "{{uri}}"
+  )
 }

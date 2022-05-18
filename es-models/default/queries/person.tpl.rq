@@ -79,7 +79,7 @@ CONSTRUCT {
 
 } WHERE {
 
-    ?subject rdf:type ?type .
+    ?subject rdf:type ?type, ucdrp:person.
     OPTIONAL { ?subject rdfs:label ?label . }
     OPTIONAL { ?subject vivo:scopusId ?scopusId . }
     OPTIONAL { ?subject vivo:researcherId ?researcherId . }

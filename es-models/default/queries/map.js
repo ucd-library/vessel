@@ -8,8 +8,8 @@ module.exports = {
       'http://experts.ucdavis.edu/schema#person'
     ],
     additionalProperties : {
-      citation : 'person-citations',
-      role:'person-grants'
+      citation: 'person-citations',
+      role: 'person-grants'
     }
   },
 
