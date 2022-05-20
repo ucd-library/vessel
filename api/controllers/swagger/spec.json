@@ -2,7 +2,11 @@
   "openapi": "3.0.0",
   "info": {
     "title": "UC Davis - Researcher Profiles API",
-    "version": "0.0.1"
+    "version": "0.0.1",
+    "license": {
+      "name": "Aggie Experts Terms of Use",
+      "url": "https://rc.experts.ucdavis.edu/termsofuse"
+    }
   },
   "servers": [
     {
