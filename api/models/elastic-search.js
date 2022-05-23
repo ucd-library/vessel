@@ -98,11 +98,23 @@ class ElasticSearch {
 
     if( opts.bypassRoles !== true ) {
       if( config.data && config.data.private && config.data.private.roles && config.data.private.roles.length ) {
-        if( !body.query.function_score.query ) body.query.function_score.query = {};
-        if( !body.query.function_score.query.bool ) body.query.function_score.query.bool = {};
-        if( !body.query.function_score.query.bool.filter ) body.query.function_score.query.bool.filter = [];
+        // set a reference query var to use for ACL assignment
+        let query = null;
+        if( !body.query ) body.query = {};
+
+        // sniff out if we are using a function store or not, ensure proper query assignment
+        if( body.query.function_score ) {
+          if( !body.query.function_score.query ) body.query.function_score.query = {};
+          query = body.query.function_score.query;
+        } else {
+          query = body.query;
+        }
+
+        if( !query.bool ) query.bool = {};
+        if( !query.bool.filter ) query.bool.filter = [];
         
-        body.query.function_score.query.bool.filter.push({
+        // finally after that nasty bit, assign ACL roles
+        query.bool.filter.push({
           terms : {
             _acl : roles
           }
