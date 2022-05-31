@@ -14,13 +14,15 @@ class PostProcess {
 
     model._ = {};
 
-    // author count
+    // author count (moved to fuseki query)
+    /*
     if( model.citation ) {
       if( !Array.isArray(model.citation) ) {
         model.citation = [model.citation];
       }
-      model._.top20Citation = [];
-      model._.lastCitation = [];
+      // model._.top20Citation = [];
+      // model._.lastCitation = [];
+      // model._.plusCitation = [];
 
       model.citation = model.citation.map(item => {
         item.authorsCount = asArray(item.authors).length;
@@ -36,20 +38,25 @@ class PostProcess {
 
         if( item.authorsCount && item.rank ) {
           // is person last author
-          if( item.authorsCount === item.rank ) {
-            model._.lastCitation.push(item);
-          }
+          // if( item.authorsCount === item.rank ) {
+          //   model._.lastCitation.push(item);
+          // }
 
           // is person top 20% rank in citation, top 2 authors up to 10
-          if( item.rank / item.authorsCount <= .2 || (item.rank <= 2 && item.authorsCount <= 10) ) {
-            model._.top20Citation.push(item);
-          }
+          // if( item.rank / item.authorsCount <= .2 || (item.rank <= 2 && item.authorsCount <= 10) ) {
+          //   model._.top20Citation.push(item);
+          // }
+
+          // is person last author or first author 
+          // if( item.authorsCount === item.rank || item.rank === 1 ) {
+          //   model._.plusCitation.push(item);
+          // }
         }
 
         delete item.authors;
         return item;
       });
-    }
+    }*/
 
     // for individual label indexing.
     if( model.label ) {

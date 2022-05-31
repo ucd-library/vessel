@@ -130,7 +130,6 @@ class EsSparqlModel {
    */
   async getModel(type, uri, opts={}) {
     let model;
-
     if( opts.query ) {
       model = type;
     } else {
