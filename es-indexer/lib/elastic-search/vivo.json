@@ -75,25 +75,18 @@
     "citation.label" : {
       "type" : "text"
     },
+    
+    "citation.hasResearchArea.label" : {
+      "type" : "keyword",
+      "fields": {
+        "text" : {
+          "type" : "text"
+        }
+      }
+    },
 
     "citation.contrib-type" : {
       "type": "keyword"
-    },
-
-    "_.lastCitation.publication" : {
-      "type" : "text"
-    },
-
-    "_.lastCitation.label" : {
-      "type" : "text"
-    },
-
-    "_.top20Citation.publication" : {
-      "type" : "text"
-    },
-
-    "_.top20Citation.label" : {
-      "type" : "text"
     },
 
     "doi" : {
