@@ -76,7 +76,7 @@
       "type" : "text"
     },
     
-    "citation.hasResearchArea.label" : {
+    "citation.hasSubjectArea.label" : {
       "type" : "keyword",
       "fields": {
         "text" : {
