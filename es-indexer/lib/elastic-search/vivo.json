@@ -76,6 +76,10 @@
       "type" : "text"
     },
     
+    "citation.abstract" : {
+      "type" : "text"
+    },
+
     "citation.hasSubjectArea.label" : {
       "type" : "keyword",
       "fields": {
