@@ -160,6 +160,18 @@ class SearchModelUtils {
           fields : query.textFields
         }
       }];
+
+      // also filter function_score by query text
+      if( query.functionScore ) {
+        esBody.query.function_score.functions[0].filter[0].bool.must = [
+          {
+            match: { 
+              'citation.label': query.text
+            }
+          },
+          ...esBody.query.function_score.functions[0].filter[0].bool.must
+        ];
+      }
     }
 
     if( !query.filters ) return esBody;
