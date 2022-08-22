@@ -1,10 +1,11 @@
 const express = require('express');
+const jsonld = require('jsonld');
 const {logger, config} = require('@ucd-lib/rp-node-utils');
 const model = require('./model');
 const app = express();
 const bodyParser = require('body-parser');
 
-app.use(bodyParser.text({ type: '*/*' }))
+app.use(bodyParser.text({ type: '*/*' }));
 
 app.get('/', (req, res) => {
   res.json({
@@ -12,6 +13,21 @@ app.get('/', (req, res) => {
     models : model.MODELS
   });
 });
+
+app.post('/frame', async (req, res) => {
+  let body;
+  try {
+    body = JSON.parse(req.body);
+    res.json(await jsonld.frame(body.document, body.frame));
+  } catch(e) {
+    res.status(500).json({
+      error : true,
+      message : 'failed to generate jsonld frame: '+e.message,
+      body : body || req.body
+    });
+  }
+});
+
 
 app.get(/\/.+/, async (req, res) => {
   let path = req.path.replace(/\/(model\/)?/, '').split('/');
