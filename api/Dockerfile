@@ -9,6 +9,7 @@ COPY package-lock.json .
 
 RUN npm install --production
 
+COPY lib/new.json node_modules/@citation-js/plugin-ris/lib/spec/
 COPY lib lib
 COPY controllers controllers
 COPY models models
