@@ -9,7 +9,10 @@ COPY package-lock.json .
 
 RUN npm install --production
 
+# see https://github.com/citation-js/citation-js/blob/5f5fde5e2b0962d649192074d47ec435c0a7ec63/packages/plugin-ris/src/spec/new.json#L678 
+# updating the translation by replacing the above file ^
 COPY lib/new.json node_modules/@citation-js/plugin-ris/lib/spec/
+
 COPY lib lib
 COPY controllers controllers
 COPY models models
